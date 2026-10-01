@@ -138,10 +138,47 @@ describe('sanitizeSvg', () => {
 describe('video', () => {
   it('fills missing narration from the slide text', () => {
     const v = normalizeVideo({ title: 'Pythagoras', scenes: [{ heading: 'Theorem', body: '\\(a^2 + b^2 = c^2\\)' }] }, 'p');
-    expect(v.scenes[0].narration).toBe('Theorem. a squared + b squared = c squared');
+    expect(v.scenes[0].narration).toBe('Theorem. a squared plus b squared equals c squared');
   });
 
   it('speakable strips markdown and LaTeX', () => {
-    expect(speakable('**Area** is \\(\\frac{1}{2}bh\\)')).toBe('Area is 1 over 2bh');
+    expect(speakable('**Area** is \\(\\frac{1}{2}bh\\)')).toBe('Area is 1 over 2 bh');
+    expect(speakable('So 6/4 = 3/2 and x^2 - 4 >= 0.')).toBe(
+      'So 6 over 4 equals 3 over 2 and x squared minus 4 is greater than or equal to 0.',
+    );
+    expect(speakable('\\[ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a} \\]')).toBe(
+      'x equals minus b plus or minus the square root of b squared minus 4ac over 2a',
+    );
+  });
+});
+
+describe('math in titles and labels', () => {
+  it('turns plain-text math into Unicode for titles, labels and points', () => {
+    const graph = normalizeGraph(
+      { title: 'Parabola y = x^2 - 4', functions: [{ expr: 'x^2 - 4' }], points: [{ x: 0.5, y: -3.75, label: '(1/2, -15/4)' }] },
+      'parabolas',
+    );
+    expect(graph.title).toBe('Parabola y = x² − 4');
+    expect(graph.points[0].label).toBe('(½, −¹⁵⁄₄)');
+
+    const flow = normalizeDiagram(
+      {
+        title: 'Quadratics',
+        nodes: [
+          { id: 'a', label: 'Compute b^2 - 4ac', shape: 'process' },
+          { id: 'b', label: '\\(\\Delta \\ge 0\\)?', shape: 'decision' },
+        ],
+        edges: [{ from: 'a', to: 'b' }],
+      },
+      'flowchart',
+      'quadratics',
+    );
+    expect(flow.type === 'flowchart' && flow.nodes.map((n) => n.label)).toEqual(['Compute b² − 4ac', 'Δ ≥ 0?']);
+  });
+
+  it('cleans up math in model-drawn SVG text', () => {
+    const svg = sanitizeSvg("<svg viewBox='0 0 10 10'><text x='1'>\\theta = 30^\\circ</text><text>x^2 &amp; y</text></svg>");
+    expect(svg).toContain('>θ = 30°</text>');
+    expect(svg).toContain('>x² &amp; y</text>');
   });
 });

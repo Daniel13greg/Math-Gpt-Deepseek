@@ -12,7 +12,7 @@ practice tests, flashcards, graphs, diagrams, study guides and narrated video le
 
 | | |
 |---|---|
-| **Chat** | Step-by-step answers for 10 subjects (Math, Physics, Accounting, Chemistry, Statistics, Biology, Economics, Finance, Computer Science, Engineering). Streaming Markdown with **LaTeX math** (KaTeX, incl. `\ce{}` chemistry), tables and code. Copy, share, read aloud, regenerate, edit. |
+| **Chat** | Step-by-step answers for 10 subjects (Math, Physics, Accounting, Chemistry, Statistics, Biology, Economics, Finance, Computer Science, Engineering). Streaming Markdown with **LaTeX math** (KaTeX, incl. `\ce{}` chemistry), tables and code. Fractions are always stacked and symbols typeset, even when the model or student types plain text like `6/4`, `x^2`, `sqrt(16)` or `a <= b`. Copy, share, read aloud, regenerate, edit. |
 | **Deep Think** | DeepSeek thinking mode with a live, collapsible chain of thought and adjustable reasoning effort. |
 | **Scan** | In-app camera with a resizable crop frame (or pick from photos). The photo goes straight to DeepSeek's vision model. |
 | **Record** | "Create lecture notes": record a lecture (live transcript) or upload MP3/AAC/WAV/OGG/FLAC, then DeepSeek writes structured notes with formulas, examples and review questions. |
@@ -88,6 +88,11 @@ with schema validation, LaTeX-safe JSON repair and one automatic retry.
   transcript is one WebView; streamed tokens are pushed into it imperatively so the whole conversation
   isn't re-sent over the bridge for every token. KaTeX fonts are inlined (`npm run katex:css`) so math
   renders offline inside the WebView.
+- **Math formatting** (`src/lib/math/`): before rendering, math written as plain text ("6/4",
+  "x^2 - 5x + 6 = 0", "sqrt(16)", "a <= b", "2H2 + O2 -> 2H2O") is detected and turned into TeX, and
+  loose TeX is cleaned up (slash fractions → `\frac`, `<=` → `\le`, …), so fractions are stacked and
+  symbols typeset everywhere — answers, thinking, notes, student messages and study tools. Places that
+  can't run KaTeX (chat titles, diagram and graph labels) get the Unicode equivalent: "x² − 4", "⁶⁄₄".
 - **State**: zustand stores persisted to SQLite key-value storage (`expo-sqlite/kv-store`), one key per
   chat, written only when a chat changes and throttled during streaming. Photos live in the app's
   document directory.

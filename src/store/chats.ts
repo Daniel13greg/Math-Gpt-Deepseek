@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import { DEFAULT_SUBJECT, type SubjectId } from '@/constants/subjects';
 import { makeId } from '@/lib/id';
+import { toUnicodeMath } from '@/lib/math';
 import { createCollectionSaver, loadCollection } from '@/lib/storage/collection';
 import type { AssistantMessage, Chat, Message } from '@/lib/types';
 
@@ -90,8 +91,13 @@ export const useChats = create<ChatsState>()((set, get) => {
         return index === -1 ? chat : { ...chat, messages: chat.messages.slice(0, index) };
       }),
 
+    // Titles are shown as native text, so math in them becomes Unicode ("x^2" → "x²", "6/4" → "⁶⁄₄").
     renameChat: (chatId, title, lock = true) =>
-      updateChat(chatId, (chat) => ({ ...chat, title: title.trim() || chat.title, titleLocked: chat.titleLocked || lock })),
+      updateChat(chatId, (chat) => ({
+        ...chat,
+        title: toUnicodeMath(title.trim()) || chat.title,
+        titleLocked: chat.titleLocked || lock,
+      })),
 
     setChatSubject: (chatId, subject) => updateChat(chatId, (chat) => ({ ...chat, subject })),
 

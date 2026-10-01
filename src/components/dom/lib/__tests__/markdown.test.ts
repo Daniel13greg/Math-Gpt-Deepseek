@@ -1,4 +1,4 @@
-import { renderMarkdown, splitDanglingMath } from '../markdown';
+import { renderInline, renderMarkdown, renderMathText, splitDanglingMath } from '../markdown';
 
 const mathCount = (html: string) => (html.match(/class="katex"/g) ?? []).length;
 const displayCount = (html: string) => (html.match(/class="math-display"/g) ?? []).length;
@@ -38,6 +38,34 @@ describe('renderMarkdown math', () => {
 
   it('shows invalid TeX without throwing', () => {
     expect(() => renderMarkdown('\\(\\frac{1}{\\)')).not.toThrow();
+  });
+});
+
+describe('plain-text math', () => {
+  const fractions = (html: string) => (html.match(/class="mfrac"/g) ?? []).length;
+
+  it('shows slash fractions stacked, in replies and inside model TeX', () => {
+    expect(fractions(renderMarkdown('Simplify 6/4 to get 3/2.'))).toBe(2);
+    expect(fractions(renderMarkdown('So \\(x = 6/4\\).'))).toBe(1);
+    expect(renderMarkdown('Simplify 6/4.')).not.toContain('6/4');
+  });
+
+  it('typesets powers, roots and symbols written as plain text', () => {
+    const html = renderMarkdown('Solve x^2 - 5x + 6 = 0, where sqrt(16) = 4 and a <= b.');
+    expect(mathCount(html)).toBe(3);
+    const visible = html.replace(/<annotation[\s\S]*?<\/annotation>/g, ''); // KaTeX keeps the source for screen readers
+    expect(visible).not.toMatch(/x\^2|sqrt\(|&lt;=/); // (KaTeX itself uses a "sqrt" class)
+    expect(visible).toContain('≤');
+  });
+
+  it('applies to inline snippets such as answer choices', () => {
+    expect(fractions(renderInline('1/2'))).toBe(1);
+  });
+
+  it('renders a student message with math but escapes everything else', () => {
+    const html = renderMathText('<b>what is</b> 6/4?');
+    expect(fractions(html)).toBe(1);
+    expect(html).toContain('&lt;b&gt;what is&lt;/b&gt; ');
   });
 });
 

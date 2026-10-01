@@ -5,6 +5,7 @@ import { toDeepSeekError } from '@/lib/deepseek/errors';
 import { DEFAULT_VISION_MODEL, isKnownVisionModel } from '@/lib/deepseek/models';
 import { makeId } from '@/lib/id';
 import { deleteImageFiles, imageToDataUrl } from '@/lib/images';
+import { toUnicodeMath } from '@/lib/math';
 import { titlePrompt, toolSystemPrompt, toolUserPrompt, tutorSystemPrompt } from '@/lib/prompts';
 import { ArtifactError } from '@/lib/tools/normalize';
 import { generateArtifact } from '@/lib/tools/generate';
@@ -66,7 +67,7 @@ export async function sendMessage(input: SendInput): Promise<void> {
   const chat = getChat(chatId)!;
   if (chat.subject !== input.subject) store.setChatSubject(chatId, input.subject);
   if (chat.messages.length === 0) {
-    const provisional = message.text || (message.images ? 'Photo problem' : 'New chat');
+    const provisional = toUnicodeMath(message.text) || (message.images ? 'Photo problem' : 'New chat');
     store.renameChat(chatId, provisional.length > 48 ? `${provisional.slice(0, 47)}…` : provisional, false);
   }
   store.addMessage(chatId, message);

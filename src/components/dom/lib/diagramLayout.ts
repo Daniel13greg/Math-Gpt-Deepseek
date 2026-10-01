@@ -35,9 +35,17 @@ export interface DiagramLayout {
 const CHAR_W = 7.4; // ~14px system font
 const LINE_H = 18;
 
+/** An operator on its own ("≥", "=") stays with what follows, so "Discriminant ≥ 0?" never wraps as "Discriminant ≥ / 0?". */
+const OPERATOR_WORD = /^[=<>≤≥≠≈±×÷·+−→⇒]$/;
+
 /** Greedy word wrap by character count. */
 export function wrapLabel(text: string, maxChars: number): string[] {
-  const words = text.split(/\s+/).filter(Boolean);
+  const words: string[] = [];
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    const last = words.length - 1;
+    if (last >= 0 && OPERATOR_WORD.test(words[last])) words[last] += ` ${word}`;
+    else words.push(word);
+  }
   const lines: string[] = [];
   let line = '';
   for (const word of words) {

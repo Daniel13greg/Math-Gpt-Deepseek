@@ -38,6 +38,8 @@ $$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} = \frac{5 \pm \sqrt{25 - 24}}{2} = \fra
 | \(x = 2\) | \(4 - 10 + 6 = 0\) ✓ |
 | \(x = 3\) | \(9 - 15 + 6 = 0\) ✓ |
 
+**Tip:** for any quadratic ax^2 + bx + c = 0, the roots add up to -b/a = 5 and multiply to c/a = 6.
+
 **Final answer:** \(\boxed{x = 2 \text{ or } x = 3}\)`;
 
 const REASONING =
@@ -113,7 +115,7 @@ const TOOLS = {
       },
       {
         question: '\\(\\frac{d}{dx} \\ln x = \\)?',
-        choices: ['\\(x\\)', '\\(\\ln x\\)', '\\(e^x\\)', '\\(\\frac{1}{x}\\)'],
+        choices: ['\\(x\\)', '\\(\\ln x\\)', '\\(e^x\\)', '1/x'],
         answerIndex: 3,
         explanation: 'Standard derivative.',
       },
@@ -127,6 +129,7 @@ const TOOLS = {
       { front: 'Tangent in terms of sine and cosine', back: '\\(\\tan\\theta = \\frac{\\sin\\theta}{\\cos\\theta}\\)' },
       { front: 'Double angle for cosine', back: '\\(\\cos 2\\theta = \\cos^2\\theta - \\sin^2\\theta\\)' },
       { front: 'Sum formula for sine', back: '\\(\\sin(a+b) = \\sin a\\cos b + \\cos a\\sin b\\)' },
+      { front: 'Reciprocal identity', back: 'csc x = 1/sin x' },
     ],
   },
   graph: {
@@ -175,7 +178,7 @@ const TOOLS = {
     title: 'Solving a Quadratic Equation',
     nodes: [
       { id: 's', label: 'Start with ax² + bx + c = 0', shape: 'start' },
-      { id: 'd', label: 'Compute the discriminant b² - 4ac', shape: 'process' },
+      { id: 'd', label: 'Compute the discriminant b^2 - 4ac', shape: 'process' },
       { id: 'q', label: 'Discriminant ≥ 0?', shape: 'decision' },
       { id: 'r', label: 'Use the quadratic formula', shape: 'process' },
       { id: 'n', label: 'No real roots', shape: 'io' },
@@ -215,7 +218,7 @@ const TOOLS = {
   },
   geometry: {
     title: 'Right Triangle',
-    svg: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><polygon points='60,250 340,250 60,60' fill='#e8f2fc' stroke='#1f2937' stroke-width='2'/><rect x='60' y='230' width='20' height='20' fill='none' stroke='#1f2937' stroke-width='2'/><text x='200' y='280' font-family='Arial' font-size='16' text-anchor='middle'>a = 4</text><text x='35' y='160' font-family='Arial' font-size='16' text-anchor='middle'>b = 3</text><text x='215' y='145' font-family='Arial' font-size='16' text-anchor='middle'>c = 5</text></svg>",
+    svg: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><polygon points='60,250 340,250 60,60' fill='#e8f2fc' stroke='#1f2937' stroke-width='2'/><rect x='60' y='230' width='20' height='20' fill='none' stroke='#1f2937' stroke-width='2'/><text x='200' y='280' font-family='Arial' font-size='16' text-anchor='middle'>a = 4</text><text x='35' y='160' font-family='Arial' font-size='16' text-anchor='middle'>b = 3</text><text x='215' y='145' font-family='Arial' font-size='16' text-anchor='middle'>c = 5</text><text x='300' y='238' font-family='Arial' font-size='15' text-anchor='end'>\\theta ≈ 37^\\circ</text></svg>",
     caption: 'A 3-4-5 right triangle.',
   },
 };
@@ -304,7 +307,7 @@ const server = createServer(async (req, res) => {
     `[mock] ${model} thinking=${thinking} json=${!!body.response_format} :: ${userText.slice(0, 70).replace(/\n/g, ' ')}`,
   );
 
-  if (system.includes('short title')) return stream(res, { content: 'Solving a Quadratic Equation', model });
+  if (system.includes('short title')) return stream(res, { content: 'Solving x^2 - 5x + 6 = 0', model });
   if (system.includes('note-taker')) return stream(res, { content: NOTES, model });
   if (system.includes('study guide')) return stream(res, { content: STUDY_GUIDE, model });
   if (body.response_format?.type === 'json_object') {

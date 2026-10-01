@@ -10,7 +10,7 @@ import type { AssistantMessage, Message, UserMessage } from '@/lib/types';
 
 import { ArtifactView } from './lib/ArtifactView';
 import { Icon, type IconName } from './lib/Icon';
-import { Markdown } from './lib/Markdown';
+import { Markdown, MathText } from './lib/Markdown';
 import { BASE_CSS, TRANSCRIPT_CSS } from './lib/styles';
 import type { TranscriptAction, TranscriptHandle } from './transcriptTypes';
 
@@ -69,7 +69,7 @@ const UserTurn = memo(
             {toolChipLabel({ kind: m.tool.kind, diagram: m.tool.diagram })}
           </span>
         ) : null}
-        {m.text ? <div className="bubble">{m.text}</div> : null}
+        {m.text ? <MathText className="bubble" text={m.text} /> : null}
         {editable ? (
           <div className="user-actions">
             <IconButton icon="copy" label="Copy" onClick={() => act({ type: 'copy', messageId: m.id })} />

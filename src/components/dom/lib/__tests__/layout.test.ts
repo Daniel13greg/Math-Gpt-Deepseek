@@ -44,6 +44,7 @@ describe('plotMath', () => {
 
 describe('diagramLayout', () => {
   it('wraps labels by words', () => {
+    expect(wrapLabel('Discriminant ≥ 0?', 14)).toEqual(['Discriminant', '≥ 0?']);
     expect(wrapLabel('Compute the discriminant b squared minus 4ac', 16)).toEqual([
       'Compute the',
       'discriminant b',

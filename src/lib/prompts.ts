@@ -2,13 +2,18 @@ import { APP_NAME } from '@/constants/app';
 import { getSubject, type SubjectId } from '@/constants/subjects';
 import type { DiagramKind, ToolKind } from '@/constants/tools';
 
+/** How math must be written so the app can typeset it (stacked fractions, real symbols). */
+const MATH_RULES = [
+  'Write all math in LaTeX, including short expressions inside sentences, headings, bold text and tables: \\( ... \\) for inline math and \\[ ... \\] for display equations on their own lines.',
+  'Write fractions as \\frac{a}{b}, never as a/b or 6/4 in plain text; powers as x^{2}; roots as \\sqrt{x}; and use \\times, \\cdot, \\div, \\pm, \\le, \\ge, \\ne, \\approx, \\pi, \\infty and ^\\circ for degrees.',
+  'Write chemical formulas and equations with \\ce{...} (for example \\(\\ce{2H2 + O2 -> 2H2O}\\)).',
+  'Never write math as plain text, inside backticks, or with Unicode look-alikes such as ², √, ≤ or ×.',
+].join(' ');
+
 function mathFormatting(subject: SubjectId): string {
-  const s = getSubject(subject);
-  const base =
-    'Write all math in LaTeX: \\( ... \\) for inline math and \\[ ... \\] for display equations on their own lines. Do not use Unicode look-alikes for math.';
-  return s.currency
-    ? `${base} Never use $ as a math delimiter in this subject; a $ sign always means money (write amounts like $1,250.00).`
-    : base;
+  return getSubject(subject).currency
+    ? `${MATH_RULES} Never use $ as a math delimiter in this subject; a $ sign always means money (write amounts like $1,250.00).`
+    : MATH_RULES;
 }
 
 export function tutorSystemPrompt(subject: SubjectId): string {
@@ -31,7 +36,7 @@ export function tutorSystemPrompt(subject: SubjectId): string {
 }
 
 export function titlePrompt(): string {
-  return 'Write a short title (2-6 words) for a study chat that starts with the message below. Reply with the title only, no quotes or punctuation at the end.';
+  return 'Write a short title (2-6 words) for a study chat that starts with the message below. Reply with the title only, no quotes or punctuation at the end. Write any math with plain Unicode symbols (x², √, ½, π, ≤), never LaTeX.';
 }
 
 /* ---------- Tools ---------- */
@@ -44,6 +49,7 @@ function jsonRules(subject: SubjectId): string {
     'Reply with a single valid JSON object and nothing else.',
     'Inside JSON strings, escape backslashes in LaTeX (write \\\\frac, \\\\( and \\\\)).',
     mathFormatting(subject),
+    'Exception: "title", "heading" and diagram "label", "sets" and "items" fields are plain text, so write math there with Unicode symbols (x², √, ½, π, θ, ≤, °), never LaTeX.',
   ].join(' ');
 }
 
@@ -51,7 +57,7 @@ const EXAMPLES: Record<Exclude<ToolKind, 'study-guide' | 'diagram'>, string> = {
   'practice-question': `{"topic":"Derivatives","difficulty":"medium","question":"Find \\\\(\\\\frac{d}{dx}\\\\left(x^3 \\\\sin x\\\\right)\\\\).","choices":["\\\\(3x^2 \\\\cos x\\\\)","\\\\(3x^2 \\\\sin x + x^3 \\\\cos x\\\\)","\\\\(x^3 \\\\cos x\\\\)","\\\\(3x^2 \\\\sin x - x^3 \\\\cos x\\\\)"],"answerIndex":1,"hint":"Use the product rule.","explanation":"By the product rule ..."}`,
   'practice-test': `{"title":"Derivatives Practice Test","topic":"Derivatives","questions":[{"question":"...","choices":["...","...","...","..."],"answerIndex":2,"explanation":"..."}]}`,
   flashcards: `{"title":"Cell Biology Basics","cards":[{"front":"Mitochondria","back":"Organelle that produces ATP through cellular respiration."}]}`,
-  graph: `{"title":"Parabola y = x^2 - 4","functions":[{"expr":"x^2 - 4","label":"y = x^2 - 4"}],"xMin":-6,"xMax":6,"yMin":-6,"yMax":10,"points":[{"x":-2,"y":0,"label":"(-2, 0)"},{"x":2,"y":0,"label":"(2, 0)"},{"x":0,"y":-4,"label":"vertex (0, -4)"}],"explanation":"The parabola opens upward ..."}`,
+  graph: `{"title":"Parabola y = x² − 4","functions":[{"expr":"x^2 - 4","label":"y = x^2 - 4"}],"xMin":-6,"xMax":6,"yMin":-6,"yMax":10,"points":[{"x":-2,"y":0,"label":"(-2, 0)"},{"x":2,"y":0,"label":"(2, 0)"},{"x":0,"y":-4,"label":"vertex (0, -4)"}],"explanation":"The parabola opens upward ..."}`,
   video: `{"title":"The Pythagorean Theorem","scenes":[{"heading":"The big idea","body":"In a right triangle:\\n\\\\[a^2 + b^2 = c^2\\\\]","narration":"In any right triangle, a squared plus b squared equals c squared, where c is the hypotenuse."}]}`,
 };
 
@@ -59,7 +65,7 @@ const DIAGRAM_SPECS: Record<DiagramKind, { describe: string; example: string }> 
   flowchart: {
     describe:
       'a flowchart of the process. Use 4-14 nodes with short labels (max 6 words). Node shapes: "start", "end", "process", "decision" (a yes/no question), "io" (input/output). Label the edges leaving a decision "Yes"/"No".',
-    example: `{"title":"Solving a Quadratic","nodes":[{"id":"s","label":"Start","shape":"start"},{"id":"d","label":"Compute b^2 - 4ac","shape":"process"},{"id":"q","label":"Discriminant ≥ 0?","shape":"decision"}],"edges":[{"from":"s","to":"d"},{"from":"d","to":"q"},{"from":"q","to":"r","label":"Yes"}],"caption":"One sentence describing the flow."}`,
+    example: `{"title":"Solving a Quadratic","nodes":[{"id":"s","label":"Start","shape":"start"},{"id":"d","label":"Compute b² − 4ac","shape":"process"},{"id":"q","label":"Discriminant ≥ 0?","shape":"decision"}],"edges":[{"from":"s","to":"d"},{"from":"d","to":"q"},{"from":"q","to":"r","label":"Yes"}],"caption":"One sentence describing the flow."}`,
   },
   mindmap: {
     describe:
@@ -84,7 +90,7 @@ const DIAGRAM_SPECS: Record<DiagramKind, { describe: string; example: string }> 
 };
 
 const SVG_RULES =
-  'SVG rules: root element <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"> with no width/height; white or transparent background; stroke="#1f2937", stroke-width 2; accent color #3490DD; text in font-family="Inter, Arial, sans-serif" font-size 14-18 with text-anchor set; no scripts, no external images, no <style> or <foreignObject>; use single quotes for attributes so the JSON stays valid. Keep every label inside the viewBox and avoid overlaps.';
+  'SVG rules: root element <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"> with no width/height; white or transparent background; stroke="#1f2937", stroke-width 2; accent color #3490DD; text in font-family="Inter, Arial, sans-serif" font-size 14-18 with text-anchor set; write labels with Unicode symbols (θ, °, ², √, π), never LaTeX or $ signs, and put subscripts in <tspan baseline-shift=\'sub\' font-size=\'75%\'>…</tspan>; no scripts, no external images, no <style> or <foreignObject>; use single quotes for attributes so the JSON stays valid. Keep every label inside the viewBox and avoid overlaps.';
 
 export function toolSystemPrompt(kind: ToolKind, subject: SubjectId, diagram?: DiagramKind): string {
   const s = getSubject(subject);
@@ -174,12 +180,13 @@ export function lectureNotesPrompt(): string {
     '- First line: a level-1 heading (# ) with a concise lecture title.',
     '- ### Summary (3-5 sentences).',
     '- ### Key Concepts, with definitions and intuition.',
-    '- ### Formulas & Equations, written in LaTeX (\\( ... \\) inline, \\[ ... \\] display), each with what its symbols mean.',
+    '- ### Formulas & Equations, each with what its symbols mean.',
     '- ### Worked Examples, reconstructed step by step from the lecture.',
     '- ### Important Points / Things to Remember.',
     '- ### Review Questions (4-6) with brief answers.',
     'Speech-to-text makes mistakes: fix misheard technical terms from context (e.g. "the rivet of" means "the derivative of", "co-sign" means "cosine").',
     "Stay faithful to the lecture: don't invent topics it didn't cover, but you may briefly clarify steps the lecturer skipped.",
+    MATH_RULES,
     'If the transcript is too short or not a lecture, still produce your best notes and say so in the summary.',
   ].join('\n');
 }

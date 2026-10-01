@@ -26,9 +26,12 @@ export function ticks(min: number, max: number, step: number): number[] {
   return out;
 }
 
+/** Tick label with a real minus sign (−2, not -2). */
 export function formatTick(v: number, step: number): string {
   const decimals = Math.max(0, -Math.floor(Math.log10(step)));
-  return Number(v.toFixed(Math.min(decimals, 6))).toString();
+  return Number(v.toFixed(Math.min(decimals, 6)))
+    .toString()
+    .replace('-', '−');
 }
 
 export function compileAll(spec: GraphSpec): (CompiledExpr | null)[] {

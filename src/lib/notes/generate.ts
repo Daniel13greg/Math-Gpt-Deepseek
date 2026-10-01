@@ -1,5 +1,6 @@
 import { streamChat } from '@/lib/deepseek/client';
 import { toDeepSeekError } from '@/lib/deepseek/errors';
+import { toUnicodeMath } from '@/lib/math';
 import { lectureNotesPrompt } from '@/lib/prompts';
 import { useNotes } from '@/store/notes';
 import { getApiKey, useSettings } from '@/store/settings';
@@ -16,7 +17,7 @@ export function stopNotes(noteId: string) {
 
 function titleFrom(markdown: string): string | undefined {
   const heading = /^#\s+(.+)$/m.exec(markdown)?.[1]?.trim();
-  return heading ? heading.replace(/[*_`]/g, '').slice(0, 80) : undefined;
+  return heading ? toUnicodeMath(heading.replace(/\*\*|__|`/g, '')).slice(0, 80) : undefined;
 }
 
 /** Streams comprehensive lecture notes for a transcript into the note. */
