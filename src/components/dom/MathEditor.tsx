@@ -58,7 +58,12 @@ export default function MathEditor({ initialLatex = '', scheme, lang, onChange }
     host.current?.appendChild(field);
     field.focus();
     show();
+    // The screen's opening transition can take focus back (seen on web), so try again once it settles.
+    const refocus = setTimeout(() => {
+      if (!field.hasFocus()) field.focus();
+    }, 400);
     return () => {
+      clearTimeout(refocus);
       keyboard.hide();
       field.remove();
     };

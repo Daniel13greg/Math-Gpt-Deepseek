@@ -1,0 +1,27 @@
+# Generate a practice test, hand it in blank and ask for a new test on the mistakes.
+appId: com.mathgpt.deepseek
+name: Practice test and practice mistakes
+---
+- runFlow: subflows/connect-mock.yaml
+- tapOn: Tools
+- tapOn: Create Practice Test
+- tapOn: Question
+- inputText: derivatives
+- tapOn: Send
+- extendedWaitUntil:
+    visible: 'Start test.*'
+    timeout: 30000
+- tapOn: 'Start test.*'
+- repeat:
+    times: 3
+    commands:
+      - tapOn: 'Next.*'
+- tapOn: Submit test
+- tapOn: Submit
+- extendedWaitUntil:
+    visible: '0%'
+    timeout: 10000
+- tapOn: 'Practice mistakes.*'
+- extendedWaitUntil:
+    visible: 'Create a practice test on my mistakes in Derivatives'
+    timeout: 10000

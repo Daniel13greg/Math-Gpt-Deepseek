@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ReducedMotionConfig, ReduceMotion } from 'react-native-reanimated';
 
 import { ToastHost } from '@/components/ui/Toast';
+import { APP_NAME } from '@/constants/app';
 import { FontFamily } from '@/constants/theme';
 import { useShareIntake } from '@/hooks/useShareIntake';
 import { useTheme } from '@/hooks/useTheme';
@@ -70,7 +71,8 @@ export default function RootLayout() {
         {/* Every Reanimated animation follows the system "Reduce motion" setting. */}
         <ReducedMotionConfig mode={ReduceMotion.System} />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
-          <Stack.Screen name="(main)" />
+          {/* The title is only used as the back button label ("(main)" otherwise) and the web page title. */}
+          <Stack.Screen name="(main)" options={{ title: APP_NAME }} />
           <Stack.Screen name="settings" options={{ ...header, title: t('settings.title') }} />
           <Stack.Screen name="upgrade" options={{ presentation: 'modal' }} />
           <Stack.Screen name="practice-test" options={{ ...header, title: t('tool.practice-test.chip') }} />

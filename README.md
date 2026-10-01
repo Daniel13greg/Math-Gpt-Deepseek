@@ -132,18 +132,52 @@ src/
     chat/                 send/stream/regenerate controller, history → API messages
     tools/                tool generation and JSON normalizers
     speech/               on-device + cloud speech-to-text
-  store/                  zustand stores (chats, notes, settings, ui, toast)
+  i18n/                   translations (en, es, pt, fr, de, zh) and the t()/useT() helpers
+  store/                  zustand stores (chats, notes, reviews, usage, settings, ui, toast)
 scripts/                  mock DeepSeek server, KaTeX CSS generator
+e2e/                      Playwright tests of the web build
+.maestro/                 Maestro flows for the native app
 ```
 
 ## Development
 
 ```bash
-npm test            # Jest unit tests (client, SSE, JSON repair, math parser, markdown/math, layouts, ...)
+npm test            # Jest: unit tests plus a controller integration test (send → stream → title → usage)
 npm run typecheck
 npm run lint
 npm run web         # quickest way to iterate on UI in a browser
+npm run e2e         # exports the web build, then runs the Playwright tests against it and the mock server
 ```
+
+### End-to-end tests (web)
+
+`e2e/` drives the exported web build in a phone-sized Chromium against the mock DeepSeek server, so no
+API key is needed: a Deep Think answer and chat title, tutor mode, Check My Work, the math keyboard, the
+photo problem picker, a practice test → **Practice my mistakes**, flashcards → **Review today**, lecture
+notes → flashcards, switching language, backup → restore on a fresh device, and usage counting.
+Playwright starts both servers itself (`playwright.config.ts`); run `npx playwright install chromium` once.
+
+### Native flows (Maestro)
+
+`.maestro/` has the same core journeys for a real iOS simulator or Android emulator, using
+[Maestro](https://maestro.mobile.dev). They need a development build (`npm run android:dev-build` /
+`npm run ios:dev-build`; release builds block plain `http://` to the mock), and the mock server running:
+
+```bash
+npm run mock                                    # in one terminal
+maestro test .maestro                           # Android emulator (reaches the host at 10.0.2.2)
+maestro test -e MOCK_URL=http://localhost:8787 .maestro   # iOS simulator
+```
+
+They aren't run in CI (that needs an emulator runner or Maestro Cloud).
+
+### CI
+
+`.github/workflows/ci.yml` runs on every pull request and push to `main`: typecheck, lint and Jest, then
+the web build with the Playwright tests (the report is uploaded when they fail). An **EAS Update** job can
+publish an over-the-air update after `main` goes green; it stays off until you run
+`npx expo install expo-updates` and `npx eas-cli@latest update:configure`, add an `EXPO_TOKEN` secret and
+set the repository variable `EAS_UPDATE_ENABLED` to `true`.
 
 ## Security & publishing notes
 

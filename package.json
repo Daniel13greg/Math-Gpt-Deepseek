@@ -52,6 +52,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@playwright/test": "1.56.1",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.2.2",
     "eslint": "^9.39.5",
@@ -71,14 +72,16 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "mock": "node scripts/mock-deepseek.mjs",
-    "katex:css": "node scripts/build-katex-css.mjs"
+    "katex:css": "node scripts/build-katex-css.mjs",
+    "e2e": "expo export -p web && playwright test"
   },
   "private": true,
   "jest": {
     "preset": "jest-expo",
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/dist/"
+      "/dist/",
+      "/e2e/"
     ],
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|react-native-svg|lucide-react-native|marked|zustand|@dagrejs/.*)"

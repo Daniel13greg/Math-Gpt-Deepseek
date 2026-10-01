@@ -117,6 +117,7 @@ export default function SettingsScreen() {
               secureTextEntry
               onSubmitEditing={saveKey}
               accessibilityLabel={t('settings.apiKey.a11y')}
+              testID="settings-api-key"
             />
             <View style={styles.buttons}>
               <Pressable
@@ -158,6 +159,7 @@ export default function SettingsScreen() {
               placeholder={DEFAULT_BASE_URL}
               keyboardType="url"
               accessibilityLabel={t('settings.baseUrl')}
+              testID="settings-base-url"
             />
             {settings.baseUrl !== DEFAULT_BASE_URL ? (
               <Pressable accessibilityRole="button" onPress={() => settings.update({ baseUrl: DEFAULT_BASE_URL })} hitSlop={6}>
