@@ -5,6 +5,16 @@ import type { PracticeQuestion } from '@/lib/types';
 import { Icon } from './Icon';
 import { InlineMarkdown, Markdown } from './Markdown';
 
+/** Shown when an independent re-solve disagreed with the answer key. */
+export function UnverifiedNote() {
+  return (
+    <div className="unverified" role="note">
+      <Icon name="circleAlert" size={16} />
+      <span>A second check got a different answer for this one. Work it out yourself before trusting the key.</span>
+    </div>
+  );
+}
+
 const LETTERS = 'ABCDEFGH';
 
 interface Props {
@@ -67,6 +77,8 @@ export function PracticeQuestionCard({ question, onAnswered, onAnother }: Props)
             );
           })}
         </div>
+
+        {checked && question.unverified ? <UnverifiedNote /> : null}
 
         {checked ? (
           <div className={`feedback ${correct ? 'ok' : 'bad'}`}>

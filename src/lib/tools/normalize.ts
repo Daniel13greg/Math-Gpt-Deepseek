@@ -1,6 +1,6 @@
 import type { DiagramKind } from '@/constants/tools';
 import { prettifyMarkdown, splitMath, toUnicodeMath } from '@/lib/math';
-import { tryCompileExpr } from '@/lib/mathExpr';
+import { tryCompileExpr, type CompiledExpr } from '@/lib/mathExpr';
 import type {
   DiagramSpec,
   FlashcardDeck,
@@ -130,17 +130,40 @@ export function normalizeFlashcards(raw: unknown, topic: string): FlashcardDeck 
   return { title: label(raw.title, topic), cards };
 }
 
+/** f(x), or the two-sided limit for holes like (x² − 1)/(x − 1) at x = 1. */
+function valueNear(fn: CompiledExpr, x: number): number {
+  const y = fn(x);
+  if (Number.isFinite(y)) return y;
+  const h = 1e-7 * Math.max(1, Math.abs(x));
+  const left = fn(x - h);
+  const right = fn(x + h);
+  return Number.isFinite(left) && Number.isFinite(right) && Math.abs(left - right) < 1e-3 * Math.max(1, Math.abs(left))
+    ? (left + right) / 2
+    : NaN;
+}
+
+/** True when (x, y) lies on one of the curves, allowing for rounded coordinates like 1.73 for √3. */
+export function onSomeCurve(fns: CompiledExpr[], x: number, y: number, span: number): boolean {
+  const tolerance = Math.max(1e-6, 0.01 * Math.abs(span), 0.005 * Math.abs(y));
+  return fns.some((fn) => {
+    const value = valueNear(fn, x);
+    return Number.isFinite(value) && Math.abs(value - y) <= tolerance;
+  });
+}
+
 export function normalizeGraph(raw: unknown, topic: string): GraphSpec {
   if (!isObj(raw)) throw new ArtifactError('The graph came back in an unexpected format.');
+  const compiled: CompiledExpr[] = [];
   const functions = pickArray(raw, ['functions', 'curves', 'equations'])
     .map((f) => {
       const expr = isObj(f) ? str(f.expr ?? f.expression ?? f.equation ?? f.fn) : str(f);
-      if (!expr || !tryCompileExpr(expr)) return null;
+      const fn = expr ? tryCompileExpr(expr) : null;
+      if (!fn || compiled.length >= 6) return null;
+      compiled.push(fn);
       const legend = isObj(f) ? str(f.label ?? f.name) : '';
       return { expr, label: legend || `y = ${expr}` };
     })
-    .filter((f): f is { expr: string; label: string } => f !== null)
-    .slice(0, 6);
+    .filter((f): f is { expr: string; label: string } => f !== null);
   if (functions.length === 0)
     throw new ArtifactError("I couldn't turn that into a plottable function. Try writing it like y = x^2 - 4.");
 
@@ -159,6 +182,8 @@ export function normalizeGraph(raw: unknown, topic: string): GraphSpec {
       return x === undefined || y === undefined ? null : { x, y, label: label(p.label) || undefined };
     })
     .filter((p): p is { x: number; y: number; label: string | undefined } => p !== null)
+    // A labelled point that isn't on any curve is a model slip; showing it would teach a wrong value.
+    .filter((p) => onSomeCurve(compiled, p.x, p.y, (yMax ?? 0) - (yMin ?? 0) || xMax - xMin))
     .slice(0, 12);
 
   return {

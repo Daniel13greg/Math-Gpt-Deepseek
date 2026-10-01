@@ -315,6 +315,15 @@ const server = createServer(async (req, res) => {
 
   if (system.includes('short title')) return stream(res, { content: 'Solving x^2 - 5x + 6 = 0', model });
   const thought = (text) => (thinking ? text : '');
+  if (system.includes('examiner')) {
+    // Answer-key check: agree with the canned keys.
+    const known = [TOOLS['practice-question'], ...TOOLS['practice-test'].questions];
+    const answers = [...userText.matchAll(/Question (\d+): ([^\n]*)/g)].map(([, n, text]) => {
+      const match = known.find((q) => q.question === text);
+      return { q: Number(n), answer: match ? 'ABCD'[match.answerIndex] : 'A' };
+    });
+    return stream(res, { reasoning: thought('Solving each question independently.'), content: JSON.stringify({ answers }), model });
+  }
   if (system.includes('note-taker')) return stream(res, { reasoning: thought(NOTES_REASONING), content: NOTES, model });
   if (system.includes('study guide')) return stream(res, { reasoning: thought(TOOL_REASONING), content: STUDY_GUIDE, model });
   if (body.response_format?.type === 'json_object' || system.includes('single valid JSON object')) {

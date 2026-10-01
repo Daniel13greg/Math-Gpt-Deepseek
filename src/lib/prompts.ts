@@ -165,10 +165,10 @@ export function toolSystemPrompt(kind: ToolKind, subject: SubjectId, diagram?: D
   }
 }
 
-export function toolUserPrompt(kind: ToolKind, topic: string, diagram?: DiagramKind): string {
+export function toolUserPrompt(kind: ToolKind, topic: string, diagram?: DiagramKind, context?: string): string {
   const subjectLine = topic.trim() || 'a core topic of this subject';
-  if (kind === 'diagram') return `Diagram type: ${diagram ?? 'flowchart'}. Topic: ${subjectLine}`;
-  return `Topic: ${subjectLine}`;
+  const request = kind === 'diagram' ? `Diagram type: ${diagram ?? 'flowchart'}. Topic: ${subjectLine}` : `Topic: ${subjectLine}`;
+  return context?.trim() ? `${request}\n\n${context.trim()}` : request;
 }
 
 /* ---------- Lecture notes ---------- */

@@ -65,6 +65,8 @@ export interface MultipleChoiceQuestion {
   answerIndex: number;
   explanation: string;
   hint?: string;
+  /** An independent re-solve disagreed with this answer key, so the student should double-check it. */
+  unverified?: boolean;
 }
 
 export interface PracticeQuestion extends MultipleChoiceQuestion {

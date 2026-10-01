@@ -9,6 +9,7 @@ import type { PracticeTest as PracticeTestData } from '@/lib/types';
 
 import { Icon } from './lib/Icon';
 import { InlineMarkdown, Markdown } from './lib/Markdown';
+import { UnverifiedNote } from './lib/PracticeQuestionCard';
 import { BASE_CSS, TRANSCRIPT_CSS } from './lib/styles';
 
 const LETTERS = 'ABCDEFGH';
@@ -211,6 +212,7 @@ export default function PracticeTest({ test, scheme, onFinish, onAnswerPick }: P
                         <InlineMarkdown text={question.choices[question.answerIndex]} />
                       </div>
                     ) : null}
+                    {question.unverified ? <UnverifiedNote /> : null}
                     <div className="solution">
                       <Markdown text={question.explanation} />
                     </div>

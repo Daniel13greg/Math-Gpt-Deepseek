@@ -78,6 +78,11 @@ the iOS Keychain / Android Keystore instead.
 Photos are always routed to a vision-capable model. Tools use JSON mode (`response_format: json_object`)
 with schema validation, LaTeX-safe JSON repair and one automatic retry.
 
+**Answer checking.** Practice tests and questions are solved a second time without the answer key
+(`src/lib/tools/verify.ts`). A test drops questions where the two solves disagree (keeping at least 4); a
+single question is rewritten once and, if the rewrite still disagrees, shown with a "double-check this one"
+note. Graph key points that don't lie on any plotted curve are removed.
+
 ## How it's built
 
 - **Expo SDK 57**, React Native 0.86, React 19.2 + React Compiler, **Expo Router** (drawer + stack), TypeScript.
