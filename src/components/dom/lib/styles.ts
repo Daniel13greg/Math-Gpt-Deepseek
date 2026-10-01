@@ -7,7 +7,7 @@ export const BASE_CSS = `
   --bg: #ffffff;
   --text: #0a0a0a;
   --text-2: #5f6368;
-  --text-3: #9ca2ae;
+  --text-3: #6a707b;
   --border: #e6e7eb;
   --surface: #f4f4f5;
   --surface-2: #fafafa;
@@ -36,7 +36,7 @@ export const BASE_CSS = `
   --bg: #0e0f11;
   --text: #ecedee;
   --text-2: #a0a4ab;
-  --text-3: #6f747c;
+  --text-3: #8a9099;
   --border: #2a2c31;
   --surface: #1d1f23;
   --surface-2: #16171a;
@@ -50,6 +50,9 @@ export const BASE_CSS = `
   --shadow: 0 1px 2px rgba(0,0,0,.3);
 }
 .mg *, .mg *::before, .mg *::after { box-sizing: border-box; }
+@media (prefers-reduced-motion: reduce) {
+  .mg *, .mg *::before, .mg *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
 .mg button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 .mg button:disabled { cursor: default; }
 

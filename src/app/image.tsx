@@ -11,9 +11,15 @@ export default function ImageScreen() {
   const insets = useSafeAreaInsets();
   return (
     <View style={styles.screen}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={() => router.back()} accessibilityLabel="Close image" />
+      <Pressable
+        accessibilityRole="button"
+        style={StyleSheet.absoluteFill}
+        onPress={() => router.back()}
+        accessibilityLabel="Close image"
+      />
       {uri ? <Image source={{ uri }} style={styles.image} contentFit="contain" /> : null}
       <Pressable
+        accessibilityRole="button"
         onPress={() => router.back()}
         hitSlop={12}
         style={[styles.close, { top: insets.top + 12 }]}

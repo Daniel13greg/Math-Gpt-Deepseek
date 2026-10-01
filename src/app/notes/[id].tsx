@@ -196,14 +196,14 @@ export default function NoteScreen() {
       {pdf.exporter}
       <View style={[styles.actions, { borderTopColor: colors.hairline, paddingBottom: Math.max(insets.bottom, 10) }]}>
         {generating ? (
-          <Pressable style={styles.action} onPress={() => stopNotes(note.id)}>
+          <Pressable accessibilityRole="button" style={styles.action} onPress={() => stopNotes(note.id)}>
             <SquareIcon size={20} color={colors.icon} />
             <AppText size={12} secondary>
               Stop
             </AppText>
           </Pressable>
         ) : (
-          <Pressable style={styles.action} onPress={() => void generateLectureNotes(note.id)}>
+          <Pressable accessibilityRole="button" style={styles.action} onPress={() => void generateLectureNotes(note.id)}>
             <RefreshIcon size={20} color={colors.icon} />
             <AppText size={12} secondary>
               Regenerate
@@ -211,6 +211,7 @@ export default function NoteScreen() {
           </Pressable>
         )}
         <Pressable
+          accessibilityRole="button"
           style={styles.action}
           onPress={async () => {
             await Clipboard.setStringAsync(text);
@@ -238,13 +239,16 @@ export default function NoteScreen() {
             PDF
           </AppText>
         </Pressable>
-        <Pressable style={styles.action} onPress={() => text && Share.share({ message: text, title: note.title })}>
+        <Pressable
+          accessibilityRole="button"
+          style={styles.action}
+          onPress={() => text && Share.share({ message: text, title: note.title })}>
           <ShareIcon size={20} color={colors.icon} />
           <AppText size={12} secondary>
             Share
           </AppText>
         </Pressable>
-        <Pressable style={styles.action} onPress={remove}>
+        <Pressable accessibilityRole="button" style={styles.action} onPress={remove}>
           <Trash2Icon size={20} color={colors.danger} />
           <AppText size={12} color={colors.danger}>
             Delete
@@ -278,7 +282,15 @@ const styles = StyleSheet.create({
   study: { borderTopWidth: 1, paddingTop: 10, paddingBottom: 8 },
   studyLabel: { paddingHorizontal: 20, marginBottom: 8, letterSpacing: 0.4 },
   studyRow: { paddingHorizontal: 16, gap: 8 },
-  studyChip: { flexDirection: 'row', alignItems: 'center', gap: 7, height: 38, paddingHorizontal: 14, borderRadius: 19, borderWidth: 1 },
+  studyChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    height: 38,
+    paddingHorizontal: 14,
+    borderRadius: 19,
+    borderWidth: 1,
+  },
   actions: { flexDirection: 'row', justifyContent: 'space-around', borderTopWidth: 1, paddingTop: 8 },
   action: { alignItems: 'center', gap: 3, minWidth: 56, paddingVertical: 2 },
 });

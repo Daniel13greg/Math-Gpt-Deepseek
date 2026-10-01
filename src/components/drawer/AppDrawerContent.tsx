@@ -117,7 +117,12 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
         <AppText weight="bold" size={20} style={styles.brand}>
           {APP_NAME}
         </AppText>
-        <Pressable onPress={newChat} hitSlop={10} accessibilityLabel="New chat" style={styles.headerButton}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={newChat}
+          hitSlop={10}
+          accessibilityLabel="New chat"
+          style={styles.headerButton}>
           <SquarePenIcon size={22} color={colors.icon} strokeWidth={1.8} />
         </Pressable>
       </View>
@@ -135,7 +140,10 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
       </View>
 
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent} keyboardShouldPersistTaps="handled">
-        <Pressable onPress={newChat} style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={newChat}
+          style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}>
           <SquarePenIcon size={19} color={colors.primary} />
           <AppText weight="medium" size={15} color={colors.primary}>
             New chat
@@ -144,7 +152,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
 
         {dueDecks.length > 0 && !query ? (
           <>
-            <AppText weight="semibold" size={12.5} color={colors.textMuted} style={styles.section}>
+            <AppText weight="semibold" size={12.5} color={colors.textMuted} style={styles.section} accessibilityRole="header">
               REVIEW TODAY
             </AppText>
             {dueDecks.map((deck) => (
@@ -176,11 +184,12 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
 
         {recentNotes.length > 0 && !query ? (
           <>
-            <AppText weight="semibold" size={12.5} color={colors.textMuted} style={styles.section}>
+            <AppText weight="semibold" size={12.5} color={colors.textMuted} style={styles.section} accessibilityRole="header">
               LECTURE NOTES
             </AppText>
             {recentNotes.map((note) => (
               <Pressable
+                accessibilityRole="button"
                 key={note.id}
                 onPress={() => {
                   close();
@@ -198,17 +207,28 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
 
         {groups.map((group) => (
           <View key={group.label}>
-            <AppText weight="semibold" size={12.5} color={colors.textMuted} style={styles.section}>
+            <AppText weight="semibold" size={12.5} color={colors.textMuted} style={styles.section} accessibilityRole="header">
               {group.label.toUpperCase()}
             </AppText>
             {group.items.map((chat) => {
               const active = chat.id === activeChatId;
               return (
                 <Pressable
+                  accessibilityRole="button"
                   key={chat.id}
                   onPress={() => openChat(chat)}
                   onLongPress={() => setMenuFor(chat)}
                   delayLongPress={350}
+                  accessibilityState={{ selected: active }}
+                  accessibilityHint="Long press for rename and delete"
+                  accessibilityActions={[
+                    { name: 'rename', label: 'Rename' },
+                    { name: 'delete', label: 'Delete' },
+                  ]}
+                  onAccessibilityAction={(e) => {
+                    if (e.nativeEvent.actionName === 'rename') setRenaming(chat);
+                    if (e.nativeEvent.actionName === 'delete') confirmDelete(chat.title, () => deleteChatWithFiles(chat.id));
+                  }}
                   style={({ pressed }) => [styles.chatRow, (active || pressed) && { backgroundColor: colors.surface }]}>
                   <AppText size={15} numberOfLines={1} weight={active ? 'medium' : 'regular'}>
                     {chat.title}
@@ -231,6 +251,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
 
       <View style={[styles.footer, { borderTopColor: colors.hairline, paddingBottom: insets.bottom + 8 }]}>
         <Pressable
+          accessibilityRole="button"
           onPress={() => {
             close();
             router.push('/upgrade');
@@ -242,6 +263,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
           </AppText>
         </Pressable>
         <Pressable
+          accessibilityRole="button"
           onPress={() => {
             close();
             router.push('/settings');
@@ -262,6 +284,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
             </AppText>
           ) : null}
           <Pressable
+            accessibilityRole="button"
             style={({ pressed }) => [styles.menuRow, pressed && { backgroundColor: colors.surface }]}
             onPress={() => {
               const chat = menuFor;
@@ -272,6 +295,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
             <AppText size={17}>Rename</AppText>
           </Pressable>
           <Pressable
+            accessibilityRole="button"
             style={({ pressed }) => [styles.menuRow, pressed && { backgroundColor: colors.surface }]}
             onPress={() => {
               const chat = menuFor;

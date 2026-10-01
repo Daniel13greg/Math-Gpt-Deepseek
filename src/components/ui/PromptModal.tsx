@@ -46,12 +46,12 @@ function PromptCard({ title, initialValue, confirmLabel = 'Save', onCancel, onCo
         placeholderTextColor={colors.textMuted}
       />
       <View style={styles.buttons}>
-        <Pressable onPress={onCancel} style={styles.button} hitSlop={6}>
+        <Pressable accessibilityRole="button" onPress={onCancel} style={styles.button} hitSlop={6}>
           <AppText weight="medium" size={16} secondary>
             Cancel
           </AppText>
         </Pressable>
-        <Pressable onPress={() => onConfirm(value)} style={styles.button} hitSlop={6}>
+        <Pressable accessibilityRole="button" onPress={() => onConfirm(value)} style={styles.button} hitSlop={6}>
           <AppText weight="semibold" size={16} color={colors.primary}>
             {confirmLabel}
           </AppText>

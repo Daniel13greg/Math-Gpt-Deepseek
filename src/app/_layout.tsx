@@ -8,6 +8,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { ReducedMotionConfig, ReduceMotion } from 'react-native-reanimated';
 
 import { ToastHost } from '@/components/ui/Toast';
 import { FontFamily } from '@/constants/theme';
@@ -54,6 +55,8 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
       <ThemeProvider value={navTheme}>
         <StatusBar style={dark ? 'light' : 'dark'} />
+        {/* Every Reanimated animation follows the system "Reduce motion" setting. */}
+        <ReducedMotionConfig mode={ReduceMotion.System} />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
           <Stack.Screen name="(main)" />
           <Stack.Screen name="settings" options={{ ...header, title: 'Settings' }} />

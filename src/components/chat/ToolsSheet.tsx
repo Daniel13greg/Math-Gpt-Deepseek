@@ -58,6 +58,7 @@ export function ToolsSheet({ visible, onClose, onSelect }: ToolsSheetProps) {
                 <Animated.View entering={FadeIn.duration(160)} style={styles.subList}>
                   {DIAGRAM_KINDS.map((d) => (
                     <Pressable
+                      accessibilityRole="button"
                       key={d.kind}
                       onPress={() => choose({ kind: 'diagram', diagram: d.kind })}
                       style={({ pressed }) => [styles.subRow, pressed && { backgroundColor: colors.surface }]}>

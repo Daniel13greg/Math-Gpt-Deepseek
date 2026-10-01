@@ -311,7 +311,7 @@ export function ChatView() {
             router.push('/math-input');
           }}
         />
-        <AppText size={12.5} align="center" color={colors.textFaint} style={styles.disclaimer} numberOfLines={1}>
+        <AppText size={12.5} align="center" color={colors.textMuted} style={styles.disclaimer} numberOfLines={1}>
           {DISCLAIMER}
         </AppText>
       </View>

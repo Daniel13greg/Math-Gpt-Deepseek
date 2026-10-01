@@ -177,13 +177,14 @@ export function ScanView({ onSolve }: ScanViewProps) {
           Point your camera at any math or science problem and MathGPT will solve it step by step.
         </AppText>
         <Pressable
+          accessibilityRole="button"
           style={[styles.primaryButton, { backgroundColor: colors.primary }]}
           onPress={() => (permission.canAskAgain ? requestPermission() : Linking.openSettings())}>
           <AppText weight="semibold" size={16} color="#fff">
             {permission.canAskAgain ? 'Allow camera access' : 'Open settings'}
           </AppText>
         </Pressable>
-        <Pressable style={styles.secondaryButton} onPress={pickFromLibrary}>
+        <Pressable accessibilityRole="button" style={styles.secondaryButton} onPress={pickFromLibrary}>
           <ImageIcon size={18} color={colors.primary} />
           <AppText weight="medium" size={16} color={colors.primary}>
             Choose a photo instead
@@ -238,15 +239,25 @@ export function ScanView({ onSolve }: ScanViewProps) {
       </View>
 
       <View style={[styles.controls, { paddingBottom: Math.max(insets.bottom, 16) + 8 }]}>
-        <Pressable onPress={pickFromLibrary} style={styles.sideButton} accessibilityLabel="Choose from photos">
+        <Pressable
+          accessibilityRole="button"
+          onPress={pickFromLibrary}
+          style={styles.sideButton}
+          accessibilityLabel="Choose from photos">
           <ImageIcon size={26} color="#fff" strokeWidth={1.8} />
         </Pressable>
-        <Pressable onPress={capture} disabled={!ready || busy} style={styles.shutterOuter} accessibilityLabel="Take photo">
+        <Pressable
+          accessibilityRole="button"
+          onPress={capture}
+          disabled={!ready || busy}
+          style={styles.shutterOuter}
+          accessibilityLabel="Take photo">
           <View style={[styles.shutterInner, (!ready || busy) && { opacity: 0.5 }]}>
             {busy ? <ActivityIndicator color="#000" /> : null}
           </View>
         </Pressable>
         <Pressable
+          accessibilityRole="button"
           onPress={() => setTorch((t) => !t)}
           style={styles.sideButton}
           accessibilityLabel={torch ? 'Turn off light' : 'Turn on light'}>
@@ -270,13 +281,17 @@ export function ScanView({ onSolve }: ScanViewProps) {
               contentFit="contain"
             />
             <View style={styles.previewButtons}>
-              <Pressable style={[styles.previewButton, { backgroundColor: colors.surface }]} onPress={() => setPreview(null)}>
+              <Pressable
+                accessibilityRole="button"
+                style={[styles.previewButton, { backgroundColor: colors.surface }]}
+                onPress={() => setPreview(null)}>
                 <RotateCcwIcon size={17} color={colors.text} />
                 <AppText weight="medium" size={16}>
                   Retake
                 </AppText>
               </Pressable>
               <Pressable
+                accessibilityRole="button"
                 style={[styles.previewButton, { backgroundColor: colors.primary }]}
                 onPress={() => {
                   const image = preview;

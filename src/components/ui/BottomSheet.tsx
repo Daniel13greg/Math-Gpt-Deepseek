@@ -68,7 +68,7 @@ export function BottomSheet({ visible, onClose, title, children }: BottomSheetPr
     <Modal transparent visible animationType="none" statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
       <GestureHandlerRootView style={styles.fill}>
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.backdrop }, backdropStyle]}>
-          <Pressable style={styles.fill} onPress={onClose} accessibilityLabel="Close" />
+          <Pressable accessibilityRole="button" style={styles.fill} onPress={onClose} accessibilityLabel="Close" />
         </Animated.View>
         <View style={styles.anchor} pointerEvents="box-none">
           <Animated.View

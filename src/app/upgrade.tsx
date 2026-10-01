@@ -46,7 +46,12 @@ export default function UpgradeScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 12, paddingBottom: 24 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.close} accessibilityLabel="Close">
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.back()}
+          hitSlop={12}
+          style={styles.close}
+          accessibilityLabel="Close">
           <XIcon size={24} color={colors.icon} />
         </Pressable>
 
@@ -122,7 +127,8 @@ export default function UpgradeScreen() {
               Deep Think
             </AppText>
             <AppText size={14} secondary>
-              On for every model. Thinks before answering and before writing tests, flashcards and notes. Slower, but more accurate.
+              On for every model. Thinks before answering and before writing tests, flashcards and notes. Slower, but more
+              accurate.
             </AppText>
           </View>
           <Switch
@@ -136,6 +142,7 @@ export default function UpgradeScreen() {
 
       <View style={[styles.cta, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <Pressable
+          accessibilityRole="button"
           style={({ pressed }) => [styles.ctaButton, { backgroundColor: pressed ? colors.primaryPressed : colors.primary }]}
           onPress={() => {
             router.back();

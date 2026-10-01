@@ -9,7 +9,12 @@ export function Section({ title, footer, children }: { title: string; footer?: s
   const { colors } = useTheme();
   return (
     <View style={settingsStyles.section}>
-      <AppText weight="semibold" size={13} color={colors.textMuted} style={settingsStyles.sectionTitle}>
+      <AppText
+        weight="semibold"
+        size={13}
+        color={colors.textMuted}
+        style={settingsStyles.sectionTitle}
+        accessibilityRole="header">
         {title.toUpperCase()}
       </AppText>
       <View style={[settingsStyles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>{children}</View>
@@ -36,6 +41,7 @@ export function Row({
   const { colors } = useTheme();
   return (
     <Pressable
+      accessibilityRole={onPress ? 'button' : undefined}
       onPress={onPress}
       disabled={!onPress}
       style={({ pressed }) => [settingsStyles.row, pressed && onPress && { backgroundColor: colors.surface }]}>
@@ -65,7 +71,11 @@ export function Field(props: React.ComponentProps<typeof TextInput>) {
       autoCorrect={false}
       placeholderTextColor={colors.textMuted}
       {...props}
-      style={[settingsStyles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border }, props.style]}
+      style={[
+        settingsStyles.input,
+        { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border },
+        props.style,
+      ]}
     />
   );
 }
@@ -80,7 +90,6 @@ export function confirm(title: string, message: string, onConfirm: () => void, a
     { text: action, style: 'destructive', onPress: onConfirm },
   ]);
 }
-
 
 export const settingsStyles = StyleSheet.create({
   section: { marginBottom: 22 },

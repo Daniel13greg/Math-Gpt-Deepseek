@@ -73,15 +73,12 @@ export default function SettingsScreen() {
     if (keyDraft.trim() !== settings.apiKey) await settings.setApiKey(keyDraft);
     setTesting(true);
     try {
-      const result = await streamChat(
-        apiConfig(),
-        {
-          model: useSettings.getState().model,
-          thinking: false,
-          maxTokens: 8,
-          messages: [{ role: 'user', content: 'Reply with OK.' }],
-        },
-      );
+      const result = await streamChat(apiConfig(), {
+        model: useSettings.getState().model,
+        thinking: false,
+        maxTokens: 8,
+        messages: [{ role: 'user', content: 'Reply with OK.' }],
+      });
       toast.success(`Connected to ${result.model ?? 'DeepSeek'} ✓`);
     } catch (e) {
       toast.error(toDeepSeekError(e).message);
@@ -101,7 +98,7 @@ export default function SettingsScreen() {
           footer={
             envKey
               ? 'Using the key from EXPO_PUBLIC_DEEPSEEK_API_KEY. Saving a key here overrides it.'
-              : 'Your key is stored in the device keychain and only sent to the API base URL below.'
+              : 'Your key is stored in the device keychain and only sent to the API base URL above.'
           }>
           <View style={styles.block}>
             <View style={styles.labelRow}>
@@ -120,12 +117,16 @@ export default function SettingsScreen() {
               accessibilityLabel="DeepSeek API key"
             />
             <View style={styles.buttons}>
-              <Pressable style={[styles.button, { backgroundColor: colors.primary }]} onPress={saveKey}>
+              <Pressable
+                accessibilityRole="button"
+                style={[styles.button, { backgroundColor: colors.primary }]}
+                onPress={saveKey}>
                 <AppText weight="semibold" size={15} color="#fff">
                   Save key
                 </AppText>
               </Pressable>
               <Pressable
+                accessibilityRole="button"
                 style={[styles.button, { backgroundColor: colors.segmentBg }]}
                 onPress={testConnection}
                 disabled={testing}>
@@ -135,7 +136,10 @@ export default function SettingsScreen() {
                 </AppText>
               </Pressable>
             </View>
-            <Pressable onPress={() => WebBrowser.openBrowserAsync('https://platform.deepseek.com/api_keys')} hitSlop={6}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => WebBrowser.openBrowserAsync('https://platform.deepseek.com/api_keys')}
+              hitSlop={6}>
               <AppText size={14} color={colors.primary} weight="medium">
                 Get an API key at platform.deepseek.com →
               </AppText>
@@ -154,7 +158,7 @@ export default function SettingsScreen() {
               accessibilityLabel="API base URL"
             />
             {settings.baseUrl !== DEFAULT_BASE_URL ? (
-              <Pressable onPress={() => settings.update({ baseUrl: DEFAULT_BASE_URL })} hitSlop={6}>
+              <Pressable accessibilityRole="button" onPress={() => settings.update({ baseUrl: DEFAULT_BASE_URL })} hitSlop={6}>
                 <AppText size={14} color={colors.primary}>
                   Reset to {DEFAULT_BASE_URL}
                 </AppText>

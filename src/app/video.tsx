@@ -121,13 +121,19 @@ export default function VideoScreen() {
     <View style={styles.screen}>
       <StatusBar style="light" />
       <View style={[styles.top, { paddingTop: insets.top + 6 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.roundButton} accessibilityLabel="Close video">
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.back()}
+          hitSlop={12}
+          style={styles.roundButton}
+          accessibilityLabel="Close video">
           <XIcon size={22} color="#fff" />
         </Pressable>
         <AppText weight="semibold" size={16} color="#fff" numberOfLines={1} style={styles.title}>
           {artifact.data.title}
         </AppText>
         <Pressable
+          accessibilityRole="button"
           onPress={() => setMuted((m) => !m)}
           hitSlop={12}
           style={[styles.roundButton, muted && styles.mutedButton]}
@@ -147,7 +153,11 @@ export default function VideoScreen() {
         ))}
       </View>
 
-      <Pressable style={styles.stage} onPress={togglePlay} accessibilityLabel={playing ? 'Pause' : 'Play'}>
+      <Pressable
+        accessibilityRole="button"
+        style={styles.stage}
+        onPress={togglePlay}
+        accessibilityLabel={playing ? 'Pause' : 'Play'}>
         <VideoScene
           heading={scene.heading}
           body={scene.body}
@@ -166,6 +176,7 @@ export default function VideoScreen() {
 
       <View style={[styles.controls, { paddingBottom: Math.max(insets.bottom, 14) + 6 }]}>
         <Pressable
+          accessibilityRole="button"
           onPress={() => goTo(index - 1)}
           disabled={index === 0}
           hitSlop={10}
@@ -173,7 +184,11 @@ export default function VideoScreen() {
           accessibilityLabel="Previous scene">
           <SkipBackIcon size={26} color="#fff" />
         </Pressable>
-        <Pressable onPress={togglePlay} style={styles.play} accessibilityLabel={ended ? 'Replay' : playing ? 'Pause' : 'Play'}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={togglePlay}
+          style={styles.play}
+          accessibilityLabel={ended ? 'Replay' : playing ? 'Pause' : 'Play'}>
           {ended ? (
             <RotateCcwIcon size={28} color="#0F2236" />
           ) : playing ? (
@@ -183,6 +198,7 @@ export default function VideoScreen() {
           )}
         </Pressable>
         <Pressable
+          accessibilityRole="button"
           onPress={() => goTo(index + 1)}
           disabled={index >= scenes.length - 1}
           hitSlop={10}

@@ -174,7 +174,7 @@ export function RecordView() {
                 Stop & create notes
               </AppText>
             </Pressable>
-            <Pressable onPress={lecture.cancel} hitSlop={8} style={styles.cancel}>
+            <Pressable accessibilityRole="button" onPress={lecture.cancel} hitSlop={8} style={styles.cancel}>
               <AppText size={15} color={colors.textSecondary}>
                 Discard recording
               </AppText>
@@ -242,7 +242,7 @@ export function RecordView() {
           <AppText size={14} color={colors.text}>
             {lecture.error}
           </AppText>
-          <Pressable onPress={() => router.push('/settings')} hitSlop={6} style={styles.errorAction}>
+          <Pressable accessibilityRole="button" onPress={() => router.push('/settings')} hitSlop={6} style={styles.errorAction}>
             <SettingsIcon size={15} color={colors.primary} />
             <AppText size={14} weight="semibold" color={colors.primary}>
               Speech settings
@@ -258,6 +258,7 @@ export function RecordView() {
           </AppText>
           {recentNotes.map((note) => (
             <Pressable
+              accessibilityRole="button"
               key={note.id}
               onPress={() => router.push({ pathname: '/notes/[id]', params: { id: note.id } })}
               style={({ pressed }) => [

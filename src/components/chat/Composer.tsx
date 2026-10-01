@@ -60,6 +60,7 @@ export function Composer(props: ComposerProps) {
             <View key={img.id} style={styles.thumbWrap}>
               <Image source={{ uri: img.thumb }} style={[styles.thumb, { borderColor: colors.border }]} contentFit="cover" />
               <Pressable
+                accessibilityRole="button"
                 onPress={() => props.onRemoveImage(img.id)}
                 hitSlop={8}
                 style={styles.thumbRemove}
@@ -94,13 +95,19 @@ export function Composer(props: ComposerProps) {
       />
 
       <View style={styles.row}>
-        <Pressable onPress={props.onPlus} hitSlop={8} style={styles.iconButton} accessibilityLabel="Add photo or options">
+        <Pressable
+          accessibilityRole="button"
+          onPress={props.onPlus}
+          hitSlop={8}
+          style={styles.iconButton}
+          accessibilityLabel="Add photo or options">
           <PlusIcon size={25} color={colors.icon} strokeWidth={1.8} />
         </Pressable>
 
         {tool ? (
           <Animated.View entering={FadeIn.duration(150)} exiting={FadeOut.duration(120)}>
             <Pressable
+              accessibilityRole="button"
               onPress={props.onClearTool}
               style={[styles.chip, { backgroundColor: colors.primarySoft }]}
               accessibilityLabel={`Remove ${toolChipLabel(tool)} tool`}>
@@ -112,7 +119,12 @@ export function Composer(props: ComposerProps) {
             </Pressable>
           </Animated.View>
         ) : (
-          <Pressable onPress={props.onTools} hitSlop={6} style={styles.tools} accessibilityLabel="Tools">
+          <Pressable
+            accessibilityRole="button"
+            onPress={props.onTools}
+            hitSlop={6}
+            style={styles.tools}
+            accessibilityLabel="Tools">
             <ToolCaseIcon size={20} color={colors.icon} strokeWidth={1.8} />
             <AppText size={15} color={colors.icon}>
               Tools
@@ -139,6 +151,7 @@ export function Composer(props: ComposerProps) {
         <View style={styles.spacer} />
 
         <Pressable
+          accessibilityRole="button"
           onPress={props.onMic}
           hitSlop={8}
           style={[styles.iconButton, props.listening && { backgroundColor: colors.dangerSoft, borderRadius: 18 }]}
