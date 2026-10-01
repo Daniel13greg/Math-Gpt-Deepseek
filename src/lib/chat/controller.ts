@@ -7,12 +7,20 @@ import { DEFAULT_VISION_MODEL, isKnownVisionModel, utilityModel } from '@/lib/de
 import { makeId } from '@/lib/id';
 import { deleteImageFiles, imageToDataUrl } from '@/lib/images';
 import { toUnicodeMath } from '@/lib/math';
-import { titlePrompt, toolSystemPrompt, toolUserPrompt, tutorSystemPrompt } from '@/lib/prompts';
+import {
+  lectureChatContext,
+  lectureToolContext,
+  titlePrompt,
+  toolSystemPrompt,
+  toolUserPrompt,
+  tutorSystemPrompt,
+} from '@/lib/prompts';
 import { ArtifactError } from '@/lib/tools/normalize';
 import { generateArtifact } from '@/lib/tools/generate';
 import { followUpContext, mistakesContext, nextDifficulty } from '@/lib/tools/adaptive';
 import type { Artifact, AssistantMessage, ImageAttachment, UserMessage } from '@/lib/types';
 import { getChat, useChats } from '@/store/chats';
+import { useNotes } from '@/store/notes';
 import { useReviews } from '@/store/reviews';
 import { useSettings } from '@/store/settings';
 
@@ -83,7 +91,7 @@ export async function sendMessage(input: SendInput): Promise<void> {
 
   const chat = getChat(chatId)!;
   if (chat.subject !== input.subject) store.setChatSubject(chatId, input.subject);
-  if (chat.messages.length === 0) {
+  if (chat.messages.length === 0 && !chat.titleLocked) {
     const provisional = toUnicodeMath(message.text) || (message.images ? 'Photo problem' : 'New chat');
     store.renameChat(chatId, provisional.length > 48 ? `${provisional.slice(0, 47)}…` : provisional, false);
   }
@@ -203,9 +211,10 @@ async function runAssistant(chatId: string): Promise<void> {
               hasImages: false,
             }
           : await toApiMessages(chat.messages, { thinking, loadImage: imageToDataUrl });
-      const system = tool
-        ? toolSystemPrompt(tool.kind, chat.subject)
-        : tutorSystemPrompt(chat.subject, settings.answerStyle);
+      const note = chat.noteId ? useNotes.getState().notes[chat.noteId] : undefined;
+      const system =
+        (tool ? toolSystemPrompt(tool.kind, chat.subject) : tutorSystemPrompt(chat.subject, settings.answerStyle)) +
+        (note && tool?.kind !== 'study-guide' ? lectureChatContext(note.title, note.notes, note.transcript) : '');
       const messages = [{ role: 'system' as const, content: system }, ...fitToBudget(built.messages, HISTORY_TOKEN_BUDGET)];
       const model = built.hasImages && !isKnownVisionModel(settings.model) ? DEFAULT_VISION_MODEL : settings.model;
 
@@ -338,6 +347,37 @@ export async function practiceMistakes(chatId: string, messageId: string): Promi
     context,
     label: `Create a practice test on my mistakes in ${artifact.data.topic}`,
   });
+}
+
+export type LectureTool = 'flashcards' | 'practice-test' | 'study-guide';
+
+const LECTURE_TOOL_LABELS: Record<LectureTool, string> = {
+  flashcards: 'Create flashcards from my lecture notes',
+  'practice-test': 'Create a practice test from my lecture notes',
+  'study-guide': 'Create a study guide from my lecture notes',
+};
+
+/** Starts a new chat that turns a lecture note into flashcards, a practice test or a study guide. */
+export async function studyFromNote(noteId: string, kind: LectureTool, subject: SubjectId): Promise<void> {
+  const note = useNotes.getState().notes[noteId];
+  if (!note) return;
+  useChats.getState().createChat(subject);
+  await sendMessage({
+    text: note.title,
+    images: [],
+    tool: { kind },
+    subject,
+    context: lectureToolContext(note.title, note.notes, note.transcript),
+    label: `${LECTURE_TOOL_LABELS[kind]}: ${note.title}`,
+  });
+}
+
+/** Opens a new chat whose answers are grounded in a lecture note. */
+export function askAboutNote(noteId: string, subject: SubjectId): void {
+  const note = useNotes.getState().notes[noteId];
+  if (!note) return;
+  const chatId = useChats.getState().createChat(subject, undefined, { noteId });
+  useChats.getState().renameChat(chatId, `Lecture: ${note.title}`, true);
 }
 
 /** Deletes a chat, the image files it owns and its flashcard review schedules. */

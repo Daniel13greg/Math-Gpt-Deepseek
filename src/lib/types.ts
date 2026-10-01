@@ -77,6 +77,8 @@ export interface Chat {
   titleLocked?: boolean;
   /** Every request made for this chat, including regenerated replies, answer checks and the title. */
   usage?: UsageByModel;
+  /** Lecture note this chat is about ("Ask about this lecture"); its notes are given to the model. */
+  noteId?: string;
 }
 
 /* ---------- Tool artifacts ---------- */

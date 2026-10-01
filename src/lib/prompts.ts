@@ -226,6 +226,35 @@ export function toolUserPrompt(kind: ToolKind, topic: string, diagram?: DiagramK
 
 /* ---------- Lecture notes ---------- */
 
+/** Long notes are cut to keep requests fast; ~60K characters is a two-hour lecture's notes. */
+const MAX_NOTES_CHARS = 60_000;
+
+function lectureMaterial(notes: string, transcript: string): string {
+  const source = notes.trim() || transcript.trim();
+  return source.length > MAX_NOTES_CHARS ? `${source.slice(0, MAX_NOTES_CHARS)}\n[…]` : source;
+}
+
+/** Source material for a study tool made from a lecture note. */
+export function lectureToolContext(title: string, notes: string, transcript: string): string {
+  return [
+    `Base this entirely on the student's notes from the lecture "${title}" below: cover what the lecture covered, use its notation and examples, and don't add topics it didn't cover.`,
+    '',
+    lectureMaterial(notes, transcript),
+  ].join('\n');
+}
+
+/** Appended to the tutor prompt in an "Ask about this lecture" chat. */
+export function lectureChatContext(title: string, notes: string, transcript: string): string {
+  return [
+    '',
+    `The student is asking about a lecture they recorded, "${title}". Its notes are below. Answer in the context of this lecture, use its notation, and say so when a question goes beyond what the lecture covered.`,
+    '',
+    '<lecture-notes>',
+    lectureMaterial(notes, transcript),
+    '</lecture-notes>',
+  ].join('\n');
+}
+
 export function lectureNotesPrompt(): string {
   return [
     `You are ${APP_NAME}, an expert note-taker for STEM lectures.`,

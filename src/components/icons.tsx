@@ -20,6 +20,7 @@ export { default as GraduationCapIcon } from 'lucide-react-native/icons/graduati
 export { default as ImageIcon } from 'lucide-react-native/icons/image';
 export { default as KeyboardIcon } from 'lucide-react-native/icons/keyboard';
 export { default as KeyRoundIcon } from 'lucide-react-native/icons/key-round';
+export { default as MessageCircleQuestionIcon } from 'lucide-react-native/icons/message-circle-question-mark';
 export { default as MicIcon } from 'lucide-react-native/icons/mic';
 export { default as NotebookPenIcon } from 'lucide-react-native/icons/notebook-pen';
 export { default as PauseIcon } from 'lucide-react-native/icons/pause';

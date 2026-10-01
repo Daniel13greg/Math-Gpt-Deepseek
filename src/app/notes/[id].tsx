@@ -6,15 +6,27 @@ import { Alert, Platform, Pressable, ScrollView, Share, StyleSheet, View } from 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import RichDocument from '@/components/dom/RichDocument';
-import { CopyIcon, RefreshIcon, ShareIcon, SquareIcon, Trash2Icon } from '@/components/icons';
+import {
+  BookCheckIcon,
+  BookIcon,
+  CopyIcon,
+  FlashcardsIcon,
+  MessageCircleQuestionIcon,
+  RefreshIcon,
+  ShareIcon,
+  SquareIcon,
+  Trash2Icon,
+} from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { MaxContentWidth } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
+import { askAboutNote, studyFromNote, type LectureTool } from '@/lib/chat/controller';
 import { generateLectureNotes, stopNotes } from '@/lib/notes/generate';
 import { useNotes } from '@/store/notes';
 import { describeUsage } from '@/lib/usage';
 import { useSettings } from '@/store/settings';
 import { toast } from '@/store/toast';
+import { useUI } from '@/store/ui';
 import { useUsage } from '@/store/usage';
 
 type Tab = 'notes' | 'transcript';
@@ -60,6 +72,26 @@ export default function NoteScreen() {
       { text: 'Delete', style: 'destructive', onPress: doDelete },
     ]);
   };
+
+  const backToChat = () => {
+    useUI.getState().clearComposer();
+    useUI.getState().setMode('chat');
+    router.dismissTo('/');
+  };
+  const study = (kind: LectureTool) => {
+    backToChat();
+    void studyFromNote(note.id, kind, useUI.getState().subject);
+  };
+  const ask = () => {
+    askAboutNote(note.id, useUI.getState().subject);
+    backToChat();
+  };
+  const studyActions = [
+    { label: 'Flashcards', icon: FlashcardsIcon, onPress: () => study('flashcards') },
+    { label: 'Practice test', icon: BookCheckIcon, onPress: () => study('practice-test') },
+    { label: 'Study guide', icon: BookIcon, onPress: () => study('study-guide') },
+    { label: 'Ask about it', icon: MessageCircleQuestionIcon, onPress: ask },
+  ];
 
   const meta = [
     new Date(note.createdAt).toLocaleString(),
@@ -133,6 +165,31 @@ export default function NoteScreen() {
         </View>
       ) : null}
 
+      {note.status === 'done' && note.notes ? (
+        <View style={[styles.study, { borderTopColor: colors.hairline }]}>
+          <AppText size={12.5} weight="semibold" color={colors.textMuted} style={styles.studyLabel}>
+            STUDY THIS LECTURE
+          </AppText>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.studyRow}>
+            {studyActions.map(({ label, icon: Icon, onPress }) => (
+              <Pressable
+                key={label}
+                onPress={onPress}
+                accessibilityRole="button"
+                style={({ pressed }) => [
+                  styles.studyChip,
+                  { backgroundColor: pressed ? colors.primarySoft : colors.surface, borderColor: colors.border },
+                ]}>
+                <Icon size={17} color={colors.primary} />
+                <AppText size={14} weight="medium">
+                  {label}
+                </AppText>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
+
       <View style={[styles.actions, { borderTopColor: colors.hairline, paddingBottom: Math.max(insets.bottom, 10) }]}>
         {generating ? (
           <Pressable style={styles.action} onPress={() => stopNotes(note.id)}>
@@ -197,6 +254,10 @@ const styles = StyleSheet.create({
   inlineError: { marginHorizontal: 16, marginBottom: 6, borderRadius: 10, padding: 10 },
   transcript: { padding: 20, paddingBottom: 40, width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center' },
   transcriptText: { lineHeight: 25 },
+  study: { borderTopWidth: 1, paddingTop: 10, paddingBottom: 8 },
+  studyLabel: { paddingHorizontal: 20, marginBottom: 8, letterSpacing: 0.4 },
+  studyRow: { paddingHorizontal: 16, gap: 8 },
+  studyChip: { flexDirection: 'row', alignItems: 'center', gap: 7, height: 38, paddingHorizontal: 14, borderRadius: 19, borderWidth: 1 },
   actions: { flexDirection: 'row', justifyContent: 'space-around', borderTopWidth: 1, paddingTop: 8 },
   action: { alignItems: 'center', gap: 3, minWidth: 64, paddingVertical: 2 },
 });

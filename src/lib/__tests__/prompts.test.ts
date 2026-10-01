@@ -1,6 +1,13 @@
 import { ANSWER_STYLES } from '@/constants/answerStyles';
 import { toolRequestText } from '@/lib/chat/controller';
-import { checkWorkSystemPrompt, toolSystemPrompt, toolUserPrompt, tutorSystemPrompt } from '@/lib/prompts';
+import {
+  checkWorkSystemPrompt,
+  lectureChatContext,
+  lectureToolContext,
+  toolSystemPrompt,
+  toolUserPrompt,
+  tutorSystemPrompt,
+} from '@/lib/prompts';
 
 jest.mock('@/lib/storage/kv', () => ({ kv: { getItemSync: () => null, setItem: () => {}, removeItem: () => {} } }));
 jest.mock('@/lib/storage/secure', () => ({ secure: { getSync: () => null, set: async () => {} } }));
@@ -44,5 +51,19 @@ describe('toolUserPrompt', () => {
       'Topic: Derivatives\n\nNotes:\n- power rule',
     );
     expect(toolUserPrompt('diagram', '', 'venn')).toBe('Diagram type: venn. Topic: a core topic of this subject');
+  });
+});
+
+describe('lecture context', () => {
+  it('grounds study tools in the notes, falling back to the transcript', () => {
+    expect(lectureToolContext('Limits', '# Limits\n- epsilon', 'raw')).toContain('# Limits\n- epsilon');
+    expect(lectureToolContext('Limits', '  ', 'raw transcript')).toContain('raw transcript');
+  });
+
+  it('wraps notes for lecture chats and caps very long notes', () => {
+    const context = lectureChatContext('Limits', 'x'.repeat(70_000), '');
+    expect(context).toContain('<lecture-notes>');
+    expect(context).toContain('[…]');
+    expect(context.length).toBeLessThan(61_000);
   });
 });

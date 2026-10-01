@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Transcript from '@/components/dom/Transcript';
 import type { TranscriptAction, TranscriptHandle } from '@/components/dom/transcriptTypes';
 import { headerHeight } from '@/components/header/MainHeader';
+import { NotebookPenIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { DISCLAIMER } from '@/constants/app';
 import { MaxContentWidth } from '@/constants/theme';
@@ -30,6 +31,7 @@ import { prepareImage } from '@/lib/images';
 import { speakable } from '@/lib/tools/normalize';
 import type { Message } from '@/lib/types';
 import { getChat, useChats } from '@/store/chats';
+import { useNotes } from '@/store/notes';
 import { useSettings } from '@/store/settings';
 import { toast } from '@/store/toast';
 import { useUI } from '@/store/ui';
@@ -113,6 +115,11 @@ export function ChatView() {
       }),
     [chatId],
   );
+
+  const lectureTitle = useChats((s) => {
+    const noteId = chatId ? s.chats[chatId]?.noteId : undefined;
+    return noteId ? (useNotes.getState().notes[noteId]?.title ?? null) : null;
+  });
 
   // Keep the subject tabs in sync with the open chat.
   const chatSubject = useChats((s) => (chatId ? s.chats[chatId]?.subject : undefined));
@@ -238,6 +245,14 @@ export function ChatView() {
   return (
     // KeyboardAvoidingView measures itself relative to its parent, which sits below the header.
     <KeyboardAvoidingView style={styles.flex} behavior="padding" keyboardVerticalOffset={headerHeight(insets.top)}>
+      {lectureTitle ? (
+        <View style={[styles.lecture, { backgroundColor: colors.primarySoft }]}>
+          <NotebookPenIcon size={15} color={colors.primary} />
+          <AppText size={13.5} color={colors.primary} numberOfLines={1} style={styles.flexShrink}>
+            Answers use your notes from {lectureTitle}
+          </AppText>
+        </View>
+      ) : null}
       <View style={styles.flex}>
         <Transcript
           ref={transcriptRef}
@@ -291,6 +306,18 @@ export function ChatView() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  flexShrink: { flexShrink: 1 },
+  lecture: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'center',
+    maxWidth: '92%',
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+  },
   bottom: { width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', paddingTop: 6 },
   composerSpacing: { height: 10 },
   disclaimer: { marginTop: 12, paddingHorizontal: 16 },

@@ -10,7 +10,7 @@ import { addToModel } from '@/lib/usage';
 interface ChatsState {
   chats: Record<string, Chat>;
   activeChatId: string | null;
-  createChat: (subject: SubjectId, title?: string) => string;
+  createChat: (subject: SubjectId, title?: string, extra?: Pick<Chat, 'noteId'>) => string;
   setActiveChat: (id: string | null) => void;
   addMessage: (chatId: string, message: Message) => void;
   updateAssistant: (
@@ -60,13 +60,13 @@ export const useChats = create<ChatsState>()((set, get) => {
     chats: recoverInterrupted(initialChats),
     activeChatId: null,
 
-    createChat: (subject, title = 'New chat') => {
+    createChat: (subject, title = 'New chat', extra) => {
       const id = makeId('c');
       const now = Date.now();
       set({
         chats: {
           ...get().chats,
-          [id]: { id, title, subject: subject ?? DEFAULT_SUBJECT, createdAt: now, updatedAt: now, messages: [] },
+          [id]: { id, title, subject: subject ?? DEFAULT_SUBJECT, createdAt: now, updatedAt: now, messages: [], ...extra },
         },
         activeChatId: id,
       });
