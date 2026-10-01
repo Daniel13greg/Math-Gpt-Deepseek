@@ -1,6 +1,7 @@
 import type { SubjectId } from '@/constants/subjects';
 import { getDiagramKind, getTool, type ToolSelection } from '@/constants/tools';
-import { streamChat, type ClientConfig } from '@/lib/deepseek/client';
+import { apiConfig } from '@/lib/api';
+import { streamChat } from '@/lib/deepseek/client';
 import { toDeepSeekError } from '@/lib/deepseek/errors';
 import { DEFAULT_VISION_MODEL, isKnownVisionModel, utilityModel } from '@/lib/deepseek/models';
 import { makeId } from '@/lib/id';
@@ -11,7 +12,7 @@ import { ArtifactError } from '@/lib/tools/normalize';
 import { generateArtifact } from '@/lib/tools/generate';
 import type { AssistantMessage, ImageAttachment, UserMessage } from '@/lib/types';
 import { getChat, useChats } from '@/store/chats';
-import { getApiKey, useSettings } from '@/store/settings';
+import { useSettings } from '@/store/settings';
 
 import { fitToBudget, toApiMessages } from './history';
 
@@ -32,8 +33,9 @@ export function stopGeneration(chatId: string | null | undefined) {
   if (chatId) inflight.get(chatId)?.abort();
 }
 
-function clientConfig(): ClientConfig {
-  return { apiKey: getApiKey(), baseUrl: useSettings.getState().baseUrl };
+/** Requests made for a chat (replies, answer checks, its title) count towards its usage. */
+function chatApiConfig(chatId: string) {
+  return apiConfig((usage, model) => useChats.getState().addChatUsage(chatId, model, usage));
 }
 
 export function toolRequestText(tool: ToolSelection, topic: string): string {
@@ -149,6 +151,7 @@ async function runAssistant(chatId: string): Promise<void> {
   const controller = new AbortController();
   inflight.set(chatId, controller);
   const update = (patch: Partial<AssistantMessage>) => useChats.getState().updateAssistant(chatId, assistantId, patch);
+  const config = chatApiConfig(chatId);
 
   try {
     if (tool && tool.kind !== 'study-guide') {
@@ -157,7 +160,7 @@ async function runAssistant(chatId: string): Promise<void> {
       let reasoned = false;
       let thinkingMs: number | undefined;
       const artifact = await generateArtifact({
-        config: clientConfig(),
+        config,
         model: settings.model,
         kind: tool.kind,
         diagram: tool.diagram,
@@ -196,7 +199,7 @@ async function runAssistant(chatId: string): Promise<void> {
       const updater = createUpdater(chatId, assistantId);
       let firstContentAt: number | null = null;
       const result = await streamChat(
-        clientConfig(),
+        config,
         {
           model,
           messages,
@@ -252,7 +255,7 @@ async function maybeGenerateTitle(chatId: string) {
 
   const replyText = reply.artifact ? '' : reply.content.slice(0, 400);
   try {
-    const result = await streamChat(clientConfig(), {
+    const result = await streamChat(chatApiConfig(chatId), {
       model: utilityModel(useSettings.getState().model),
       thinking: false,
       maxTokens: 24,

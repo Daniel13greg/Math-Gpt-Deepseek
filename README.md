@@ -18,6 +18,7 @@ practice tests, flashcards, graphs, diagrams, study guides and narrated video le
 | **Record** | "Create lecture notes": record a lecture (live transcript) or upload MP3/AAC/WAV/OGG/FLAC, then DeepSeek writes structured notes with formulas, examples and review questions. |
 | **Tools** | Create Video (animated slides + text-to-speech narration), Practice Test (scored, with review), Practice Question (interactive, hints, solution), Graph (pan/zoom plot), Diagram (flowchart, mind map, geometry, free-body, Venn), Study Guide, Flashcards (flip + swipe). |
 | **History** | Chats and notes are saved on the device; searchable drawer grouped by date; rename/delete. |
+| **Usage** | Tokens per chat (long-press it in the drawer), per lecture note, this month and all time, per model. Enter DeepSeek's prices in Settings to see costs too. |
 | **Upgrade** | Instead of a paywall, picks the model: *Flash* (fast, reads photos) or *Pro* (strongest reasoning). |
 | **Themes** | Light, dark or system. |
 

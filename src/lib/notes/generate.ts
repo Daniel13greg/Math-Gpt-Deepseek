@@ -1,9 +1,11 @@
+import { apiConfig } from '@/lib/api';
 import { streamChat } from '@/lib/deepseek/client';
 import { toDeepSeekError } from '@/lib/deepseek/errors';
 import { toUnicodeMath } from '@/lib/math';
 import { lectureNotesPrompt } from '@/lib/prompts';
 import { useNotes } from '@/store/notes';
-import { getApiKey, useSettings } from '@/store/settings';
+import { addToModel } from '@/lib/usage';
+import { useSettings } from '@/store/settings';
 
 const inflight = new Map<string, AbortController>();
 
@@ -46,7 +48,7 @@ export async function generateLectureNotes(noteId: string): Promise<void> {
   try {
     const minutes = note.durationSec ? ` (${Math.max(1, Math.round(note.durationSec / 60))} minutes)` : '';
     const result = await streamChat(
-      { apiKey: getApiKey(), baseUrl: settings.baseUrl },
+      apiConfig((usage, model) => update(noteId, (n) => ({ usage: addToModel(n.usage, model, usage) }))),
       {
         model: settings.model,
         // Deep Think helps untangle misheard terms and reconstruct skipped steps.

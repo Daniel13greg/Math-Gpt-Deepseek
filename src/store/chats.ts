@@ -4,7 +4,8 @@ import { DEFAULT_SUBJECT, type SubjectId } from '@/constants/subjects';
 import { makeId } from '@/lib/id';
 import { toUnicodeMath } from '@/lib/math';
 import { createCollectionSaver, loadCollection } from '@/lib/storage/collection';
-import type { AssistantMessage, Chat, Message } from '@/lib/types';
+import type { AssistantMessage, Chat, Message, TokenUsage } from '@/lib/types';
+import { addToModel } from '@/lib/usage';
 
 interface ChatsState {
   chats: Record<string, Chat>;
@@ -22,6 +23,7 @@ interface ChatsState {
   /** `lock` (default true) marks the title as final so it won't be auto-replaced. */
   renameChat: (chatId: string, title: string, lock?: boolean) => void;
   setChatSubject: (chatId: string, subject: SubjectId) => void;
+  addChatUsage: (chatId: string, model: string, usage: TokenUsage) => void;
   deleteChat: (chatId: string) => void;
   deleteAllChats: () => void;
 }
@@ -100,6 +102,9 @@ export const useChats = create<ChatsState>()((set, get) => {
       })),
 
     setChatSubject: (chatId, subject) => updateChat(chatId, (chat) => ({ ...chat, subject })),
+
+    addChatUsage: (chatId, model, usage) =>
+      updateChat(chatId, (chat) => ({ ...chat, usage: addToModel(chat.usage, model, usage) })),
 
     deleteChat: (chatId) => {
       const { [chatId]: _removed, ...rest } = get().chats;

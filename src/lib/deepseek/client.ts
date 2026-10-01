@@ -49,6 +49,8 @@ export interface ClientConfig {
   fetch?: typeof fetch;
   /** Waits before each automatic retry of a rate-limit, overload, server or network error. */
   retryDelaysMs?: number[];
+  /** Called with the billed usage of every completed request, keyed by the requested model. */
+  onUsage?: (usage: Usage, model: string) => void;
 }
 
 const DEFAULT_RETRY_DELAYS_MS = [1000, 3000];
@@ -202,7 +204,7 @@ async function attempt(
     if (contentType.includes('application/json')) {
       // Server ignored `stream: true`; treat the whole body as one message.
       builder.handleData(await response.text());
-      return builder.result();
+      return reportUsage(config, req, builder.result());
     }
 
     const parser = new SSEParser();
@@ -212,7 +214,7 @@ async function attempt(
       for (const message of [...parser.feed(await response.text()), ...parser.end()]) {
         builder.handleData(message.data);
       }
-      return builder.result();
+      return reportUsage(config, req, builder.result());
     }
 
     const reader = body.getReader();
@@ -233,7 +235,12 @@ async function attempt(
     throw toDeepSeekError(error);
   }
 
-  return builder.result();
+  return reportUsage(config, req, builder.result());
+}
+
+function reportUsage(config: ClientConfig, req: ChatRequest, result: ChatResult): ChatResult {
+  if (result.usage) config.onUsage?.(result.usage, req.model);
+  return result;
 }
 
 function sleep(ms: number, signal: AbortSignal | undefined): Promise<void> {

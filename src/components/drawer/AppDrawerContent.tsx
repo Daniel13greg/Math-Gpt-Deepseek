@@ -23,9 +23,11 @@ import { useTheme } from '@/hooks/useTheme';
 import { deleteChatWithFiles } from '@/lib/chat/controller';
 import { groupByDate } from '@/lib/dates';
 import type { Chat } from '@/lib/types';
+import { describeUsage } from '@/lib/usage';
 import { sortChats, useChats } from '@/store/chats';
 import { sortNotes, useNotes } from '@/store/notes';
 import { useUI } from '@/store/ui';
+import { useUsage } from '@/store/usage';
 
 export function AppLogo({ size = 30 }: { size?: number }) {
   const { colors } = useTheme();
@@ -88,6 +90,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
   };
 
   const [menuFor, setMenuFor] = useState<Chat | null>(null);
+  const prices = useUsage((s) => s.prices);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 8, backgroundColor: colors.background }]}>
@@ -203,6 +206,11 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
 
       <BottomSheet visible={menuFor !== null} onClose={() => setMenuFor(null)} title={menuFor?.title}>
         <View style={styles.menu}>
+          {menuFor?.usage ? (
+            <AppText size={13} color={colors.textMuted} style={styles.menuMeta}>
+              {describeUsage(menuFor.usage, prices)}
+            </AppText>
+          ) : null}
           <Pressable
             style={({ pressed }) => [styles.menuRow, pressed && { backgroundColor: colors.surface }]}
             onPress={() => {
@@ -268,6 +276,7 @@ const styles = StyleSheet.create({
   chatRow: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
   empty: { textAlign: 'center', marginTop: 28, paddingHorizontal: 20 },
   footer: { borderTopWidth: 1, paddingTop: 6, paddingHorizontal: 8 },
+  menuMeta: { paddingHorizontal: 24, paddingBottom: 6 },
   menu: { paddingTop: 8 },
   menuRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 24, height: 52 },
 });

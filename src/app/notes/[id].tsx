@@ -12,8 +12,10 @@ import { MaxContentWidth } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { generateLectureNotes, stopNotes } from '@/lib/notes/generate';
 import { useNotes } from '@/store/notes';
+import { describeUsage } from '@/lib/usage';
 import { useSettings } from '@/store/settings';
 import { toast } from '@/store/toast';
+import { useUsage } from '@/store/usage';
 
 type Tab = 'notes' | 'transcript';
 
@@ -30,6 +32,7 @@ export default function NoteScreen() {
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<Tab>('notes');
   const thinking = useSettings((s) => s.thinking);
+  const prices = useUsage((s) => s.prices);
 
   if (!note) {
     return (
@@ -58,7 +61,12 @@ export default function NoteScreen() {
     ]);
   };
 
-  const meta = [new Date(note.createdAt).toLocaleString(), formatDuration(note.durationSec), note.fileName]
+  const meta = [
+    new Date(note.createdAt).toLocaleString(),
+    formatDuration(note.durationSec),
+    note.fileName,
+    note.usage ? describeUsage(note.usage, prices) : null,
+  ]
     .filter(Boolean)
     .join(' · ');
 

@@ -1,110 +1,26 @@
 import * as WebBrowser from 'expo-web-browser';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { useHeaderHeight } from 'expo-router/react-navigation';
-import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CheckIcon, KeyRoundIcon } from '@/components/icons';
+import { confirm, Divider, Field, Row, Section } from '@/components/settings/SettingsUI';
+import { UsageSection } from '@/components/settings/UsageSection';
 import { AppText } from '@/components/ui/AppText';
 import { Segmented } from '@/components/ui/Segmented';
 import { APP_NAME } from '@/constants/app';
-import { FontFamily, MaxContentWidth } from '@/constants/theme';
+import { MaxContentWidth } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
+import { apiConfig } from '@/lib/api';
 import { streamChat } from '@/lib/deepseek/client';
 import { toDeepSeekError } from '@/lib/deepseek/errors';
 import { DEFAULT_BASE_URL, MODELS } from '@/lib/deepseek/models';
 import { getSpeechLib } from '@/lib/speech/recognition';
 import { useChats } from '@/store/chats';
 import { useNotes } from '@/store/notes';
-import { getApiKey, useSettings } from '@/store/settings';
+import { useSettings } from '@/store/settings';
 import { toast } from '@/store/toast';
-
-function Section({ title, footer, children }: { title: string; footer?: string; children: ReactNode }) {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.section}>
-      <AppText weight="semibold" size={13} color={colors.textMuted} style={styles.sectionTitle}>
-        {title.toUpperCase()}
-      </AppText>
-      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>{children}</View>
-      {footer ? (
-        <AppText size={13} color={colors.textMuted} style={styles.footer}>
-          {footer}
-        </AppText>
-      ) : null}
-    </View>
-  );
-}
-
-function Row({
-  label,
-  detail,
-  children,
-  onPress,
-}: {
-  label: string;
-  detail?: string;
-  children?: ReactNode;
-  onPress?: () => void;
-}) {
-  const { colors } = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={!onPress}
-      style={({ pressed }) => [styles.row, pressed && onPress && { backgroundColor: colors.surface }]}>
-      <View style={styles.rowText}>
-        <AppText size={16}>{label}</AppText>
-        {detail ? (
-          <AppText size={13} secondary>
-            {detail}
-          </AppText>
-        ) : null}
-      </View>
-      {children}
-    </Pressable>
-  );
-}
-
-function Divider() {
-  const { colors } = useTheme();
-  return <View style={[styles.divider, { backgroundColor: colors.hairline }]} />;
-}
-
-function Field(props: React.ComponentProps<typeof TextInput>) {
-  const { colors } = useTheme();
-  return (
-    <TextInput
-      autoCapitalize="none"
-      autoCorrect={false}
-      placeholderTextColor={colors.textMuted}
-      {...props}
-      style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border }, props.style]}
-    />
-  );
-}
-
-function confirm(title: string, message: string, onConfirm: () => void) {
-  if (Platform.OS === 'web') {
-    if (globalThis.confirm?.(`${title}\n\n${message}`)) onConfirm();
-    return;
-  }
-  Alert.alert(title, message, [
-    { text: 'Cancel', style: 'cancel' },
-    { text: 'Delete', style: 'destructive', onPress: onConfirm },
-  ]);
-}
 
 export default function SettingsScreen() {
   const { colors } = useTheme();
@@ -128,7 +44,7 @@ export default function SettingsScreen() {
     setTesting(true);
     try {
       const result = await streamChat(
-        { apiKey: getApiKey(), baseUrl: useSettings.getState().baseUrl },
+        apiConfig(),
         {
           model: useSettings.getState().model,
           thinking: false,
@@ -366,6 +282,8 @@ export default function SettingsScreen() {
           </View>
         </Section>
 
+        <UsageSection />
+
         <Section title="Data" footer="Chats and notes are stored only on this device.">
           <Row
             label="Delete all chats"
@@ -393,23 +311,8 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   content: { padding: 16, width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center' },
-  section: { marginBottom: 22 },
-  sectionTitle: { marginLeft: 6, marginBottom: 6, letterSpacing: 0.4 },
-  card: { borderRadius: 14, borderWidth: 1, overflow: 'hidden' },
-  footer: { marginTop: 6, marginHorizontal: 6, lineHeight: 18 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, minHeight: 52 },
-  rowText: { flex: 1, gap: 2 },
-  divider: { height: 1, marginLeft: 16 },
   block: { padding: 16, gap: 10 },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  input: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-    fontFamily: FontFamily.regular,
-  },
   buttons: { flexDirection: 'row', gap: 10 },
   button: { flex: 1, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
   mt: { marginTop: 4 },

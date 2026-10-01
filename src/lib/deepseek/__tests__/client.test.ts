@@ -121,6 +121,21 @@ describe('streamChat', () => {
     expect(JSON.parse(init.body).thinking).toEqual({ type: 'enabled' });
   });
 
+  it('reports usage for the requested model', async () => {
+    const body = sse([
+      { model: 'deepseek-flash-0901', choices: [{ delta: { content: 'hi' }, finish_reason: 'stop' }] },
+      { choices: [], usage: { prompt_tokens: 10, completion_tokens: 3, prompt_cache_hit_tokens: 4 } },
+      '[DONE]',
+    ]);
+    const fetchImpl = jest.fn().mockResolvedValue(fakeResponse(200, chunked(body, 50)));
+    const onUsage = jest.fn();
+    await streamChat({ ...config(fetchImpl), onUsage }, baseRequest);
+    expect(onUsage).toHaveBeenCalledWith(
+      { promptTokens: 10, completionTokens: 3, cacheHitTokens: 4, reasoningTokens: undefined },
+      'deepseek-flash',
+    );
+  });
+
   it('accepts a non-streamed JSON body', async () => {
     const json = JSON.stringify({ choices: [{ message: { content: '{"ok":true}' }, finish_reason: 'stop' }] });
     const fetchImpl = jest.fn().mockResolvedValue(fakeResponse(200, chunked(json, 1000), 'application/json'));
