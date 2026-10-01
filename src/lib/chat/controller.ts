@@ -10,7 +10,8 @@ import { toUnicodeMath } from '@/lib/math';
 import { titlePrompt, toolSystemPrompt, toolUserPrompt, tutorSystemPrompt } from '@/lib/prompts';
 import { ArtifactError } from '@/lib/tools/normalize';
 import { generateArtifact } from '@/lib/tools/generate';
-import type { AssistantMessage, ImageAttachment, UserMessage } from '@/lib/types';
+import { followUpContext, mistakesContext, nextDifficulty } from '@/lib/tools/adaptive';
+import type { Artifact, AssistantMessage, ImageAttachment, UserMessage } from '@/lib/types';
 import { getChat, useChats } from '@/store/chats';
 import { useReviews } from '@/store/reviews';
 import { useSettings } from '@/store/settings';
@@ -55,6 +56,10 @@ export interface SendInput {
   images: ImageAttachment[];
   tool: ToolSelection | null;
   subject: SubjectId;
+  /** Hidden source material for a tool (lecture notes, missed questions). */
+  context?: string;
+  /** Visible message text, when it should differ from the generated tool request. */
+  label?: string;
 }
 
 /** Appends the user's message to the active chat (creating one if needed) and streams the reply. */
@@ -69,9 +74,11 @@ export async function sendMessage(input: SendInput): Promise<void> {
     id: makeId('m'),
     role: 'user',
     createdAt: Date.now(),
-    text: input.tool ? toolRequestText(input.tool, text) : text,
+    text: input.label ?? (input.tool ? toolRequestText(input.tool, text) : text),
     images: input.images.length ? input.images : undefined,
-    tool: input.tool ? { kind: input.tool.kind, diagram: input.tool.diagram, topic: text } : undefined,
+    tool: input.tool
+      ? { kind: input.tool.kind, diagram: input.tool.diagram, topic: text, context: input.context }
+      : undefined,
   };
 
   const chat = getChat(chatId)!;
@@ -168,6 +175,7 @@ async function runAssistant(chatId: string): Promise<void> {
         diagram: tool.diagram,
         subject: chat.subject,
         topic: tool.topic,
+        context: tool.context,
         thinking,
         reasoningEffort: settings.reasoningEffort,
         signal: controller.signal,
@@ -281,6 +289,55 @@ async function maybeGenerateTitle(chatId: string) {
   } catch {
     // Keep the provisional title.
   }
+}
+
+function findArtifact<K extends Artifact['kind']>(chatId: string, messageId: string, kind: K) {
+  const m = getChat(chatId)?.messages.find((x) => x.id === messageId);
+  return m?.role === 'assistant' && m.artifact?.kind === kind ? (m.artifact as Extract<Artifact, { kind: K }>) : undefined;
+}
+
+/** Remembers the student's answer to a practice question (the card reopens answered; follow-ups adapt). */
+export function recordAnswer(chatId: string, messageId: string, choice: number, correct: boolean) {
+  useChats
+    .getState()
+    .updateAssistant(chatId, messageId, (m) =>
+      m.artifact?.kind === 'practice-question' ? { artifact: { ...m.artifact, lastAnswer: { choice, correct, at: Date.now() } } } : {},
+    );
+}
+
+/** "Another question": harder after a right answer, easier on the same idea after a wrong one. */
+export async function anotherQuestion(chatId: string, messageId: string): Promise<void> {
+  const artifact = findArtifact(chatId, messageId, 'practice-question');
+  const chat = getChat(chatId);
+  if (!artifact || !chat) return;
+  const q = artifact.data;
+  const level = nextDifficulty(q.difficulty, artifact.lastAnswer);
+  useChats.getState().setActiveChat(chatId);
+  await sendMessage({
+    text: q.topic,
+    images: [],
+    tool: { kind: 'practice-question' },
+    subject: chat.subject,
+    context: followUpContext(q, artifact.lastAnswer),
+    label: `Another ${level} question on ${q.topic}`,
+  });
+}
+
+/** "Practice my mistakes": a new test aimed at the questions missed in the last attempt. */
+export async function practiceMistakes(chatId: string, messageId: string): Promise<void> {
+  const artifact = findArtifact(chatId, messageId, 'practice-test');
+  const chat = getChat(chatId);
+  const context = artifact?.lastScore?.answers ? mistakesContext(artifact.data, artifact.lastScore.answers) : null;
+  if (!artifact || !chat || !context) return;
+  useChats.getState().setActiveChat(chatId);
+  await sendMessage({
+    text: artifact.data.topic,
+    images: [],
+    tool: { kind: 'practice-test' },
+    subject: chat.subject,
+    context,
+    label: `Create a practice test on my mistakes in ${artifact.data.topic}`,
+  });
 }
 
 /** Deletes a chat, the image files it owns and its flashcard review schedules. */

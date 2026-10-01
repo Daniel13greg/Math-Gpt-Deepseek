@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,6 +7,7 @@ import PracticeTest from '@/components/dom/PracticeTest';
 import { AppText } from '@/components/ui/AppText';
 import { useArtifact } from '@/hooks/useArtifact';
 import { useTheme } from '@/hooks/useTheme';
+import { practiceMistakes } from '@/lib/chat/controller';
 import { useChats } from '@/store/chats';
 
 export default function PracticeTestScreen() {
@@ -31,12 +32,12 @@ export default function PracticeTestScreen() {
         onAnswerPick={async () => {
           if (Platform.OS !== 'web') await Haptics.selectionAsync();
         }}
-        onFinish={async (correct, total) => {
+        onFinish={async (correct, total, answers) => {
           useChats
             .getState()
             .updateAssistant(chatId, messageId, (m) =>
               m.artifact?.kind === 'practice-test'
-                ? { artifact: { ...m.artifact, lastScore: { correct, total, at: Date.now() } } }
+                ? { artifact: { ...m.artifact, lastScore: { correct, total, at: Date.now(), answers } } }
                 : {},
             );
           if (Platform.OS !== 'web') {
@@ -44,6 +45,10 @@ export default function PracticeTestScreen() {
               correct / total >= 0.7 ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning,
             );
           }
+        }}
+        onPracticeMistakes={async () => {
+          router.back();
+          await practiceMistakes(chatId, messageId);
         }}
         dom={{ style: { flex: 1 }, containerStyle: { flex: 1 }, scrollEnabled: false, bounces: false }}
       />

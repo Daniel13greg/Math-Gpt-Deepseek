@@ -16,7 +16,16 @@ import { DISCLAIMER } from '@/constants/app';
 import { MaxContentWidth } from '@/constants/theme';
 import { useDictation } from '@/hooks/useDictation';
 import { useTheme } from '@/hooks/useTheme';
-import { editFrom, isGenerating, regenerate, sendMessage, stopGeneration } from '@/lib/chat/controller';
+import {
+  anotherQuestion,
+  editFrom,
+  isGenerating,
+  practiceMistakes,
+  recordAnswer,
+  regenerate,
+  sendMessage,
+  stopGeneration,
+} from '@/lib/chat/controller';
 import { prepareImage } from '@/lib/images';
 import { speakable } from '@/lib/tools/normalize';
 import type { Message } from '@/lib/types';
@@ -209,18 +218,14 @@ export function ChatView() {
       case 'open-settings':
         router.push('/settings');
         break;
-      case 'another-question': {
-        const m = findMessage(action.messageId);
-        if (m?.role !== 'assistant' || m.artifact?.kind !== 'practice-question') break;
-        await sendMessage({
-          text: m.artifact.data.topic,
-          images: [],
-          tool: { kind: 'practice-question' },
-          subject: useUI.getState().subject,
-        });
+      case 'another-question':
+        if (chatId) await anotherQuestion(chatId, action.messageId);
         break;
-      }
+      case 'practice-mistakes':
+        if (chatId) await practiceMistakes(chatId, action.messageId);
+        break;
       case 'answered':
+        if (chatId) recordAnswer(chatId, action.messageId, action.choice, action.correct);
         if (Platform.OS !== 'web') {
           await Haptics.notificationAsync(
             action.correct ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Error,

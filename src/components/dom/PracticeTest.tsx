@@ -43,12 +43,14 @@ const TEST_CSS = `
 interface Props {
   test: PracticeTestData;
   scheme: 'light' | 'dark';
-  onFinish: (correct: number, total: number) => Promise<void>;
+  onFinish: (correct: number, total: number, answers: (number | null)[]) => Promise<void>;
   onAnswerPick: () => Promise<void>;
+  /** Generates a new test aimed at the questions missed in this attempt. */
+  onPracticeMistakes?: () => Promise<void>;
   dom?: DOMProps;
 }
 
-export default function PracticeTest({ test, scheme, onFinish, onAnswerPick }: Props) {
+export default function PracticeTest({ test, scheme, onFinish, onAnswerPick, onPracticeMistakes }: Props) {
   const total = test.questions.length;
   const [answers, setAnswers] = useState<(number | null)[]>(() => test.questions.map(() => null));
   const [index, setIndex] = useState(0);
@@ -76,7 +78,7 @@ export default function PracticeTest({ test, scheme, onFinish, onAnswerPick }: P
     setConfirming(false);
     setSubmitted(true);
     body.current?.scrollTo({ top: 0 });
-    onFinish(correct, total).catch(() => {});
+    onFinish(correct, total, answers).catch(() => {});
   };
 
   const retake = () => {
@@ -257,9 +259,16 @@ export default function PracticeTest({ test, scheme, onFinish, onAnswerPick }: P
             )}
           </>
         ) : (
-          <button className="btn" onClick={retake}>
-            <Icon name="rotateCcw" size={17} /> Retake test
-          </button>
+          <>
+            <button className={correct < total && onPracticeMistakes ? 'btn secondary' : 'btn'} onClick={retake}>
+              <Icon name="rotateCcw" size={17} /> Retake
+            </button>
+            {correct < total && onPracticeMistakes ? (
+              <button className="btn" onClick={() => onPracticeMistakes().catch(() => {})}>
+                <Icon name="refreshCw" size={16} /> Practice mistakes
+              </button>
+            ) : null}
+          </>
         )}
       </div>
     </div>

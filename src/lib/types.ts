@@ -178,8 +178,18 @@ export interface VideoLesson {
 }
 
 export type Artifact =
-  | { kind: 'practice-question'; data: PracticeQuestion }
-  | { kind: 'practice-test'; data: PracticeTest; lastScore?: { correct: number; total: number; at: number } }
+  | {
+      kind: 'practice-question';
+      data: PracticeQuestion;
+      /** The student's answer, so the card reopens answered and "Another question" can adapt. */
+      lastAnswer?: { choice: number; correct: boolean; at: number };
+    }
+  | {
+      kind: 'practice-test';
+      data: PracticeTest;
+      /** `answers` holds the chosen index per question (null = skipped), for "Practice my mistakes". */
+      lastScore?: { correct: number; total: number; at: number; answers?: (number | null)[] };
+    }
   | { kind: 'flashcards'; data: FlashcardDeck }
   | { kind: 'graph'; data: GraphSpec }
   | { kind: 'diagram'; data: DiagramSpec }

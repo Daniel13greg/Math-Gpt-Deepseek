@@ -14,7 +14,8 @@ export type TranscriptAction =
   | { type: 'open-image'; messageId: string; index: number }
   | { type: 'open-settings' }
   | { type: 'another-question'; messageId: string }
-  | { type: 'answered'; correct: boolean };
+  | { type: 'practice-mistakes'; messageId: string }
+  | { type: 'answered'; messageId: string; choice: number; correct: boolean };
 
 export interface TranscriptHandle extends DOMImperativeFactory {
   /**

@@ -167,8 +167,9 @@ const AssistantTurn = memo(
           <ArtifactView
             artifact={m.artifact}
             onOpen={() => act({ type: 'open-artifact', messageId: m.id })}
-            onAnswered={(correct) => act({ type: 'answered', correct })}
+            onAnswered={(choice, correct) => act({ type: 'answered', messageId: m.id, choice, correct })}
             onAnother={() => act({ type: 'another-question', messageId: m.id })}
+            onPracticeMistakes={() => act({ type: 'practice-mistakes', messageId: m.id })}
           />
         ) : null}
 
@@ -224,7 +225,8 @@ const AssistantTurn = memo(
     a.m.thinkingMs === b.m.thinkingMs &&
     !!a.m.artifact === !!b.m.artifact &&
     JSON.stringify(a.m.artifact?.kind === 'practice-test' ? a.m.artifact.lastScore : null) ===
-      JSON.stringify(b.m.artifact?.kind === 'practice-test' ? b.m.artifact.lastScore : null),
+      JSON.stringify(b.m.artifact?.kind === 'practice-test' ? b.m.artifact.lastScore : null) &&
+    a.m.artifact?.data === b.m.artifact?.data,
 );
 
 export default function Transcript({ messages, chatId, scheme, busy, onAction, ref }: TranscriptProps) {

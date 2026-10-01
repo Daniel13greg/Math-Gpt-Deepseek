@@ -19,14 +19,16 @@ const LETTERS = 'ABCDEFGH';
 
 interface Props {
   question: PracticeQuestion;
-  onAnswered?: (correct: boolean) => void;
+  /** A saved answer: the card opens already checked. */
+  lastAnswer?: { choice: number };
+  onAnswered?: (choice: number, correct: boolean) => void;
   onAnother?: () => void;
 }
 
 /** Interactive multiple-choice question: pick, check, hint, worked solution. */
-export function PracticeQuestionCard({ question, onAnswered, onAnother }: Props) {
-  const [selected, setSelected] = useState<number | null>(null);
-  const [checked, setChecked] = useState(false);
+export function PracticeQuestionCard({ question, lastAnswer, onAnswered, onAnother }: Props) {
+  const [selected, setSelected] = useState<number | null>(lastAnswer?.choice ?? null);
+  const [checked, setChecked] = useState(lastAnswer !== undefined);
   const [showHint, setShowHint] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const correct = selected === question.answerIndex;
@@ -34,7 +36,7 @@ export function PracticeQuestionCard({ question, onAnswered, onAnother }: Props)
   const check = () => {
     if (selected === null) return;
     setChecked(true);
-    onAnswered?.(selected === question.answerIndex);
+    onAnswered?.(selected, selected === question.answerIndex);
   };
 
   return (

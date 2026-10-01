@@ -1,3 +1,4 @@
+import { missedCount } from '@/lib/tools/adaptive';
 import type { Artifact } from '@/lib/types';
 
 import { DiagramView } from './DiagramView';
@@ -9,8 +10,9 @@ import { PracticeQuestionCard } from './PracticeQuestionCard';
 interface Props {
   artifact: Artifact;
   onOpen: () => void;
-  onAnswered: (correct: boolean) => void;
+  onAnswered: (choice: number, correct: boolean) => void;
   onAnother: () => void;
+  onPracticeMistakes: () => void;
 }
 
 function Head({ icon, title, sub }: { icon: IconName; title: string; sub: string }) {
@@ -28,10 +30,17 @@ function Head({ icon, title, sub }: { icon: IconName; title: string; sub: string
 }
 
 /** Inline rendering of a tool result inside the chat transcript. */
-export function ArtifactView({ artifact, onOpen, onAnswered, onAnother }: Props) {
+export function ArtifactView({ artifact, onOpen, onAnswered, onAnother, onPracticeMistakes }: Props) {
   switch (artifact.kind) {
     case 'practice-question':
-      return <PracticeQuestionCard question={artifact.data} onAnswered={onAnswered} onAnother={onAnother} />;
+      return (
+        <PracticeQuestionCard
+          question={artifact.data}
+          lastAnswer={artifact.lastAnswer}
+          onAnswered={onAnswered}
+          onAnother={onAnother}
+        />
+      );
 
     case 'practice-test': {
       const n = artifact.data.questions.length;
@@ -52,6 +61,11 @@ export function ArtifactView({ artifact, onOpen, onAnswered, onAnother }: Props)
             <button className="btn" onClick={onOpen}>
               {score ? 'Retake test' : 'Start test'} <Icon name="arrowRight" size={16} />
             </button>
+            {missedCount(artifact.data, score?.answers) > 0 ? (
+              <button className="btn secondary" onClick={onPracticeMistakes}>
+                <Icon name="refreshCw" size={15} /> Practice my mistakes
+              </button>
+            ) : null}
           </div>
         </div>
       );
