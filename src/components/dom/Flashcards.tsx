@@ -44,12 +44,19 @@ const CARDS_CSS = `
 .mg .done { text-align: center; margin: auto 0; }
 .mg .done h2 { margin: 12px 0 6px; font-size: 24px; }
 .mg .done .btn { margin-top: 12px; width: 100%; height: 48px; }
+.mg .next-review { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 14px; color: var(--primary-text); background: var(--primary-soft); border-radius: 999px; padding: 4px 12px; }
 `;
 
 interface Props {
   deck: FlashcardDeck;
   scheme: 'light' | 'dark';
   onFlip: () => Promise<void>;
+  /** Saves the answer for spaced repetition (card index in the deck). */
+  onGrade?: (card: number, gotIt: boolean) => Promise<void>;
+  /** Cards to study, in order (review mode passes just the due ones). Defaults to the whole deck. */
+  initialOrder?: number[];
+  /** Shown when the session ends, e.g. "tomorrow". */
+  nextReview?: string | null;
   dom?: DOMProps;
 }
 
@@ -62,8 +69,9 @@ function shuffled(n: number) {
   return a;
 }
 
-export default function Flashcards({ deck, scheme, onFlip }: Props) {
-  const [order, setOrder] = useState(() => deck.cards.map((_, i) => i));
+export default function Flashcards({ deck, scheme, onFlip, onGrade, initialOrder, nextReview }: Props) {
+  const [start] = useState(() => (initialOrder?.length ? initialOrder : deck.cards.map((_, i) => i)));
+  const [order, setOrder] = useState(start);
   const [pos, setPos] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [known, setKnown] = useState<Set<number>>(() => new Set());
@@ -77,6 +85,7 @@ export default function Flashcards({ deck, scheme, onFlip }: Props) {
   const mark = (gotIt: boolean) => {
     if (done) return;
     const id = order[pos];
+    onGrade?.(id, gotIt).catch(() => {});
     setKnown((s) => {
       const n = new Set(s);
       if (gotIt) n.add(id);
@@ -95,7 +104,7 @@ export default function Flashcards({ deck, scheme, onFlip }: Props) {
   };
 
   const restart = (subset?: number[]) => {
-    setOrder(subset ?? deck.cards.map((_, i) => i));
+    setOrder(subset ?? start);
     setPos(0);
     setFlipped(false);
     if (!subset) {
@@ -225,13 +234,18 @@ export default function Flashcards({ deck, scheme, onFlip }: Props) {
           <div className="done fade-in">
             <div style={{ fontSize: 46 }}>{learning.size === 0 ? '🎉' : '💪'}</div>
             <h2>
-              You know {known.size} of {deck.cards.length}
+              You know {known.size} of {order.length}
             </h2>
             <div className="muted">
               {learning.size === 0
                 ? 'Every card mastered. Nice!'
                 : `${learning.size} card${learning.size > 1 ? 's' : ''} still need practice.`}
             </div>
+            {nextReview ? (
+              <div className="next-review">
+                <Icon name="clock" size={15} /> Next review {nextReview}
+              </div>
+            ) : null}
             {learning.size > 0 ? (
               <button className="btn" onClick={() => restart([...learning])}>
                 Practice the {learning.size} I missed

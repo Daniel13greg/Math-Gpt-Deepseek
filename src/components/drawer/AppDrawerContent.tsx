@@ -5,6 +5,7 @@ import { Alert, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } f
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
+  FlashcardsIcon,
   NotebookPenIcon,
   PencilIcon,
   SearchIcon,
@@ -22,10 +23,12 @@ import { FontFamily } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { deleteChatWithFiles } from '@/lib/chat/controller';
 import { groupByDate } from '@/lib/dates';
+import { isDue } from '@/lib/srs';
 import type { Chat } from '@/lib/types';
 import { describeUsage } from '@/lib/usage';
 import { sortChats, useChats } from '@/store/chats';
 import { sortNotes, useNotes } from '@/store/notes';
+import { useReviews } from '@/store/reviews';
 import { useUI } from '@/store/ui';
 import { useUsage } from '@/store/usage';
 
@@ -73,6 +76,21 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
   }, [chats, query]);
 
   const recentNotes = useMemo(() => sortNotes(notes).slice(0, 4), [notes]);
+
+  // Flashcard decks with cards due today (decks whose message was deleted are skipped).
+  const reviewDecks = useReviews((s) => s.decks);
+  const dueDecks = useMemo(() => {
+    const out: { chatId: string; messageId: string; title: string; due: number }[] = [];
+    for (const [key, cards] of Object.entries(reviewDecks)) {
+      const [chatId, messageId] = key.split(':');
+      const message = chats[chatId]?.messages.find((m) => m.id === messageId);
+      if (message?.role !== 'assistant' || message.artifact?.kind !== 'flashcards') continue;
+      const deckSize = message.artifact.data.cards.length;
+      const due = Object.entries(cards).filter(([i, card]) => Number(i) < deckSize && isDue(card)).length;
+      if (due > 0) out.push({ chatId, messageId, title: message.artifact.data.title, due });
+    }
+    return out.sort((a, b) => b.due - a.due).slice(0, 5);
+  }, [reviewDecks, chats]);
 
   const close = () => navigation.closeDrawer();
 
@@ -123,6 +141,38 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
             New chat
           </AppText>
         </Pressable>
+
+        {dueDecks.length > 0 && !query ? (
+          <>
+            <AppText weight="semibold" size={12.5} color={colors.textMuted} style={styles.section}>
+              REVIEW TODAY
+            </AppText>
+            {dueDecks.map((deck) => (
+              <Pressable
+                key={`${deck.chatId}:${deck.messageId}`}
+                accessibilityRole="button"
+                accessibilityLabel={`Review ${deck.title}, ${deck.due} card${deck.due === 1 ? '' : 's'} due`}
+                onPress={() => {
+                  close();
+                  router.push({
+                    pathname: '/flashcards',
+                    params: { chatId: deck.chatId, messageId: deck.messageId, review: '1' },
+                  });
+                }}
+                style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}>
+                <FlashcardsIcon size={18} color={colors.primary} />
+                <AppText size={15} numberOfLines={1} style={styles.flex}>
+                  {deck.title}
+                </AppText>
+                <View style={[styles.badge, { backgroundColor: colors.primarySoft }]}>
+                  <AppText size={12} weight="semibold" color={colors.primary}>
+                    {deck.due}
+                  </AppText>
+                </View>
+              </Pressable>
+            ))}
+          </>
+        ) : null}
 
         {recentNotes.length > 0 && !query ? (
           <>
@@ -276,6 +326,7 @@ const styles = StyleSheet.create({
   chatRow: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
   empty: { textAlign: 'center', marginTop: 28, paddingHorizontal: 20 },
   footer: { borderTopWidth: 1, paddingTop: 6, paddingHorizontal: 8 },
+  badge: { minWidth: 24, height: 20, borderRadius: 10, paddingHorizontal: 7, alignItems: 'center', justifyContent: 'center' },
   menuMeta: { paddingHorizontal: 24, paddingBottom: 6 },
   menu: { paddingTop: 8 },
   menuRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 24, height: 52 },

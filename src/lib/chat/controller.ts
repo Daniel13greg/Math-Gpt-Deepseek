@@ -12,6 +12,7 @@ import { ArtifactError } from '@/lib/tools/normalize';
 import { generateArtifact } from '@/lib/tools/generate';
 import type { AssistantMessage, ImageAttachment, UserMessage } from '@/lib/types';
 import { getChat, useChats } from '@/store/chats';
+import { useReviews } from '@/store/reviews';
 import { useSettings } from '@/store/settings';
 
 import { fitToBudget, toApiMessages } from './history';
@@ -282,10 +283,11 @@ async function maybeGenerateTitle(chatId: string) {
   }
 }
 
-/** Deletes a chat and the image files it owns. */
+/** Deletes a chat, the image files it owns and its flashcard review schedules. */
 export function deleteChatWithFiles(chatId: string) {
   stopGeneration(chatId);
   const chat = getChat(chatId);
   chat?.messages.forEach((m) => m.role === 'user' && deleteImageFiles(m.images));
   useChats.getState().deleteChat(chatId);
+  useReviews.getState().forgetChat(chatId);
 }

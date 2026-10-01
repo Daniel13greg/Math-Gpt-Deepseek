@@ -20,6 +20,7 @@ import { DEFAULT_BASE_URL, MODELS } from '@/lib/deepseek/models';
 import { getSpeechLib } from '@/lib/speech/recognition';
 import { useChats } from '@/store/chats';
 import { useNotes } from '@/store/notes';
+import { useReviews } from '@/store/reviews';
 import { useSettings } from '@/store/settings';
 import { toast } from '@/store/toast';
 
@@ -299,7 +300,12 @@ export default function SettingsScreen() {
         <Section title="Data" footer="Chats and notes are stored only on this device.">
           <Row
             label="Delete all chats"
-            onPress={() => confirm('Delete all chats?', 'This cannot be undone.', () => useChats.getState().deleteAllChats())}
+            onPress={() =>
+              confirm('Delete all chats?', 'This cannot be undone.', () => {
+                useChats.getState().deleteAllChats();
+                useReviews.getState().forgetAll();
+              })
+            }
           />
           <Divider />
           <Row
