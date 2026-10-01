@@ -207,6 +207,7 @@ const AssistantTurn = memo(
                 <IconButton icon="copy" label="Copy" onClick={() => act({ type: 'copy', messageId: m.id })} />
                 <IconButton icon="volume2" label="Read aloud" onClick={() => act({ type: 'speak', messageId: m.id })} />
                 <IconButton icon="share2" label="Share" onClick={() => act({ type: 'share', messageId: m.id })} />
+                <IconButton icon="fileDown" label="Save as PDF" onClick={() => act({ type: 'export-pdf', messageId: m.id })} />
               </>
             ) : null}
             {isLast && !busy ? (

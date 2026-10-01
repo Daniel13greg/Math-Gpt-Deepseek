@@ -15,6 +15,7 @@ export { default as CircleHelpIcon } from 'lucide-react-native/icons/circle-ques
 export { default as ClipboardCheckIcon } from 'lucide-react-native/icons/clipboard-check';
 export { default as CopyIcon } from 'lucide-react-native/icons/copy';
 export { default as FileIcon } from 'lucide-react-native/icons/file';
+export { default as FileDownIcon } from 'lucide-react-native/icons/file-down';
 export { default as FileTextIcon } from 'lucide-react-native/icons/file-text';
 export { default as GraduationCapIcon } from 'lucide-react-native/icons/graduation-cap';
 export { default as ImageIcon } from 'lucide-react-native/icons/image';

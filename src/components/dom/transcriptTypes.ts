@@ -6,6 +6,7 @@ export type TranscriptAction =
   | { type: 'copy'; messageId: string }
   | { type: 'copy-text'; text: string }
   | { type: 'share'; messageId: string }
+  | { type: 'export-pdf'; messageId: string }
   | { type: 'speak'; messageId: string }
   | { type: 'regenerate'; messageId: string }
   | { type: 'edit'; messageId: string }

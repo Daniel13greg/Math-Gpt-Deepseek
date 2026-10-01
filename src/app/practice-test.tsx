@@ -1,12 +1,15 @@
 import * as Haptics from 'expo-haptics';
 import { router, Stack } from 'expo-router';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import PracticeTest from '@/components/dom/PracticeTest';
+import { FileDownIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { useArtifact } from '@/hooks/useArtifact';
+import { usePdfExport } from '@/hooks/usePdfExport';
 import { useTheme } from '@/hooks/useTheme';
+import { practiceTestSections } from '@/lib/tools/printable';
 import { practiceMistakes } from '@/lib/chat/controller';
 import { useChats } from '@/store/chats';
 
@@ -14,6 +17,7 @@ export default function PracticeTestScreen() {
   const { chatId, messageId, artifact } = useArtifact('practice-test');
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
+  const pdf = usePdfExport();
 
   if (!artifact) {
     return (
@@ -25,7 +29,22 @@ export default function PracticeTestScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background, paddingBottom: insets.bottom }]}>
-      <Stack.Screen options={{ title: artifact.data.title }} />
+      <Stack.Screen
+        options={{
+          title: artifact.data.title,
+          headerRight: () => (
+            <Pressable
+              onPress={() => pdf.exportPdf({ title: artifact.data.title, sections: practiceTestSections(artifact.data) })}
+              hitSlop={10}
+              style={styles.headerButton}
+              accessibilityRole="button"
+              accessibilityLabel="Save test as PDF">
+              <FileDownIcon size={22} color={colors.icon} />
+            </Pressable>
+          ),
+        }}
+      />
+      {pdf.exporter}
       <PracticeTest
         test={artifact.data}
         scheme={scheme}
@@ -58,5 +77,6 @@ export default function PracticeTestScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  headerButton: { paddingHorizontal: 6 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
 });

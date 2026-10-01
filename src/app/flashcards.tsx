@@ -1,14 +1,17 @@
 import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Flashcards from '@/components/dom/Flashcards';
+import { FileDownIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { useArtifact } from '@/hooks/useArtifact';
+import { usePdfExport } from '@/hooks/usePdfExport';
 import { useTheme } from '@/hooks/useTheme';
 import { describeDue, isDue } from '@/lib/srs';
+import { flashcardsMarkdown } from '@/lib/tools/printable';
 import { deckKey, useReviews } from '@/store/reviews';
 
 export default function FlashcardsScreen() {
@@ -16,6 +19,7 @@ export default function FlashcardsScreen() {
   const { review } = useLocalSearchParams<{ review?: string }>();
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
+  const pdf = usePdfExport();
   const key = deckKey(chatId, messageId);
   const schedules = useReviews((s) => s.decks[key]);
   // Review mode studies only the cards due today, most overdue first (fixed when the screen opens).
@@ -40,7 +44,22 @@ export default function FlashcardsScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background, paddingBottom: insets.bottom }]}>
-      <Stack.Screen options={{ title: review ? `Review: ${artifact.data.title}` : artifact.data.title }} />
+      <Stack.Screen
+        options={{
+          title: review ? `Review: ${artifact.data.title}` : artifact.data.title,
+          headerRight: () => (
+            <Pressable
+              onPress={() => pdf.exportPdf({ title: artifact.data.title, sections: [flashcardsMarkdown(artifact.data)] })}
+              hitSlop={10}
+              style={styles.headerButton}
+              accessibilityRole="button"
+              accessibilityLabel="Save flashcards as PDF">
+              <FileDownIcon size={22} color={colors.icon} />
+            </Pressable>
+          ),
+        }}
+      />
+      {pdf.exporter}
       <Flashcards
         deck={artifact.data}
         scheme={scheme}
@@ -60,5 +79,6 @@ export default function FlashcardsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  headerButton: { paddingHorizontal: 6 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
 });

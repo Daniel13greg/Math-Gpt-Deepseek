@@ -10,6 +10,7 @@ import {
   BookCheckIcon,
   BookIcon,
   CopyIcon,
+  FileDownIcon,
   FlashcardsIcon,
   MessageCircleQuestionIcon,
   RefreshIcon,
@@ -19,6 +20,7 @@ import {
 } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { MaxContentWidth } from '@/constants/theme';
+import { usePdfExport } from '@/hooks/usePdfExport';
 import { useTheme } from '@/hooks/useTheme';
 import { askAboutNote, studyFromNote, type LectureTool } from '@/lib/chat/controller';
 import { generateLectureNotes, stopNotes } from '@/lib/notes/generate';
@@ -45,6 +47,7 @@ export default function NoteScreen() {
   const [tab, setTab] = useState<Tab>('notes');
   const thinking = useSettings((s) => s.thinking);
   const prices = useUsage((s) => s.prices);
+  const pdf = usePdfExport();
 
   if (!note) {
     return (
@@ -190,6 +193,7 @@ export default function NoteScreen() {
         </View>
       ) : null}
 
+      {pdf.exporter}
       <View style={[styles.actions, { borderTopColor: colors.hairline, paddingBottom: Math.max(insets.bottom, 10) }]}>
         {generating ? (
           <Pressable style={styles.action} onPress={() => stopNotes(note.id)}>
@@ -215,6 +219,23 @@ export default function NoteScreen() {
           <CopyIcon size={20} color={colors.icon} />
           <AppText size={12} secondary>
             Copy
+          </AppText>
+        </Pressable>
+        <Pressable
+          style={styles.action}
+          disabled={!note.notes || generating}
+          onPress={() =>
+            pdf.exportPdf({
+              title: note.title,
+              sections: [note.notes.replace(/^#\s+.*\n+/, '')],
+              meta: [new Date(note.createdAt).toLocaleDateString(), formatDuration(note.durationSec)].filter(Boolean).join(' · '),
+            })
+          }
+          accessibilityRole="button"
+          accessibilityLabel="Save notes as PDF">
+          <FileDownIcon size={20} color={colors.icon} />
+          <AppText size={12} secondary>
+            PDF
           </AppText>
         </Pressable>
         <Pressable style={styles.action} onPress={() => text && Share.share({ message: text, title: note.title })}>
@@ -259,5 +280,5 @@ const styles = StyleSheet.create({
   studyRow: { paddingHorizontal: 16, gap: 8 },
   studyChip: { flexDirection: 'row', alignItems: 'center', gap: 7, height: 38, paddingHorizontal: 14, borderRadius: 19, borderWidth: 1 },
   actions: { flexDirection: 'row', justifyContent: 'space-around', borderTopWidth: 1, paddingTop: 8 },
-  action: { alignItems: 'center', gap: 3, minWidth: 64, paddingVertical: 2 },
+  action: { alignItems: 'center', gap: 3, minWidth: 56, paddingVertical: 2 },
 });

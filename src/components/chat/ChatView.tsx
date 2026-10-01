@@ -14,8 +14,10 @@ import { headerHeight } from '@/components/header/MainHeader';
 import { NotebookPenIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { DISCLAIMER } from '@/constants/app';
+import { getSubject } from '@/constants/subjects';
 import { MaxContentWidth } from '@/constants/theme';
 import { useDictation } from '@/hooks/useDictation';
+import { usePdfExport } from '@/hooks/usePdfExport';
 import { useTheme } from '@/hooks/useTheme';
 import {
   anotherQuestion,
@@ -103,6 +105,7 @@ export function ChatView() {
   const [attachOpen, setAttachOpen] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const dictationBase = useRef('');
+  const pdf = usePdfExport();
 
   // Streamed text is patched straight into the WebView instead of re-sending every message.
   useEffect(
@@ -175,6 +178,22 @@ export function ChatView() {
       case 'share': {
         const text = messageText(findMessage(action.messageId));
         if (text) await Share.share({ message: text });
+        break;
+      }
+      case 'export-pdf': {
+        const m = findMessage(action.messageId);
+        if (m?.role !== 'assistant' || !m.content.trim()) break;
+        const chat = getChat(chatId);
+        const asked = chat?.messages[chat.messages.indexOf(m) - 1];
+        const title =
+          asked?.role === 'user' && asked.tool?.kind === 'study-guide' && asked.tool.topic
+            ? `Study Guide: ${asked.tool.topic}`
+            : (chat?.title ?? 'Answer');
+        pdf.exportPdf({
+          title,
+          sections: [m.content],
+          meta: `${new Date(m.createdAt).toLocaleDateString()} · ${chat ? getSubject(chat.subject).label : ''}`,
+        });
         break;
       }
       case 'speak': {
@@ -298,6 +317,7 @@ export function ChatView() {
       </View>
 
       <ProblemPicker />
+      {pdf.exporter}
       <ToolsSheet visible={toolsOpen} onClose={() => setToolsOpen(false)} onSelect={(tool) => ui.setTool(tool)} />
       <AttachSheet
         visible={attachOpen}
