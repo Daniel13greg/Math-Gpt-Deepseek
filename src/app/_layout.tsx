@@ -11,6 +11,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { ToastHost } from '@/components/ui/Toast';
 import { FontFamily } from '@/constants/theme';
+import { useShareIntake } from '@/hooks/useShareIntake';
 import { useTheme } from '@/hooks/useTheme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -19,6 +20,7 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold });
   const { colors, dark } = useTheme();
   const ready = fontsLoaded || !!fontError;
+  useShareIntake();
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => {});
@@ -61,6 +63,7 @@ export default function RootLayout() {
           <Stack.Screen name="video" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
           <Stack.Screen name="notes/[id]" options={{ ...header, title: 'Lecture Notes' }} />
           <Stack.Screen name="image" options={{ presentation: 'transparentModal', animation: 'fade' }} />
+          <Stack.Screen name="expo-sharing" options={{ animation: 'none' }} />
           <Stack.Screen name="math-input" options={{ ...header, title: 'Write math', presentation: 'modal' }} />
         </Stack>
         <ToastHost />

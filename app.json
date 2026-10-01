@@ -76,6 +76,28 @@
           ]
         }
       ],
+      [
+        "expo-sharing",
+        {
+          "ios": {
+            "enabled": true,
+            "activationRule": {
+              "supportsImageWithMaxCount": 4,
+              "supportsText": true
+            }
+          },
+          "android": {
+            "enabled": true,
+            "singleShareMimeTypes": [
+              "image/*",
+              "text/plain"
+            ],
+            "multipleShareMimeTypes": [
+              "image/*"
+            ]
+          }
+        }
+      ],
       "expo-secure-store",
       "expo-sqlite",
       "expo-web-browser",
