@@ -7,6 +7,7 @@ import { Platform } from 'react-native';
 import PdfExporter from '@/components/dom/PdfExporter';
 import { pdfFileName } from '@/lib/tools/printable';
 import { toast } from '@/store/toast';
+import { t } from '@/i18n';
 
 export interface PdfJob {
   title: string;
@@ -23,7 +24,7 @@ async function savePdf(html: string, title: string) {
     frame.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0';
     document.body.appendChild(frame);
     const doc = frame.contentDocument;
-    if (!doc || !frame.contentWindow) throw new Error("Couldn't open the print dialog.");
+    if (!doc || !frame.contentWindow) throw new Error(t('pdf.printFailed'));
     doc.open();
     doc.write(html);
     doc.close();
@@ -60,7 +61,7 @@ export function usePdfExport() {
         try {
           await savePdf(html, title);
         } catch (e) {
-          toast.error(e instanceof Error && e.message ? e.message : "Couldn't create the PDF.");
+          toast.error(e instanceof Error && e.message ? e.message : t('pdf.failed'));
         }
       }}
       dom={{ style: { position: 'absolute', width: 1, height: 1, opacity: 0 }, scrollEnabled: false }}

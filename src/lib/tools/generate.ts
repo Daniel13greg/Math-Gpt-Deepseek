@@ -17,6 +17,7 @@ import {
   normalizeVideo,
 } from './normalize';
 import { applyKeyChecks, checkAnswerKeys } from './verify';
+import { t } from '@/i18n';
 
 export type { ArtifactToolKind };
 
@@ -43,22 +44,22 @@ export function progressLabel(kind: ArtifactToolKind, partial: string): string {
   switch (kind) {
     case 'practice-test': {
       const n = count('question');
-      return n > 0 ? `Writing question ${n}…` : 'Planning your practice test…';
+      return n > 0 ? t('progress.question', { n }) : t('progress.planTest');
     }
     case 'flashcards': {
       const n = count('front');
-      return n > 0 ? `Writing card ${n}…` : 'Choosing key terms…';
+      return n > 0 ? t('progress.card', { n }) : t('progress.planCards');
     }
     case 'video': {
       const n = count('heading');
-      return n > 0 ? `Scripting scene ${n}…` : 'Planning your video lesson…';
+      return n > 0 ? t('progress.scene', { n }) : t('progress.planVideo');
     }
     case 'practice-question':
-      return partial.includes('"explanation"') ? 'Writing the solution…' : 'Writing your question…';
+      return partial.includes('"explanation"') ? t('progress.solution') : t('progress.writeQuestion');
     case 'graph':
-      return 'Plotting your graph…';
+      return t('progress.graph');
     case 'diagram':
-      return 'Drawing your diagram…';
+      return t('progress.diagram');
   }
 }
 
@@ -109,7 +110,7 @@ async function generateOnce(opts: GenerateArtifactOptions): Promise<Artifact> {
         onReasoning: (delta) => {
           if (!thinkingLabelShown) {
             thinkingLabelShown = true;
-            opts.onProgress?.('Thinking it through…');
+            opts.onProgress?.(t('progress.thinking'));
           }
           opts.onReasoning?.(delta);
         },
@@ -127,15 +128,15 @@ async function generateOnce(opts: GenerateArtifactOptions): Promise<Artifact> {
     );
 
     try {
-      if (!result.content.trim()) throw new ArtifactError('The reply was empty.');
+      if (!result.content.trim()) throw new ArtifactError(t('artifactError.empty'));
       return buildArtifact(opts.kind, extractJson(result.content), opts.topic, opts.diagram);
     } catch (error) {
       if (error instanceof DeepSeekError || attempt >= 1) {
         if (error instanceof ArtifactError || error instanceof DeepSeekError) throw error;
-        throw new ArtifactError("DeepSeek's reply couldn't be read. Please try again.");
+        throw new ArtifactError(t('artifactError.unreadable'));
       }
       const reason = error instanceof Error ? error.message : 'invalid JSON';
-      opts.onProgress?.('Fixing a formatting issue…');
+      opts.onProgress?.(t('progress.fixing'));
       messages.push(
         { role: 'assistant', content: result.content, ...(opts.thinking ? { reasoning_content: result.reasoning } : {}) },
         {
@@ -159,7 +160,7 @@ export async function generateArtifact(opts: GenerateArtifactOptions): Promise<A
   const artifact = await generateOnce(opts);
   if (opts.verify === false) return artifact;
   const check = (questions: MultipleChoiceQuestion[]) => {
-    opts.onProgress?.('Double-checking the answers…');
+    opts.onProgress?.(t('progress.checking'));
     return checkAnswerKeys(questions, {
       config: opts.config,
       model: opts.model,
@@ -181,7 +182,7 @@ export async function generateArtifact(opts: GenerateArtifactOptions): Promise<A
   if (artifact.kind === 'practice-question') {
     const [ok] = await check([artifact.data]);
     if (ok !== false) return artifact;
-    opts.onProgress?.('Writing a clearer question…');
+    opts.onProgress?.(t('progress.rewriting'));
     const retry = await generateOnce(opts);
     if (retry.kind !== 'practice-question') return retry;
     const [retryOk] = await check([retry.data]);

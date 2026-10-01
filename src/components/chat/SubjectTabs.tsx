@@ -4,10 +4,12 @@ import { Pressable, ScrollView, StyleSheet, type LayoutRectangle } from 'react-n
 import { SUBJECTS, type SubjectId } from '@/constants/subjects';
 import { AppText } from '@/components/ui/AppText';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
 
 /** Horizontally scrolling subject picker (Math, Physics, Accounting, Chemistry, ...). */
 export function SubjectTabs({ value, onChange }: { value: SubjectId; onChange: (id: SubjectId) => void }) {
   const { colors } = useTheme();
+  const { t } = useT();
   const scrollRef = useRef<ScrollView>(null);
   const layouts = useRef<Partial<Record<SubjectId, LayoutRectangle>>>({});
 
@@ -37,7 +39,7 @@ export function SubjectTabs({ value, onChange }: { value: SubjectId; onChange: (
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}>
             <AppText size={15.5} weight="semibold" color={active ? colors.textStrong : colors.tabInactive}>
-              {s.label}
+              {t(`subject.${s.id}`)}
             </AppText>
           </Pressable>
         );

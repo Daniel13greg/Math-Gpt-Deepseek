@@ -1,3 +1,5 @@
+import type { Params, StringKey } from '@/i18n/strings';
+
 export type ToolKind =
   | 'check-work'
   | 'video'
@@ -23,101 +25,34 @@ export interface ToolSelection {
   diagram?: DiagramKind;
 }
 
-export interface ToolInfo {
-  kind: ToolKind;
-  /** Label in the Tools sheet. */
-  title: string;
-  /** Short label for the chip shown in the composer. */
-  chip: string;
-  /** Composer placeholder while the tool is selected. */
-  placeholder: string;
-  /** Verb phrase used to build the visible user message, e.g. "Create a practice test on". */
-  request: string;
-}
-
-export const TOOLS: ToolInfo[] = [
-  {
-    kind: 'check-work',
-    title: 'Check My Work',
-    chip: 'Check My Work',
-    placeholder: 'Add a photo of your working, or type it here',
-    request: 'Check my work',
-  },
-  {
-    kind: 'video',
-    title: 'Create Video',
-    chip: 'Video',
-    placeholder: 'What should the video explain?',
-    request: 'Create a video lesson about',
-  },
-  {
-    kind: 'practice-test',
-    title: 'Create Practice Test',
-    chip: 'Practice Test',
-    placeholder: 'Topic for your practice test',
-    request: 'Create a practice test on',
-  },
-  {
-    kind: 'practice-question',
-    title: 'Create Practice Question',
-    chip: 'Practice Question',
-    placeholder: 'Topic for a practice question',
-    request: 'Create a practice question on',
-  },
-  {
-    kind: 'graph',
-    title: 'Create Graph',
-    chip: 'Graph',
-    placeholder: 'What should I graph? e.g. y = x^2 - 4',
-    request: 'Graph',
-  },
-  {
-    kind: 'diagram',
-    title: 'Create Diagram',
-    chip: 'Diagram',
-    placeholder: 'Describe the diagram you need',
-    request: 'Create a diagram of',
-  },
-  {
-    kind: 'study-guide',
-    title: 'Create Study Guide',
-    chip: 'Study Guide',
-    placeholder: 'Topic for your study guide',
-    request: 'Create a study guide on',
-  },
-  {
-    kind: 'flashcards',
-    title: 'Create Flashcards',
-    chip: 'Flashcards',
-    placeholder: 'Topic for your flashcards',
-    request: 'Create flashcards on',
-  },
+/** Order of the Tools sheet. Titles and placeholders live in the translations ("tool.<kind>.title"). */
+export const TOOL_KINDS: ToolKind[] = [
+  'check-work',
+  'video',
+  'practice-test',
+  'practice-question',
+  'graph',
+  'diagram',
+  'study-guide',
+  'flashcards',
 ];
 
-export const DIAGRAM_KINDS: { kind: DiagramKind; title: string; placeholder: string }[] = [
-  { kind: 'flowchart', title: 'Flowchart', placeholder: 'Process to map, e.g. solving a quadratic' },
-  { kind: 'mindmap', title: 'Mind Map', placeholder: 'Topic to map, e.g. cell biology' },
-  { kind: 'geometry', title: 'Geometry Figure', placeholder: 'Figure to draw, e.g. inscribed angle theorem' },
-  { kind: 'free-body', title: 'Free-Body Diagram', placeholder: 'Situation, e.g. block on a 30° incline' },
-  { kind: 'venn', title: 'Venn Diagram', placeholder: 'Sets to compare, e.g. mitosis vs meiosis' },
-];
+export const DIAGRAM_KINDS: DiagramKind[] = ['flowchart', 'mindmap', 'geometry', 'free-body', 'venn'];
 
-export function getTool(kind: ToolKind): ToolInfo {
-  const tool = TOOLS.find((t) => t.kind === kind);
-  if (!tool) throw new Error(`Unknown tool: ${kind}`);
-  return tool;
+type Translate = (key: StringKey, params?: Params) => string;
+
+export function toolChipLabel(selection: ToolSelection, t: Translate): string {
+  if (selection.kind === 'diagram' && selection.diagram) return t(`diagram.${selection.diagram}.title`);
+  return t(`tool.${selection.kind}.chip`);
 }
 
-export function getDiagramKind(kind: DiagramKind | undefined) {
-  return DIAGRAM_KINDS.find((d) => d.kind === kind) ?? DIAGRAM_KINDS[0];
+export function toolPlaceholder(selection: ToolSelection, t: Translate): string {
+  if (selection.kind === 'diagram') return t(`diagram.${selection.diagram ?? 'flowchart'}.placeholder`);
+  return t(`tool.${selection.kind}.placeholder`);
 }
 
-export function toolChipLabel(selection: ToolSelection): string {
-  if (selection.kind === 'diagram' && selection.diagram) return getDiagramKind(selection.diagram).title;
-  return getTool(selection.kind).chip;
-}
-
-export function toolPlaceholder(selection: ToolSelection): string {
-  if (selection.kind === 'diagram') return getDiagramKind(selection.diagram).placeholder;
-  return getTool(selection.kind).placeholder;
+/** The visible message for a tool request, e.g. "Create a practice test on derivatives". */
+export function toolRequestLabel(selection: ToolSelection, topic: string, t: Translate): string {
+  const prefix = selection.kind === 'diagram' ? (`diagram.${selection.diagram ?? 'flowchart'}` as const) : (`tool.${selection.kind}` as const);
+  return topic ? t(`${prefix}.request`, { topic }) : t(`${prefix}.requestBare`);
 }

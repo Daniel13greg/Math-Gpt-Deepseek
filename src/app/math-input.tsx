@@ -5,11 +5,13 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import MathEditor from '@/components/dom/MathEditor';
 import { AppText } from '@/components/ui/AppText';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
 import { insertMath } from '@/lib/mathInput';
 import { useUI } from '@/store/ui';
 
 export default function MathInputScreen() {
   const { colors, scheme } = useTheme();
+  const { t, lang } = useT();
   const latex = useRef('');
 
   const insert = () => {
@@ -24,14 +26,14 @@ export default function MathInputScreen() {
           headerLeft: () => (
             <Pressable onPress={() => router.back()} hitSlop={10} accessibilityRole="button" style={styles.headerButton}>
               <AppText size={16} color={colors.textSecondary}>
-                Cancel
+                {t('common.cancel')}
               </AppText>
             </Pressable>
           ),
           headerRight: () => (
             <Pressable onPress={insert} hitSlop={10} accessibilityRole="button" style={styles.headerButton}>
               <AppText size={16} weight="semibold" color={colors.primary}>
-                Insert
+                {t('math.insert')}
               </AppText>
             </Pressable>
           ),
@@ -39,6 +41,7 @@ export default function MathInputScreen() {
       />
       <MathEditor
         scheme={scheme}
+        lang={lang}
         onChange={async (value) => {
           latex.current = value;
         }}

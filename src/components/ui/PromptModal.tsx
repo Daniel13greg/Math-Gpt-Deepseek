@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Modal, Pressable, StyleSheet, TextInput, View } f
 
 import { FontFamily } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
 
 import { AppText } from './AppText';
 
@@ -28,8 +29,9 @@ export function PromptModal(props: PromptModalProps) {
   );
 }
 
-function PromptCard({ title, initialValue, confirmLabel = 'Save', onCancel, onConfirm }: PromptModalProps) {
+function PromptCard({ title, initialValue, confirmLabel, onCancel, onConfirm }: PromptModalProps) {
   const { colors } = useTheme();
+  const { t } = useT();
   const [value, setValue] = useState(initialValue);
   return (
     <View style={[styles.card, { backgroundColor: colors.card }]}>
@@ -48,12 +50,12 @@ function PromptCard({ title, initialValue, confirmLabel = 'Save', onCancel, onCo
       <View style={styles.buttons}>
         <Pressable accessibilityRole="button" onPress={onCancel} style={styles.button} hitSlop={6}>
           <AppText weight="medium" size={16} secondary>
-            Cancel
+            {t('common.cancel')}
           </AppText>
         </Pressable>
         <Pressable accessibilityRole="button" onPress={() => onConfirm(value)} style={styles.button} hitSlop={6}>
           <AppText weight="semibold" size={16} color={colors.primary}>
-            {confirmLabel}
+            {confirmLabel ?? t('common.save')}
           </AppText>
         </Pressable>
       </View>

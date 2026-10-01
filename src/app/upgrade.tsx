@@ -8,26 +8,27 @@ import { AppText } from '@/components/ui/AppText';
 import { APP_NAME } from '@/constants/app';
 import { MaxContentWidth } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
+import { useT, type StringKey } from '@/i18n';
 import { MODELS } from '@/lib/deepseek/models';
 import { useHasApiKey, useSettings } from '@/store/settings';
 
 const FEATURES = [
-  'Step-by-step solutions for 10 subjects',
-  'Snap a photo of any problem',
-  'Deep Think reasoning for hard problems',
-  'Lecture notes from recordings',
-  'Practice tests, flashcards, graphs, diagrams & video lessons',
-];
+  'upgrade.feature.steps',
+  'upgrade.feature.photo',
+  'upgrade.feature.think',
+  'upgrade.feature.notes',
+  'upgrade.feature.tools',
+] as const;
 
-const PLAN_COPY: Record<string, { name: string; blurb: string; badge?: string }> = {
+const PLAN_COPY: Record<string, { name: string; blurb: StringKey; badge?: StringKey }> = {
   'deepseek-flash': {
     name: 'Flash',
-    blurb: 'DeepSeek V4.1 Flash. Fast answers, reads photos of problems, and Deep Think included.',
-    badge: 'Recommended',
+    blurb: 'upgrade.flash.blurb',
+    badge: 'upgrade.recommended',
   },
   'deepseek-v4-pro': {
     name: 'Pro',
-    blurb: 'DeepSeek V4 Pro. The strongest reasoning for proofs and olympiad-style problems (text only).',
+    blurb: 'upgrade.pro.blurb',
   },
 };
 
@@ -37,6 +38,7 @@ const PLAN_COPY: Record<string, { name: string; blurb: string; badge?: string }>
  */
 export default function UpgradeScreen() {
   const { colors } = useTheme();
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const model = useSettings((s) => s.model);
   const thinking = useSettings((s) => s.thinking);
@@ -51,7 +53,7 @@ export default function UpgradeScreen() {
           onPress={() => router.back()}
           hitSlop={12}
           style={styles.close}
-          accessibilityLabel="Close">
+          accessibilityLabel={t('common.close')}>
           <XIcon size={24} color={colors.icon} />
         </Pressable>
 
@@ -61,7 +63,7 @@ export default function UpgradeScreen() {
             {APP_NAME} Pro
           </AppText>
           <AppText size={16} secondary align="center" style={styles.subtitle}>
-            Every feature is unlocked with your DeepSeek API key. No subscription: you pay DeepSeek directly for what you use.
+            {t('upgrade.subtitle')}
           </AppText>
         </View>
 
@@ -72,17 +74,20 @@ export default function UpgradeScreen() {
                 <CheckIcon size={14} color={colors.primary} strokeWidth={3} />
               </View>
               <AppText size={15} style={styles.flex}>
-                {f}
+                {t(f)}
               </AppText>
             </View>
           ))}
         </View>
 
         <AppText weight="semibold" size={13} color={colors.textMuted} style={styles.label}>
-          CHOOSE YOUR MODEL
+          {t('upgrade.chooseModel').toUpperCase()}
         </AppText>
         {MODELS.map((m) => {
-          const copy = PLAN_COPY[m.id] ?? { name: m.label, blurb: m.description };
+          const plan = PLAN_COPY[m.id];
+          const copy = plan
+            ? { name: plan.name, blurb: t(plan.blurb), badge: plan.badge && t(plan.badge) }
+            : { name: m.label, blurb: m.description, badge: undefined };
           const selected = model === m.id;
           return (
             <Pressable
@@ -124,11 +129,10 @@ export default function UpgradeScreen() {
         <View style={[styles.plan, styles.toggle, { borderColor: colors.cardBorder, backgroundColor: colors.card }]}>
           <View style={styles.flex}>
             <AppText weight="semibold" size={16}>
-              Deep Think
+              {t('deepThink.title')}
             </AppText>
             <AppText size={14} secondary>
-              On for every model. Thinks before answering and before writing tests, flashcards and notes. Slower, but more
-              accurate.
+              {t('upgrade.deepThink')}
             </AppText>
           </View>
           <Switch
@@ -149,7 +153,7 @@ export default function UpgradeScreen() {
             if (!hasKey) router.push('/settings');
           }}>
           <AppText weight="semibold" size={17} color="#fff">
-            {hasKey ? 'Continue' : 'Add your DeepSeek API key'}
+            {hasKey ? t('upgrade.continue') : t('upgrade.addKey')}
           </AppText>
         </Pressable>
       </View>

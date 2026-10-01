@@ -1,3 +1,5 @@
+import { translate, type LanguageCode } from '@/i18n/strings';
+
 export interface DateGroup<T> {
   label: string;
   items: T[];
@@ -12,7 +14,12 @@ function startOfDay(t: number) {
 }
 
 /** Groups items (already sorted newest first) into Today / Yesterday / Previous 7 days / Previous 30 days / Month Year. */
-export function groupByDate<T>(items: T[], getTime: (item: T) => number, now = Date.now()): DateGroup<T>[] {
+export function groupByDate<T>(
+  items: T[],
+  getTime: (item: T) => number,
+  lang: LanguageCode = 'en',
+  now = Date.now(),
+): DateGroup<T>[] {
   const today = startOfDay(now);
   const groups: DateGroup<T>[] = [];
   const push = (label: string, item: T) => {
@@ -23,11 +30,11 @@ export function groupByDate<T>(items: T[], getTime: (item: T) => number, now = D
   for (const item of items) {
     const t = getTime(item);
     let label: string;
-    if (t >= today) label = 'Today';
-    else if (t >= today - DAY) label = 'Yesterday';
-    else if (t >= today - 7 * DAY) label = 'Previous 7 days';
-    else if (t >= today - 30 * DAY) label = 'Previous 30 days';
-    else label = new Date(t).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    if (t >= today) label = translate(lang, 'dates.today');
+    else if (t >= today - DAY) label = translate(lang, 'dates.yesterday');
+    else if (t >= today - 7 * DAY) label = translate(lang, 'dates.previous7');
+    else if (t >= today - 30 * DAY) label = translate(lang, 'dates.previous30');
+    else label = new Date(t).toLocaleDateString(lang, { month: 'long', year: 'numeric' });
     push(label, item);
   }
   return groups;

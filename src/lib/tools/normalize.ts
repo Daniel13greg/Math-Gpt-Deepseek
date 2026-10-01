@@ -14,6 +14,7 @@ import type {
   VennRegion,
   VideoLesson,
 } from '@/lib/types';
+import { t } from '@/i18n';
 
 /**
  * Model JSON is "mostly right". These normalizers accept the common variations
@@ -96,7 +97,7 @@ function normalizeMCQ(raw: unknown): MultipleChoiceQuestion | null {
 export function normalizePracticeQuestion(raw: unknown, topic: string): PracticeQuestion {
   const source = isObj(raw) && isObj(raw.question) ? raw.question : raw;
   const q = normalizeMCQ(source);
-  if (!q) throw new ArtifactError('The practice question came back incomplete. Try again.');
+  if (!q) throw new ArtifactError(t('artifactError.question'));
   const difficulty = str(isObj(raw) ? raw.difficulty : '').toLowerCase();
   return {
     ...q,
@@ -106,17 +107,17 @@ export function normalizePracticeQuestion(raw: unknown, topic: string): Practice
 }
 
 export function normalizePracticeTest(raw: unknown, topic: string): PracticeTest {
-  if (!isObj(raw)) throw new ArtifactError('The practice test came back in an unexpected format.');
+  if (!isObj(raw)) throw new ArtifactError(t('artifactError.testFormat'));
   const questions = pickArray(raw, ['questions', 'items', 'test'])
     .map(normalizeMCQ)
     .filter((q): q is MultipleChoiceQuestion => q !== null)
     .slice(0, 30);
-  if (questions.length === 0) throw new ArtifactError('The practice test had no usable questions. Try again.');
+  if (questions.length === 0) throw new ArtifactError(t('artifactError.testEmpty'));
   return { title: label(raw.title, `Practice Test: ${topic}`), topic: label(raw.topic, topic), questions };
 }
 
 export function normalizeFlashcards(raw: unknown, topic: string): FlashcardDeck {
-  if (!isObj(raw)) throw new ArtifactError('The flashcards came back in an unexpected format.');
+  if (!isObj(raw)) throw new ArtifactError(t('artifactError.cardsFormat'));
   const cards = pickArray(raw, ['cards', 'flashcards', 'items'])
     .map((c) => {
       if (!isObj(c)) return null;
@@ -126,7 +127,7 @@ export function normalizeFlashcards(raw: unknown, topic: string): FlashcardDeck 
     })
     .filter((c): c is { front: string; back: string } => c !== null)
     .slice(0, 60);
-  if (cards.length === 0) throw new ArtifactError('No flashcards were generated. Try a more specific topic.');
+  if (cards.length === 0) throw new ArtifactError(t('artifactError.cardsEmpty'));
   return { title: label(raw.title, topic), cards };
 }
 
@@ -152,7 +153,7 @@ export function onSomeCurve(fns: CompiledExpr[], x: number, y: number, span: num
 }
 
 export function normalizeGraph(raw: unknown, topic: string): GraphSpec {
-  if (!isObj(raw)) throw new ArtifactError('The graph came back in an unexpected format.');
+  if (!isObj(raw)) throw new ArtifactError(t('artifactError.graphFormat'));
   const compiled: CompiledExpr[] = [];
   const functions = pickArray(raw, ['functions', 'curves', 'equations'])
     .map((f) => {
@@ -165,7 +166,7 @@ export function normalizeGraph(raw: unknown, topic: string): GraphSpec {
     })
     .filter((f): f is { expr: string; label: string } => f !== null);
   if (functions.length === 0)
-    throw new ArtifactError("I couldn't turn that into a plottable function. Try writing it like y = x^2 - 4.");
+    throw new ArtifactError(t('artifactError.graphFunction'));
 
   let xMin = num(raw.xMin ?? raw.x_min) ?? -10;
   let xMax = num(raw.xMax ?? raw.x_max) ?? 10;
@@ -224,7 +225,7 @@ function normalizeFlowchart(raw: Obj, title: string, caption: string): DiagramSp
     })
     .filter((e): e is FlowEdge => e !== null);
   if (nodes.length < 2)
-    throw new ArtifactError('The flowchart needs at least two steps. Try describing the process in more detail.');
+    throw new ArtifactError(t('artifactError.flowchart'));
   return { type: 'flowchart', title, nodes, edges, caption };
 }
 
@@ -248,7 +249,7 @@ function normalizeVenn(raw: Obj, title: string, caption: string): DiagramSpec {
     .map((s) => (isObj(s) ? label(s.label ?? s.name) : label(s)))
     .filter(Boolean)
     .slice(0, 3);
-  if (sets.length < 2) throw new ArtifactError('A Venn diagram needs two or three sets.');
+  if (sets.length < 2) throw new ArtifactError(t('artifactError.venn'));
   const indexOf = (v: unknown) => {
     if (typeof v === 'number') return v;
     const s = label(v).toLowerCase();
@@ -287,7 +288,7 @@ export function sanitizeSvg(svg: string): string {
   let out = svg.trim();
   const start = out.search(/<svg[\s>]/i);
   const end = out.toLowerCase().lastIndexOf('</svg>');
-  if (start === -1 || end === -1) throw new ArtifactError('The diagram came back without a drawing. Try again.');
+  if (start === -1 || end === -1) throw new ArtifactError(t('artifactError.svg'));
   out = out.slice(start, end + 6);
   out = out
     .replace(/<script[\s\S]*?<\/script\s*>/gi, '')
@@ -299,7 +300,7 @@ export function sanitizeSvg(svg: string): string {
 }
 
 export function normalizeDiagram(raw: unknown, kind: DiagramKind, topic: string): DiagramSpec {
-  if (!isObj(raw)) throw new ArtifactError('The diagram came back in an unexpected format.');
+  if (!isObj(raw)) throw new ArtifactError(t('artifactError.diagramFormat'));
   const title = label(raw.title, topic);
   const caption = str(raw.caption ?? raw.explanation ?? raw.description);
   switch (kind) {
@@ -307,7 +308,7 @@ export function normalizeDiagram(raw: unknown, kind: DiagramKind, topic: string)
       return normalizeFlowchart(raw, title, caption);
     case 'mindmap': {
       const root = normalizeMindNode(raw.root ?? raw.map ?? { label: title, children: raw.children }, 0);
-      if (!root || root.children.length === 0) throw new ArtifactError('The mind map came back empty. Try a broader topic.');
+      if (!root || root.children.length === 0) throw new ArtifactError(t('artifactError.mindmap'));
       return { type: 'mindmap', title, root, caption };
     }
     case 'venn':
@@ -400,7 +401,7 @@ export function speakable(markdown: string): string {
 }
 
 export function normalizeVideo(raw: unknown, topic: string): VideoLesson {
-  if (!isObj(raw)) throw new ArtifactError('The video script came back in an unexpected format.');
+  if (!isObj(raw)) throw new ArtifactError(t('artifactError.videoFormat'));
   const scenes = pickArray(raw, ['scenes', 'slides', 'steps'])
     .map((s) => {
       if (!isObj(s)) return null;
@@ -411,6 +412,6 @@ export function normalizeVideo(raw: unknown, topic: string): VideoLesson {
     })
     .filter((s): s is { heading: string; body: string; narration: string } => s !== null)
     .slice(0, 14);
-  if (scenes.length === 0) throw new ArtifactError('The video lesson came back empty. Try again.');
+  if (scenes.length === 0) throw new ArtifactError(t('artifactError.videoEmpty'));
   return { title: label(raw.title, topic), scenes };
 }

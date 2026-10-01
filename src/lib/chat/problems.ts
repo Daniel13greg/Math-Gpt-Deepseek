@@ -2,6 +2,7 @@ import { streamChat, type ClientConfig } from '@/lib/deepseek/client';
 import { DEFAULT_VISION_MODEL } from '@/lib/deepseek/models';
 import { extractJson } from '@/lib/json';
 import { toUnicodeMath } from '@/lib/math';
+import { t } from '@/i18n';
 
 export interface DetectedProblem {
   /** As printed on the page ("3", "4b"), or a running number. */
@@ -66,5 +67,5 @@ export async function detectProblems(imageDataUrl: string, config: ClientConfig,
 
 /** The visible message once the student has chosen. */
 export function problemRequest(choice: DetectedProblem | 'all'): string {
-  return choice === 'all' ? 'Solve all the problems in this photo.' : `Solve problem ${choice.label}: ${choice.text}`;
+  return choice === 'all' ? t('picker.solveAll') : t('picker.solveOne', { label: choice.label, text: choice.text });
 }

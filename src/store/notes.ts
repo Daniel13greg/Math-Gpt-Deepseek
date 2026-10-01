@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { makeId } from '@/lib/id';
 import { createCollectionSaver, loadCollection } from '@/lib/storage/collection';
 import type { LectureNote } from '@/lib/types';
+import { t } from '@/i18n';
 
 interface NotesState {
   notes: Record<string, LectureNote>;
@@ -22,7 +23,7 @@ function recoverInterrupted(notes: Record<string, LectureNote>): Record<string, 
   for (const [id, note] of Object.entries(notes)) {
     out[id] =
       note.status === 'generating' || note.status === 'transcribing'
-        ? { ...note, status: 'error', error: 'Interrupted before finishing. Tap "Regenerate" to try again.' }
+        ? { ...note, status: 'error', error: t('notes.interrupted') }
         : note;
   }
   return out;
@@ -33,7 +34,7 @@ export const useNotes = create<NotesState>()((set, get) => ({
 
   createNote: (init) => {
     const id = makeId('n');
-    const note: LectureNote = { title: 'Lecture notes', notes: '', createdAt: Date.now(), ...init, id };
+    const note: LectureNote = { title: t('notes.defaultTitle'), notes: '', createdAt: Date.now(), ...init, id };
     set({ notes: { ...get().notes, [id]: note } });
     return id;
   },

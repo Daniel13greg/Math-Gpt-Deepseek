@@ -3,7 +3,8 @@ import { Platform } from 'react-native';
 import { useSettings } from '@/store/settings';
 
 import { isCloudTranscriptionConfigured, transcribeWithCloud } from './cloud';
-import { getSpeechLib, NEEDS_DEV_BUILD_MESSAGE, requestSpeechPermissions, speechErrorMessage } from './recognition';
+import { getSpeechLib, needsDevBuildMessage, requestSpeechPermissions, speechErrorMessage } from './recognition';
+import { t } from '@/i18n';
 
 /**
  * Transcribes an uploaded audio file. Cloud transcription handles any common format;
@@ -14,7 +15,7 @@ export async function transcribeAudioFile(uri: string, fileName: string, onParti
   if (isCloudTranscriptionConfigured()) return transcribeWithCloud(uri, fileName);
 
   const lib = getSpeechLib();
-  if (!lib || Platform.OS === 'web') throw new Error(NEEDS_DEV_BUILD_MESSAGE);
+  if (!lib || Platform.OS === 'web') throw new Error(needsDevBuildMessage());
   if (!(await requestSpeechPermissions())) throw new Error(speechErrorMessage('not-allowed'));
 
   const M = lib.ExpoSpeechRecognitionModule;
@@ -42,8 +43,7 @@ export async function transcribeAudioFile(uri: string, fileName: string, onParti
         else
           reject(
             new Error(
-              failure ??
-                'No speech was recognized in that file. On-device transcription works best with 16 kHz MP3, OGG or WAV; for other formats add a cloud transcription key in Settings.',
+              failure ?? t('speech.file.noSpeech'),
             ),
           );
       }),

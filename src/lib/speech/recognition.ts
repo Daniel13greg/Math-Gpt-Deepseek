@@ -1,5 +1,6 @@
 import { requireOptionalNativeModule } from 'expo';
 import { Platform } from 'react-native';
+import { t, type StringKey } from '@/i18n';
 
 type SpeechRecognitionLib = typeof import('expo-speech-recognition');
 
@@ -50,19 +51,21 @@ export async function requestSpeechPermissions(): Promise<boolean> {
   return result.granted;
 }
 
-const ERROR_MESSAGES: Record<string, string> = {
-  'not-allowed': 'Microphone or speech permission was denied. Enable it in system settings.',
-  'service-not-allowed': "Speech recognition isn't available on this device. Try cloud transcription in Settings.",
-  'language-not-supported': "Speech recognition doesn't support the selected language on this device.",
-  network: 'Speech recognition needs a network connection.',
-  'audio-capture': "The audio couldn't be captured or read.",
-  busy: 'Speech recognition is busy. Try again in a moment.',
+const ERROR_KEYS: Record<string, StringKey> = {
+  'not-allowed': 'speech.error.notAllowed',
+  'service-not-allowed': 'speech.error.serviceNotAllowed',
+  'language-not-supported': 'speech.error.language',
+  network: 'speech.error.network',
+  'audio-capture': 'speech.error.audioCapture',
+  busy: 'speech.error.busy',
 };
 
 export function speechErrorMessage(code: string, fallback?: string): string {
-  return ERROR_MESSAGES[code] ?? fallback ?? `Speech recognition failed (${code}).`;
+  const key = ERROR_KEYS[code];
+  return key ? t(key) : (fallback ?? t('speech.error.failed', { code }));
 }
 
 /** Why voice features can't work in this build, for user-facing messages. */
-export const NEEDS_DEV_BUILD_MESSAGE =
-  'On-device speech recognition needs a development or production build (it is not in Expo Go). You can also add a Whisper-compatible API key under Settings → Speech to text.';
+export function needsDevBuildMessage(): string {
+  return t('speech.needsDevBuild');
+}

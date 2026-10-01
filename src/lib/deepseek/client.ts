@@ -1,6 +1,7 @@
 import { DeepSeekError, errorFromResponse, toDeepSeekError } from './errors';
 import { DEFAULT_BASE_URL, type ReasoningEffort } from './models';
 import { SSEParser } from './sse';
+import { t } from '@/i18n';
 
 export type ContentPart = { type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } };
 
@@ -136,7 +137,7 @@ class ResultBuilder {
     }
     if (json.error) {
       const message = json.error.message ?? 'Unknown error';
-      throw new DeepSeekError('server', `DeepSeek reported an error: ${message}`, { apiMessage: message });
+      throw new DeepSeekError('server', t('error.reported', { message }), { apiMessage: message });
     }
     if (json.model) this.model = json.model;
     const choice = json.choices?.[0];
@@ -173,7 +174,7 @@ async function attempt(
   signal: AbortSignal | undefined,
 ): Promise<ChatResult> {
   if (!config.apiKey) {
-    throw new DeepSeekError('missing_key', 'Add your DeepSeek API key in Settings to start solving.');
+    throw new DeepSeekError('missing_key', t('error.missingKey'));
   }
   const fetchImpl = config.fetch ?? fetch;
   let response: Response;
@@ -245,14 +246,14 @@ function reportUsage(config: ClientConfig, req: ChatRequest, result: ChatResult)
 
 function sleep(ms: number, signal: AbortSignal | undefined): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (signal?.aborted) return reject(new DeepSeekError('aborted', 'Stopped.'));
+    if (signal?.aborted) return reject(new DeepSeekError('aborted', t('transcript.stopped')));
     const timer = setTimeout(() => {
       signal?.removeEventListener('abort', onAbort);
       resolve();
     }, ms);
     const onAbort = () => {
       clearTimeout(timer);
-      reject(new DeepSeekError('aborted', 'Stopped.'));
+      reject(new DeepSeekError('aborted', t('transcript.stopped')));
     };
     signal?.addEventListener('abort', onAbort, { once: true });
   });
@@ -284,7 +285,7 @@ async function attemptWithRetry(
     try {
       return await attempt(config, req, tracked, signal);
     } catch (error) {
-      if (signal?.aborted) throw new DeepSeekError('aborted', 'Stopped.');
+      if (signal?.aborted) throw new DeepSeekError('aborted', t('transcript.stopped'));
       const retryable = error instanceof DeepSeekError && error.retryable;
       if (!retryable || streamed || i >= delays.length) throw error;
       await sleep(delays[i], signal);

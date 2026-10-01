@@ -1,6 +1,7 @@
 import type { CardSchedule } from '@/lib/srs';
 import type { Chat, LectureNote, UsageByModel } from '@/lib/types';
 import type { ModelPrice } from '@/lib/usage';
+import { t, tp } from '@/i18n';
 
 export const BACKUP_FORMAT = 'math-gpt-deepseek-backup';
 export const BACKUP_VERSION = 1;
@@ -32,11 +33,11 @@ export function parseBackup(text: string): Backup {
   try {
     raw = JSON.parse(text);
   } catch {
-    throw new BackupError("That file isn't a backup (it isn't valid JSON).");
+    throw new BackupError(t('backup.error.json'));
   }
-  if (!isObj(raw) || raw.format !== BACKUP_FORMAT) throw new BackupError("That file isn't a backup from this app.");
+  if (!isObj(raw) || raw.format !== BACKUP_FORMAT) throw new BackupError(t('backup.error.format'));
   if (typeof raw.version !== 'number' || raw.version > BACKUP_VERSION) {
-    throw new BackupError('This backup was made by a newer version of the app. Update the app, then try again.');
+    throw new BackupError(t('backup.error.version'));
   }
   const chats = Array.isArray(raw.chats)
     ? (raw.chats as unknown[]).filter((c): c is Chat => isObj(c) && typeof c.id === 'string' && Array.isArray(c.messages))
@@ -119,12 +120,12 @@ export function imageIds(chats: Chat[]): string[] {
 }
 
 export function describeRestore(chats: MergeResult<Chat>, notes: MergeResult<LectureNote>): string {
-  const part = (r: MergeResult<unknown>, noun: string) => {
-    const n = r.added + r.updated;
-    return n ? `${n} ${noun}${n === 1 ? '' : 's'}` : '';
-  };
-  const parts = [part(chats, 'chat'), part(notes, 'lecture note')].filter(Boolean);
-  return parts.length ? `Restored ${parts.join(' and ')}.` : 'Everything in the backup is already on this device.';
+  const chatCount = chats.added + chats.updated;
+  const noteCount = notes.added + notes.updated;
+  if (!chatCount && !noteCount) return t('backup.restore.none');
+  if (!noteCount) return t('backup.restore.one', { items: tp('backup.chats', chatCount) });
+  if (!chatCount) return t('backup.restore.one', { items: tp('backup.notes', noteCount) });
+  return t('backup.restore.both', { chats: tp('backup.chats', chatCount), notes: tp('backup.notes', noteCount) });
 }
 
 export function backupFileName(date = new Date()): string {

@@ -3,13 +3,14 @@ import { useRef } from 'react';
 import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 
-import { getAnswerStyle, type AnswerStyle } from '@/constants/answerStyles';
-import { getSubject, type SubjectId } from '@/constants/subjects';
+import type { AnswerStyle } from '@/constants/answerStyles';
+import type { SubjectId } from '@/constants/subjects';
 import { toolChipLabel, toolPlaceholder, type ToolSelection } from '@/constants/tools';
 import { ArrowUpIcon, BrainIcon, MicIcon, PlusIcon, SigmaIcon, SquareIcon, ToolCaseIcon, XIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { FontFamily } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
 import type { ImageAttachment } from '@/lib/types';
 
 import { ToolIcon } from './ToolIcon';
@@ -35,16 +36,28 @@ export interface ComposerProps {
   onMathKeyboard: () => void;
 }
 
+/** Rough width of a label in Latin-letter units (CJK characters are about twice as wide). */
+function labelWidth(text: string): number {
+  let width = 0;
+  for (const ch of text) width += /[\u2e80-\u9fff\uac00-\ud7af\uff00-\uffef]/.test(ch) ? 2 : 1;
+  return width;
+}
+
 /** The rounded input card: text field, "+" attachments, Tools, mic and the blue send button. */
 export function Composer(props: ComposerProps) {
   const { colors, dark } = useTheme();
+  const { t } = useT();
   const inputRef = useRef<TextInput>(null);
   const { tool, images } = props;
 
   const placeholder = tool
-    ? toolPlaceholder(tool)
-    : (getAnswerStyle(props.answerStyle).placeholder ?? `Type your ${getSubject(props.subject).noun} question here`);
+    ? toolPlaceholder(tool, t)
+    : props.answerStyle === 'steps'
+      ? t(`composer.placeholder.${props.subject}`)
+      : t(`answerStyle.${props.answerStyle}.placeholder`);
   const canSend = props.draft.trim().length > 0 || images.length > 0 || tool !== null;
+  // The row fits "Tools" plus a labelled Deep Think chip in short languages only; otherwise show just its icon.
+  const compactThink = tool !== null || labelWidth(t('tools.title')) + labelWidth(t('composer.deepThinkChip')) > 16;
 
   const send = () => {
     if (props.busy) return props.onStop();
@@ -64,7 +77,7 @@ export function Composer(props: ComposerProps) {
                 onPress={() => props.onRemoveImage(img.id)}
                 hitSlop={8}
                 style={styles.thumbRemove}
-                accessibilityLabel="Remove image">
+                accessibilityLabel={t('composer.removeImage')}>
                 <XIcon size={12} color="#FFFFFF" strokeWidth={3} />
               </Pressable>
             </View>
@@ -77,7 +90,7 @@ export function Composer(props: ComposerProps) {
         hitSlop={6}
         style={[styles.mathButton, images.length > 0 && styles.mathButtonBelowThumbs]}
         accessibilityRole="button"
-        accessibilityLabel="Math keyboard">
+        accessibilityLabel={t('composer.mathKeyboard')}>
         <SigmaIcon size={19} color={colors.icon} strokeWidth={1.9} />
       </Pressable>
 
@@ -85,11 +98,11 @@ export function Composer(props: ComposerProps) {
         ref={inputRef}
         value={props.draft}
         onChangeText={props.onDraftChange}
-        placeholder={props.listening ? 'Listening…' : placeholder}
+        placeholder={props.listening ? t('composer.listening') : placeholder}
         placeholderTextColor={colors.textMuted}
         multiline
         style={[styles.input, { color: colors.text }]}
-        accessibilityLabel="Question"
+        accessibilityLabel={t('composer.question')}
         submitBehavior={Platform.OS === 'web' ? 'submit' : 'newline'}
         onSubmitEditing={Platform.OS === 'web' ? send : undefined}
       />
@@ -100,7 +113,7 @@ export function Composer(props: ComposerProps) {
           onPress={props.onPlus}
           hitSlop={8}
           style={styles.iconButton}
-          accessibilityLabel="Add photo or options">
+          accessibilityLabel={t('composer.plus')}>
           <PlusIcon size={25} color={colors.icon} strokeWidth={1.8} />
         </Pressable>
 
@@ -110,10 +123,10 @@ export function Composer(props: ComposerProps) {
               accessibilityRole="button"
               onPress={props.onClearTool}
               style={[styles.chip, { backgroundColor: colors.primarySoft }]}
-              accessibilityLabel={`Remove ${toolChipLabel(tool)} tool`}>
+              accessibilityLabel={t('composer.removeTool', { tool: toolChipLabel(tool, t) })}>
               <ToolIcon kind={tool.kind} size={17} color={colors.primary} />
               <AppText size={14} weight="medium" color={colors.primary} numberOfLines={1} style={styles.chipText}>
-                {toolChipLabel(tool)}
+                {toolChipLabel(tool, t)}
               </AppText>
               <XIcon size={14} color={colors.primary} strokeWidth={2.4} />
             </Pressable>
@@ -124,10 +137,10 @@ export function Composer(props: ComposerProps) {
             onPress={props.onTools}
             hitSlop={6}
             style={styles.tools}
-            accessibilityLabel="Tools">
+            accessibilityLabel={t('tools.title')}>
             <ToolCaseIcon size={20} color={colors.icon} strokeWidth={1.8} />
-            <AppText size={15} color={colors.icon}>
-              Tools
+            <AppText size={15} color={colors.icon} numberOfLines={1} style={styles.chipText}>
+              {t('tools.title')}
             </AppText>
           </Pressable>
         )}
@@ -136,13 +149,13 @@ export function Composer(props: ComposerProps) {
           <Pressable
             onPress={props.onToggleThinking}
             hitSlop={4}
-            style={[styles.chip, styles.thinkChip, tool && styles.thinkChipCompact, { backgroundColor: colors.primarySoft }]}
+            style={[styles.chip, styles.thinkChip, compactThink && styles.thinkChipCompact, { backgroundColor: colors.primarySoft }]}
             accessibilityRole="button"
-            accessibilityLabel="Deep Think is on. Tap to turn it off">
+            accessibilityLabel={t('composer.deepThinkOn')}>
             <BrainIcon size={15} color={colors.primary} />
-            {tool ? null : (
-              <AppText size={13} weight="medium" color={colors.primary}>
-                Deep Think
+            {compactThink ? null : (
+              <AppText size={13} weight="medium" color={colors.primary} numberOfLines={1} style={styles.chipText}>
+                {t('composer.deepThinkChip')}
               </AppText>
             )}
           </Pressable>
@@ -155,14 +168,14 @@ export function Composer(props: ComposerProps) {
           onPress={props.onMic}
           hitSlop={8}
           style={[styles.iconButton, props.listening && { backgroundColor: colors.dangerSoft, borderRadius: 18 }]}
-          accessibilityLabel={props.listening ? 'Stop dictation' : 'Dictate question'}>
+          accessibilityLabel={props.listening ? t('composer.stopDictation') : t('composer.dictate')}>
           <MicIcon size={21} color={props.listening ? colors.danger : colors.icon} strokeWidth={1.8} />
         </Pressable>
 
         <Pressable
           onPress={send}
           accessibilityRole="button"
-          accessibilityLabel={props.busy ? 'Stop generating' : 'Send'}
+          accessibilityLabel={props.busy ? t('composer.stop') : t('composer.send')}
           style={({ pressed }) => [
             styles.send,
             { backgroundColor: props.busy ? colors.icon : pressed ? colors.primaryPressed : colors.primary },
@@ -234,7 +247,7 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 },
   iconButton: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  tools: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 8, height: 36 },
+  tools: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 8, height: 36, flexShrink: 1 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -246,7 +259,7 @@ const styles = StyleSheet.create({
     maxWidth: 190,
   },
   chipText: { flexShrink: 1 },
-  thinkChip: { height: 28, paddingHorizontal: 9, gap: 4 },
+  thinkChip: { height: 28, paddingHorizontal: 9, gap: 4, flexShrink: 1 },
   // Next to a tool chip there is only room for the icon.
   thinkChipCompact: { width: 28, paddingHorizontal: 0, justifyContent: 'center' },
   spacer: { flex: 1 },

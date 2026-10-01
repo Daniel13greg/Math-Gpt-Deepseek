@@ -5,12 +5,16 @@ import './katex-inline.css';
 import { IS_DOM, useDOMImperativeHandle, type DOMProps } from 'expo/dom';
 import { memo, useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type Ref } from 'react';
 
-import { getTool, isArtifactTool, toolChipLabel } from '@/constants/tools';
+import { isArtifactTool, toolChipLabel } from '@/constants/tools';
+import { APP_NAME } from '@/constants/app';
+import { translator, type LanguageCode } from '@/i18n/strings';
 import type { AssistantMessage, Message, UserMessage } from '@/lib/types';
 
 import { ArtifactView } from './lib/ArtifactView';
+import { DomI18nProvider, useDomT } from './lib/i18n';
 import { Icon, type IconName } from './lib/Icon';
 import { Markdown, MathText } from './lib/Markdown';
+import { setMarkdownLabels } from './lib/markdown';
 import { BASE_CSS, TRANSCRIPT_CSS } from './lib/styles';
 import type { TranscriptAction, TranscriptHandle } from './transcriptTypes';
 
@@ -18,6 +22,7 @@ interface TranscriptProps {
   messages: Message[];
   chatId: string | null;
   scheme: 'light' | 'dark';
+  lang: LanguageCode;
   busy: boolean;
   onAction: (action: TranscriptAction) => Promise<void>;
   ref?: Ref<TranscriptHandle>;
@@ -50,6 +55,7 @@ function IconButton({ icon, label, onClick }: { icon: IconName; label: string; o
 
 const UserTurn = memo(
   function UserTurn({ m, editable, act }: { m: UserMessage; editable: boolean; act: Act }) {
+    const { t } = useDomT();
     return (
       <div className="turn user fade-in">
         {m.images?.length ? (
@@ -58,7 +64,7 @@ const UserTurn = memo(
               <img
                 key={img.id}
                 src={img.thumb}
-                alt="Attached problem"
+                alt={t('transcript.attachedProblem')}
                 onClick={() => act({ type: 'open-image', messageId: m.id, index: i })}
               />
             ))}
@@ -67,14 +73,14 @@ const UserTurn = memo(
         {m.tool ? (
           <span className="tag">
             <Icon name={TOOL_ICONS[m.tool.kind] ?? 'sparkles'} size={13} />
-            {toolChipLabel({ kind: m.tool.kind, diagram: m.tool.diagram })}
+            {toolChipLabel({ kind: m.tool.kind, diagram: m.tool.diagram }, t)}
           </span>
         ) : null}
         {m.text ? <MathText className="bubble" text={m.text} /> : null}
         {editable ? (
           <div className="user-actions">
-            <IconButton icon="copy" label="Copy" onClick={() => act({ type: 'copy', messageId: m.id })} />
-            <IconButton icon="pencil" label="Edit" onClick={() => act({ type: 'edit', messageId: m.id })} />
+            <IconButton icon="copy" label={t('common.copy')} onClick={() => act({ type: 'copy', messageId: m.id })} />
+            <IconButton icon="pencil" label={t('common.edit')} onClick={() => act({ type: 'edit', messageId: m.id })} />
           </div>
         ) : null}
       </div>
@@ -88,13 +94,14 @@ const UserTurn = memo(
 );
 
 function Thinking({ m }: { m: AssistantMessage }) {
+  const { t } = useDomT();
   const streaming = m.status === 'streaming';
   // Tool replies never stream text; they record thinkingMs once the JSON starts arriving.
   const live = streaming && !m.content && !m.thinkingMs;
   const [open, setOpen] = useState<boolean | null>(null);
   const expanded = open ?? live;
   const seconds = m.thinkingMs ? Math.max(1, Math.round(m.thinkingMs / 1000)) : null;
-  const label = live ? 'Thinking…' : seconds ? `Thought for ${seconds}s` : 'Thoughts';
+  const label = live ? t('transcript.thinking') : seconds ? t('transcript.thoughtFor', { seconds }) : t('transcript.thoughts');
   const reasoning = m.reasoning ?? '';
 
   return (
@@ -121,6 +128,7 @@ function Thinking({ m }: { m: AssistantMessage }) {
 
 const AssistantTurn = memo(
   function AssistantTurn({ m, isLast, busy, act }: { m: AssistantMessage; isLast: boolean; busy: boolean; act: Act }) {
+    const { t } = useDomT();
     const streaming = m.status === 'streaming';
     const generatingArtifact = streaming && m.tool && isArtifactTool(m.tool);
     const hasText = m.content.trim().length > 0;
@@ -130,11 +138,11 @@ const AssistantTurn = memo(
       <div className="turn assistant">
         {m.tool === 'study-guide' ? (
           <span className="tag" style={{ marginBottom: 10 }}>
-            <Icon name="bookOpen" size={13} /> Study guide
+            <Icon name="bookOpen" size={13} /> {t('transcript.studyGuide')}
           </span>
         ) : m.tool === 'check-work' ? (
           <span className="tag" style={{ marginBottom: 10 }}>
-            <Icon name="clipboardCheck" size={13} /> Work check
+            <Icon name="clipboardCheck" size={13} /> {t('transcript.workCheck')}
           </span>
         ) : null}
 
@@ -150,15 +158,15 @@ const AssistantTurn = memo(
               <Icon name={TOOL_ICONS[m.tool!] ?? 'sparkles'} size={22} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="artifact-title">{getTool(m.tool!).title.replace('Create ', 'Creating ')}</div>
-              <div className="artifact-sub pulse-text">{m.progress ?? 'Working…'}</div>
+              <div className="artifact-title">{t(`tool.${m.tool!}.progress`)}</div>
+              <div className="artifact-sub pulse-text">{m.progress ?? t('transcript.working')}</div>
               <div className="shimmer" />
             </div>
           </div>
         ) : null}
 
         {streaming && !hasText && !m.thinking && !generatingArtifact && !m.progress ? (
-          <div className="typing" aria-label="MathGPT is typing">
+          <div className="typing" aria-label={t('transcript.typing', { app: APP_NAME })}>
             <span />
             <span />
             <span />
@@ -181,37 +189,47 @@ const AssistantTurn = memo(
           <div className="error-card fade-in">
             <div className="row">
               <Icon name="circleAlert" size={18} />
-              <div>{m.error ?? 'Something went wrong.'}</div>
+              <div>{m.error ?? t('common.error')}</div>
             </div>
             {settingsError ? (
               <button className="btn" onClick={() => act({ type: 'open-settings' })}>
-                <Icon name="settings" size={15} /> Open Settings
+                <Icon name="settings" size={15} /> {t('transcript.openSettings')}
               </button>
             ) : isLast && !busy ? (
               <button className="btn secondary" onClick={() => act({ type: 'regenerate', messageId: m.id })}>
-                <Icon name="refreshCw" size={15} /> Try again
+                <Icon name="refreshCw" size={15} /> {t('common.tryAgain')}
               </button>
             ) : null}
           </div>
         ) : null}
 
-        {m.status === 'stopped' ? <div className="notice">Stopped</div> : null}
-        {m.status === 'done' && m.finishReason === 'length' ? (
-          <div className="notice">The answer hit the length limit. Ask “continue” to get the rest.</div>
-        ) : null}
+        {m.status === 'stopped' ? <div className="notice">{t('transcript.stopped')}</div> : null}
+        {m.status === 'done' && m.finishReason === 'length' ? <div className="notice">{t('transcript.lengthLimit')}</div> : null}
 
         {!streaming && m.status !== 'error' ? (
           <div className="actions">
             {hasText ? (
               <>
-                <IconButton icon="copy" label="Copy" onClick={() => act({ type: 'copy', messageId: m.id })} />
-                <IconButton icon="volume2" label="Read aloud" onClick={() => act({ type: 'speak', messageId: m.id })} />
-                <IconButton icon="share2" label="Share" onClick={() => act({ type: 'share', messageId: m.id })} />
-                <IconButton icon="fileDown" label="Save as PDF" onClick={() => act({ type: 'export-pdf', messageId: m.id })} />
+                <IconButton icon="copy" label={t('common.copy')} onClick={() => act({ type: 'copy', messageId: m.id })} />
+                <IconButton
+                  icon="volume2"
+                  label={t('settings.readAloud')}
+                  onClick={() => act({ type: 'speak', messageId: m.id })}
+                />
+                <IconButton icon="share2" label={t('common.share')} onClick={() => act({ type: 'share', messageId: m.id })} />
+                <IconButton
+                  icon="fileDown"
+                  label={t('common.savePdf')}
+                  onClick={() => act({ type: 'export-pdf', messageId: m.id })}
+                />
               </>
             ) : null}
             {isLast && !busy ? (
-              <IconButton icon="refreshCw" label="Regenerate" onClick={() => act({ type: 'regenerate', messageId: m.id })} />
+              <IconButton
+                icon="refreshCw"
+                label={t('common.regenerate')}
+                onClick={() => act({ type: 'regenerate', messageId: m.id })}
+              />
             ) : null}
           </div>
         ) : null}
@@ -234,7 +252,9 @@ const AssistantTurn = memo(
     a.m.artifact?.data === b.m.artifact?.data,
 );
 
-export default function Transcript({ messages, chatId, scheme, busy, onAction, ref }: TranscriptProps) {
+export default function Transcript({ messages, chatId, scheme, lang, busy, onAction, ref }: TranscriptProps) {
+  const tr = translator(lang);
+  setMarkdownLabels({ copy: tr.t('common.copy') });
   const scroller = useRef<HTMLDivElement>(null);
   const thread = useRef<HTMLDivElement>(null);
   const pinned = useRef(true);
@@ -312,8 +332,8 @@ export default function Transcript({ messages, chatId, scheme, busy, onAction, r
     if (copy) {
       const code = copy.closest('.code-block')?.querySelector('code')?.textContent ?? '';
       act({ type: 'copy-text', text: code });
-      copy.textContent = 'Copied';
-      setTimeout(() => (copy.textContent = 'Copy'), 1500);
+      copy.textContent = tr.t('common.copied');
+      setTimeout(() => (copy.textContent = tr.t('common.copy')), 1500);
     }
   };
 
@@ -321,27 +341,29 @@ export default function Transcript({ messages, chatId, scheme, busy, onAction, r
   const lastUserIndex = messages.map((m) => m.role).lastIndexOf('user');
 
   return (
-    <div
-      ref={scroller}
-      className="mg transcript"
-      data-scheme={scheme}
-      onScroll={onScroll}
-      onClick={onClick}
-      style={IS_DOM ? { position: 'fixed', inset: 0 } : { flex: 1, minHeight: 0, height: '100%' }}>
-      <style>{(IS_DOM ? PAGE_CSS : '') + BASE_CSS + TRANSCRIPT_CSS}</style>
-      <div ref={thread} className="thread">
-        {messages.map((m, i) => {
-          if (m.role === 'user') {
-            return <UserTurn key={m.id} m={m} editable={i === lastUserIndex && !busy} act={act} />;
-          }
-          const patch = m.status === 'streaming' ? live[m.id] : undefined;
-          const merged =
-            patch && patch.content.length >= m.content.length
-              ? { ...m, content: patch.content, reasoning: patch.reasoning || m.reasoning }
-              : m;
-          return <AssistantTurn key={m.id} m={merged} isLast={i === lastIndex} busy={busy} act={act} />;
-        })}
+    <DomI18nProvider lang={lang}>
+      <div
+        ref={scroller}
+        className="mg transcript"
+        data-scheme={scheme}
+        onScroll={onScroll}
+        onClick={onClick}
+        style={IS_DOM ? { position: 'fixed', inset: 0 } : { flex: 1, minHeight: 0, height: '100%' }}>
+        <style>{(IS_DOM ? PAGE_CSS : '') + BASE_CSS + TRANSCRIPT_CSS}</style>
+        <div ref={thread} className="thread">
+          {messages.map((m, i) => {
+            if (m.role === 'user') {
+              return <UserTurn key={m.id} m={m} editable={i === lastUserIndex && !busy} act={act} />;
+            }
+            const patch = m.status === 'streaming' ? live[m.id] : undefined;
+            const merged =
+              patch && patch.content.length >= m.content.length
+                ? { ...m, content: patch.content, reasoning: patch.reasoning || m.reasoning }
+                : m;
+            return <AssistantTurn key={m.id} m={merged} isLast={i === lastIndex} busy={busy} act={act} />;
+          })}
+        </div>
       </div>
-    </div>
+    </DomI18nProvider>
   );
 }

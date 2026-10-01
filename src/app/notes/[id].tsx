@@ -22,6 +22,7 @@ import { AppText } from '@/components/ui/AppText';
 import { MaxContentWidth } from '@/constants/theme';
 import { usePdfExport } from '@/hooks/usePdfExport';
 import { useTheme } from '@/hooks/useTheme';
+import { t, useT } from '@/i18n';
 import { askAboutNote, studyFromNote, type LectureTool } from '@/lib/chat/controller';
 import { generateLectureNotes, stopNotes } from '@/lib/notes/generate';
 import { useNotes } from '@/store/notes';
@@ -36,7 +37,7 @@ type Tab = 'notes' | 'transcript';
 function formatDuration(sec?: number) {
   if (!sec) return null;
   const m = Math.floor(sec / 60);
-  return m >= 1 ? `${m} min` : `${sec} s`;
+  return m >= 1 ? t('notes.minutes', { m }) : t('notes.seconds', { s: sec });
 }
 
 export default function NoteScreen() {
@@ -48,11 +49,12 @@ export default function NoteScreen() {
   const thinking = useSettings((s) => s.thinking);
   const prices = useUsage((s) => s.prices);
   const pdf = usePdfExport();
+  const { lang } = useT();
 
   if (!note) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <AppText secondary>These notes no longer exist.</AppText>
+        <AppText secondary>{t('notes.missing')}</AppText>
       </View>
     );
   }
@@ -67,12 +69,12 @@ export default function NoteScreen() {
       router.back();
     };
     if (Platform.OS === 'web') {
-      if (globalThis.confirm?.('Delete these notes?')) doDelete();
+      if (globalThis.confirm?.(t('notes.deleteConfirm'))) doDelete();
       return;
     }
-    Alert.alert('Delete notes?', 'The notes and transcript will be permanently deleted.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: doDelete },
+    Alert.alert(t('notes.deleteTitle'), t('notes.deleteMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: doDelete },
     ]);
   };
 
@@ -90,14 +92,14 @@ export default function NoteScreen() {
     backToChat();
   };
   const studyActions = [
-    { label: 'Flashcards', icon: FlashcardsIcon, onPress: () => study('flashcards') },
-    { label: 'Practice test', icon: BookCheckIcon, onPress: () => study('practice-test') },
-    { label: 'Study guide', icon: BookIcon, onPress: () => study('study-guide') },
-    { label: 'Ask about it', icon: MessageCircleQuestionIcon, onPress: ask },
+    { label: t('notes.study.flashcards'), icon: FlashcardsIcon, onPress: () => study('flashcards') },
+    { label: t('notes.study.test'), icon: BookCheckIcon, onPress: () => study('practice-test') },
+    { label: t('notes.study.guide'), icon: BookIcon, onPress: () => study('study-guide') },
+    { label: t('notes.study.ask'), icon: MessageCircleQuestionIcon, onPress: ask },
   ];
 
   const meta = [
-    new Date(note.createdAt).toLocaleString(),
+    new Date(note.createdAt).toLocaleString(lang),
     formatDuration(note.durationSec),
     note.fileName,
     note.usage ? describeUsage(note.usage, prices) : null,
@@ -114,15 +116,15 @@ export default function NoteScreen() {
           {meta}
         </AppText>
         <View style={[styles.tabs, { backgroundColor: colors.segmentBg }]}>
-          {(['notes', 'transcript'] as const).map((t) => (
+          {(['notes', 'transcript'] as const).map((name) => (
             <Pressable
-              key={t}
-              onPress={() => setTab(t)}
-              style={[styles.tab, tab === t && { backgroundColor: colors.segmentSelected }]}
+              key={name}
+              onPress={() => setTab(name)}
+              style={[styles.tab, tab === name && { backgroundColor: colors.segmentSelected }]}
               accessibilityRole="tab"
-              accessibilityState={{ selected: tab === t }}>
-              <AppText weight={tab === t ? 'semibold' : 'regular'} size={14} color={colors.segmentText}>
-                {t === 'notes' ? 'Notes' : 'Transcript'}
+              accessibilityState={{ selected: tab === name }}>
+              <AppText weight={tab === name ? 'semibold' : 'regular'} size={14} color={colors.segmentText}>
+                {name === 'notes' ? t('notes.tab.notes') : t('notes.tab.transcript')}
               </AppText>
             </Pressable>
           ))}
@@ -134,7 +136,7 @@ export default function NoteScreen() {
           note.status === 'error' && !note.notes ? (
             <View style={styles.errorWrap}>
               <View style={[styles.error, { backgroundColor: colors.dangerSoft }]}>
-                <AppText size={15}>{note.error ?? 'Something went wrong.'}</AppText>
+                <AppText size={15}>{note.error ?? t('common.error')}</AppText>
               </View>
             </View>
           ) : (
@@ -142,13 +144,13 @@ export default function NoteScreen() {
               markdown={note.notes}
               scheme={scheme}
               streaming={generating}
-              placeholder={thinking ? 'Thinking through the lecture, then writing your notes…' : 'Writing your notes…'}
+              placeholder={thinking ? t('notes.thinking') : t('notes.writing')}
               onLink={async (url) => {
                 if (/^https?:/.test(url)) await WebBrowser.openBrowserAsync(url);
               }}
               onCopyCode={async (code) => {
                 await Clipboard.setStringAsync(code);
-                toast.success('Copied');
+                toast.success(t('common.copied'));
               }}
               dom={{ style: { flex: 1 }, containerStyle: { flex: 1 }, scrollEnabled: false, bounces: false }}
             />
@@ -156,7 +158,7 @@ export default function NoteScreen() {
         ) : (
           <ScrollView contentContainerStyle={styles.transcript}>
             <AppText size={16} selectable style={styles.transcriptText}>
-              {note.transcript || 'No transcript.'}
+              {note.transcript || t('notes.noTranscript')}
             </AppText>
           </ScrollView>
         )}
@@ -171,7 +173,7 @@ export default function NoteScreen() {
       {note.status === 'done' && note.notes ? (
         <View style={[styles.study, { borderTopColor: colors.hairline }]}>
           <AppText size={12.5} weight="semibold" color={colors.textMuted} style={styles.studyLabel}>
-            STUDY THIS LECTURE
+            {t('notes.study').toUpperCase()}
           </AppText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.studyRow}>
             {studyActions.map(({ label, icon: Icon, onPress }) => (
@@ -199,14 +201,14 @@ export default function NoteScreen() {
           <Pressable accessibilityRole="button" style={styles.action} onPress={() => stopNotes(note.id)}>
             <SquareIcon size={20} color={colors.icon} />
             <AppText size={12} secondary>
-              Stop
+              {t('common.stop')}
             </AppText>
           </Pressable>
         ) : (
           <Pressable accessibilityRole="button" style={styles.action} onPress={() => void generateLectureNotes(note.id)}>
             <RefreshIcon size={20} color={colors.icon} />
             <AppText size={12} secondary>
-              Regenerate
+              {t('common.regenerate')}
             </AppText>
           </Pressable>
         )}
@@ -215,11 +217,11 @@ export default function NoteScreen() {
           style={styles.action}
           onPress={async () => {
             await Clipboard.setStringAsync(text);
-            toast.success('Copied');
+            toast.success(t('common.copied'));
           }}>
           <CopyIcon size={20} color={colors.icon} />
           <AppText size={12} secondary>
-            Copy
+            {t('common.copy')}
           </AppText>
         </Pressable>
         <Pressable
@@ -229,14 +231,14 @@ export default function NoteScreen() {
             pdf.exportPdf({
               title: note.title,
               sections: [note.notes.replace(/^#\s+.*\n+/, '')],
-              meta: [new Date(note.createdAt).toLocaleDateString(), formatDuration(note.durationSec)].filter(Boolean).join(' · '),
+              meta: [new Date(note.createdAt).toLocaleDateString(lang), formatDuration(note.durationSec)].filter(Boolean).join(' · '),
             })
           }
           accessibilityRole="button"
-          accessibilityLabel="Save notes as PDF">
+          accessibilityLabel={t('notes.savePdf')}>
           <FileDownIcon size={20} color={colors.icon} />
           <AppText size={12} secondary>
-            PDF
+            {t('common.pdf')}
           </AppText>
         </Pressable>
         <Pressable
@@ -245,13 +247,13 @@ export default function NoteScreen() {
           onPress={() => text && Share.share({ message: text, title: note.title })}>
           <ShareIcon size={20} color={colors.icon} />
           <AppText size={12} secondary>
-            Share
+            {t('common.share')}
           </AppText>
         </Pressable>
         <Pressable accessibilityRole="button" style={styles.action} onPress={remove}>
           <Trash2Icon size={20} color={colors.danger} />
           <AppText size={12} color={colors.danger}>
-            Delete
+            {t('common.delete')}
           </AppText>
         </Pressable>
       </View>

@@ -9,6 +9,7 @@ import { AppText } from '@/components/ui/AppText';
 import { useArtifact } from '@/hooks/useArtifact';
 import { usePdfExport } from '@/hooks/usePdfExport';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
 import { practiceTestSections } from '@/lib/tools/printable';
 import { practiceMistakes } from '@/lib/chat/controller';
 import { useChats } from '@/store/chats';
@@ -18,11 +19,12 @@ export default function PracticeTestScreen() {
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const pdf = usePdfExport();
+  const { t, lang } = useT();
 
   if (!artifact) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <AppText secondary>This practice test is no longer available.</AppText>
+        <AppText secondary>{t('test.missing')}</AppText>
       </View>
     );
   }
@@ -34,11 +36,11 @@ export default function PracticeTestScreen() {
           title: artifact.data.title,
           headerRight: () => (
             <Pressable
-              onPress={() => pdf.exportPdf({ title: artifact.data.title, sections: practiceTestSections(artifact.data) })}
+              onPress={() => pdf.exportPdf({ title: artifact.data.title, sections: practiceTestSections(artifact.data, t) })}
               hitSlop={10}
               style={styles.headerButton}
               accessibilityRole="button"
-              accessibilityLabel="Save test as PDF">
+              accessibilityLabel={t('test.savePdf')}>
               <FileDownIcon size={22} color={colors.icon} />
             </Pressable>
           ),
@@ -48,6 +50,7 @@ export default function PracticeTestScreen() {
       <PracticeTest
         test={artifact.data}
         scheme={scheme}
+        lang={lang}
         onAnswerPick={async () => {
           if (Platform.OS !== 'web') await Haptics.selectionAsync();
         }}

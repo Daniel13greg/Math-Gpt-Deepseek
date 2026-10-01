@@ -10,6 +10,7 @@ import { AppText } from '@/components/ui/AppText';
 import { useArtifact } from '@/hooks/useArtifact';
 import { usePdfExport } from '@/hooks/usePdfExport';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
 import { describeDue, isDue } from '@/lib/srs';
 import { flashcardsMarkdown } from '@/lib/tools/printable';
 import { deckKey, useReviews } from '@/store/reviews';
@@ -20,6 +21,7 @@ export default function FlashcardsScreen() {
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const pdf = usePdfExport();
+  const { t, lang } = useT();
   const key = deckKey(chatId, messageId);
   const schedules = useReviews((s) => s.decks[key]);
   // Review mode studies only the cards due today, most overdue first (fixed when the screen opens).
@@ -37,7 +39,7 @@ export default function FlashcardsScreen() {
   if (!artifact) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <AppText secondary>These flashcards are no longer available.</AppText>
+        <AppText secondary>{t('cards.missing')}</AppText>
       </View>
     );
   }
@@ -46,14 +48,14 @@ export default function FlashcardsScreen() {
     <View style={[styles.screen, { backgroundColor: colors.background, paddingBottom: insets.bottom }]}>
       <Stack.Screen
         options={{
-          title: review ? `Review: ${artifact.data.title}` : artifact.data.title,
+          title: review ? t('cards.reviewTitle', { title: artifact.data.title }) : artifact.data.title,
           headerRight: () => (
             <Pressable
-              onPress={() => pdf.exportPdf({ title: artifact.data.title, sections: [flashcardsMarkdown(artifact.data)] })}
+              onPress={() => pdf.exportPdf({ title: artifact.data.title, sections: [flashcardsMarkdown(artifact.data, t)] })}
               hitSlop={10}
               style={styles.headerButton}
               accessibilityRole="button"
-              accessibilityLabel="Save flashcards as PDF">
+              accessibilityLabel={t('cards.savePdf')}>
               <FileDownIcon size={22} color={colors.icon} />
             </Pressable>
           ),
@@ -63,8 +65,9 @@ export default function FlashcardsScreen() {
       <Flashcards
         deck={artifact.data}
         scheme={scheme}
+        lang={lang}
         initialOrder={dueOrder}
-        nextReview={nextDue === null ? null : describeDue(nextDue)}
+        nextReview={nextDue === null ? null : describeDue(nextDue, lang)}
         onGrade={async (card, gotIt) => {
           useReviews.getState().grade(key, card, gotIt ? 'good' : 'again');
         }}

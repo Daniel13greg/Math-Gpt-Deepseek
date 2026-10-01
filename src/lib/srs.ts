@@ -1,3 +1,5 @@
+import { translate, translatePlural, type LanguageCode } from '@/i18n/strings';
+
 /**
  * Spaced repetition for flashcards: a compact SM-2 variant with the two answers the
  * flashcard screen offers ("Still learning" = again, "Got it" = good).
@@ -52,11 +54,11 @@ export function isDue(card: CardSchedule | undefined, now = Date.now()): boolean
 }
 
 /** "today", "tomorrow", "in 3 days", "in 2 weeks", "in 4 months". */
-export function describeDue(due: number, now = Date.now()): string {
-  if (due <= endOfDay(now)) return 'today';
+export function describeDue(due: number, lang: LanguageCode = 'en', now = Date.now()): string {
+  if (due <= endOfDay(now)) return translate(lang, 'due.today');
   const days = Math.round((endOfDay(due) - endOfDay(now)) / DAY);
-  if (days === 1) return 'tomorrow';
-  if (days < 14) return `in ${days} days`;
-  if (days < 60) return `in ${Math.round(days / 7)} weeks`;
-  return `in ${Math.round(days / 30)} months`;
+  if (days === 1) return translate(lang, 'due.tomorrow');
+  if (days < 14) return translatePlural(lang, 'due.days', days);
+  if (days < 60) return translatePlural(lang, 'due.weeks', Math.round(days / 7));
+  return translatePlural(lang, 'due.months', Math.round(days / 30));
 }

@@ -38,10 +38,10 @@ describe('due dates', () => {
   });
 
   it('describes when a card comes back', () => {
-    expect(describeDue(now + 60_000, now)).toBe('today');
-    expect(describeDue(now + DAY, now)).toBe('tomorrow');
-    expect(describeDue(now + 6 * DAY, now)).toBe('in 6 days');
-    expect(describeDue(now + 21 * DAY, now)).toBe('in 3 weeks');
-    expect(describeDue(now + 90 * DAY, now)).toBe('in 3 months');
+    expect(describeDue(now + 60_000, 'en', now)).toBe('today');
+    expect(describeDue(now + DAY, 'en', now)).toBe('tomorrow');
+    expect(describeDue(now + 6 * DAY, 'en', now)).toBe('in 6 days');
+    expect(describeDue(now + 21 * DAY, 'en', now)).toBe('in 3 weeks');
+    expect(describeDue(now + 90 * DAY, 'en', now)).toBe('in 3 months');
   });
 });

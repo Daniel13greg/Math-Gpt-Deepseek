@@ -5,12 +5,13 @@ import { isCloudTranscriptionConfigured, SPEECH_RECORDING, transcribeWithCloud }
 import {
   getSpeechLib,
   isDeviceRecognitionAvailable,
-  NEEDS_DEV_BUILD_MESSAGE,
+  needsDevBuildMessage,
   requestSpeechPermissions,
   speechErrorMessage,
 } from '@/lib/speech/recognition';
 import { useSettings } from '@/store/settings';
 import { toast } from '@/store/toast';
+import { t } from '@/i18n';
 
 export type DictationState = 'idle' | 'listening' | 'transcribing';
 
@@ -100,7 +101,7 @@ export function useDictation({ onPartial, onFinal }: Options) {
       return;
     }
 
-    toast.info(lib ? speechErrorMessage('service-not-allowed') : NEEDS_DEV_BUILD_MESSAGE);
+    toast.info(lib ? speechErrorMessage('service-not-allowed') : needsDevBuildMessage());
   };
 
   const stop = async () => {
@@ -116,7 +117,7 @@ export function useDictation({ onPartial, onFinal }: Options) {
         await setAudioModeAsync({ allowsRecording: false });
         if (recorder.uri) handlers.current.onFinal(await transcribeWithCloud(recorder.uri, 'question.m4a'));
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Transcription failed.');
+        toast.error(e instanceof Error ? e.message : t('speech.transcriptionFailed'));
       } finally {
         mode.current = null;
         setState('idle');

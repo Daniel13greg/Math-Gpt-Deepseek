@@ -6,6 +6,7 @@ import { toUnicodeMath } from '@/lib/math';
 import { createCollectionSaver, loadCollection } from '@/lib/storage/collection';
 import type { AssistantMessage, Chat, Message, TokenUsage, UserMessage } from '@/lib/types';
 import { addToModel } from '@/lib/usage';
+import { t } from '@/i18n';
 
 interface ChatsState {
   chats: Record<string, Chat>;
@@ -63,7 +64,7 @@ export const useChats = create<ChatsState>()((set, get) => {
     chats: recoverInterrupted(initialChats),
     activeChatId: null,
 
-    createChat: (subject, title = 'New chat', extra) => {
+    createChat: (subject, title = t('drawer.newChat'), extra) => {
       const id = makeId('c');
       const now = Date.now();
       set({

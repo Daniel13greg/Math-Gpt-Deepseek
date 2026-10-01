@@ -1,5 +1,6 @@
 import type { Usage } from '@/lib/deepseek/client';
 import type { TokenUsage, UsageByModel } from '@/lib/types';
+import { t } from '@/i18n';
 
 /** USD per million tokens, as listed on DeepSeek's pricing page. */
 export interface ModelPrice {
@@ -92,7 +93,7 @@ export function monthKey(date = new Date()): string {
 /** "12.3K tokens · $0.0042" (cost only when every model used has a price). */
 export function describeUsage(byModel: UsageByModel | undefined, prices: Record<string, ModelPrice | undefined>): string {
   const total = totalUsage(byModel);
-  const tokens = `${formatTokens(total.promptTokens + total.completionTokens)} tokens`;
+  const tokens = t('usage.totalTokens', { tokens: formatTokens(total.promptTokens + total.completionTokens) });
   const cost = costByModel(byModel, prices);
   return cost === null ? tokens : `${tokens} · ${formatCost(cost)}`;
 }

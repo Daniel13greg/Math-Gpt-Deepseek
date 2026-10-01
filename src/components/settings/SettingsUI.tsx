@@ -4,6 +4,7 @@ import { Alert, Platform, Pressable, StyleSheet, TextInput, View } from 'react-n
 import { AppText } from '@/components/ui/AppText';
 import { FontFamily } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
+import { t } from '@/i18n';
 
 export function Section({ title, footer, children }: { title: string; footer?: string; children: ReactNode }) {
   const { colors } = useTheme();
@@ -80,13 +81,13 @@ export function Field(props: React.ComponentProps<typeof TextInput>) {
   );
 }
 
-export function confirm(title: string, message: string, onConfirm: () => void, action = 'Delete') {
+export function confirm(title: string, message: string, onConfirm: () => void, action = t('common.delete')) {
   if (Platform.OS === 'web') {
     if (globalThis.confirm?.(`${title}\n\n${message}`)) onConfirm();
     return;
   }
   Alert.alert(title, message, [
-    { text: 'Cancel', style: 'cancel' },
+    { text: t('common.cancel'), style: 'cancel' },
     { text: action, style: 'destructive', onPress: onConfirm },
   ]);
 }

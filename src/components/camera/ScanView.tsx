@@ -17,7 +17,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CameraIcon, ImageIcon, RotateCcwIcon, ZapIcon, ZapOffIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
+import { APP_NAME } from '@/constants/app';
 import { useTheme } from '@/hooks/useTheme';
+import { t as translate, useT } from '@/i18n';
 import { frameToCrop } from '@/lib/cropFrame';
 import { prepareImage } from '@/lib/images';
 import type { ImageAttachment } from '@/lib/types';
@@ -89,13 +91,14 @@ function CornerHandle({
   }));
   return (
     <GestureDetector gesture={gesture}>
-      <Animated.View style={[styles.handle, style]} hitSlop={8} accessibilityLabel={`Resize frame ${corner}`} />
+      <Animated.View style={[styles.handle, style]} hitSlop={8} accessibilityLabel={translate(`scan.corner.${corner}`)} />
     </GestureDetector>
   );
 }
 
 export function ScanView({ onSolve }: ScanViewProps) {
   const { colors } = useTheme();
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
   const camera = useRef<CameraView>(null);
@@ -140,7 +143,7 @@ export function ScanView({ onSolve }: ScanViewProps) {
       const crop = frameToCrop({ x: fx.get(), y: fy.get(), w: fw.get(), h: fh.get() }, view, photo);
       setPreview(await prepareImage(photo.uri, { width: photo.width, height: photo.height }, crop));
     } catch {
-      toast.error("Couldn't take the photo. Try again.");
+      toast.error(t('scan.captureFailed'));
     } finally {
       setBusy(false);
     }
@@ -154,7 +157,7 @@ export function ScanView({ onSolve }: ScanViewProps) {
     try {
       setPreview(await prepareImage(asset.uri, { width: asset.width, height: asset.height }));
     } catch {
-      toast.error("Couldn't read that image.");
+      toast.error(t('chat.imageUnreadable'));
     } finally {
       setBusy(false);
     }
@@ -171,23 +174,23 @@ export function ScanView({ onSolve }: ScanViewProps) {
           <CameraIcon size={30} color={colors.primary} />
         </View>
         <AppText weight="bold" size={22} align="center">
-          Scan a problem
+          {t('scan.title')}
         </AppText>
         <AppText size={16} secondary align="center" style={styles.permissionText}>
-          Point your camera at any math or science problem and MathGPT will solve it step by step.
+          {t('scan.subtitle', { app: APP_NAME })}
         </AppText>
         <Pressable
           accessibilityRole="button"
           style={[styles.primaryButton, { backgroundColor: colors.primary }]}
           onPress={() => (permission.canAskAgain ? requestPermission() : Linking.openSettings())}>
           <AppText weight="semibold" size={16} color="#fff">
-            {permission.canAskAgain ? 'Allow camera access' : 'Open settings'}
+            {permission.canAskAgain ? t('scan.allow') : t('scan.openSettings')}
           </AppText>
         </Pressable>
         <Pressable accessibilityRole="button" style={styles.secondaryButton} onPress={pickFromLibrary}>
           <ImageIcon size={18} color={colors.primary} />
           <AppText weight="medium" size={16} color={colors.primary}>
-            Choose a photo instead
+            {t('scan.choosePhoto')}
           </AppText>
         </Pressable>
       </View>
@@ -234,7 +237,7 @@ export function ScanView({ onSolve }: ScanViewProps) {
 
       <View pointerEvents="none" style={[styles.hint, { top: 18 }]}>
         <AppText weight="medium" size={15} color="#fff" align="center">
-          Fit one problem inside the frame
+          {t('scan.hint')}
         </AppText>
       </View>
 
@@ -243,7 +246,7 @@ export function ScanView({ onSolve }: ScanViewProps) {
           accessibilityRole="button"
           onPress={pickFromLibrary}
           style={styles.sideButton}
-          accessibilityLabel="Choose from photos">
+          accessibilityLabel={t('attach.library')}>
           <ImageIcon size={26} color="#fff" strokeWidth={1.8} />
         </Pressable>
         <Pressable
@@ -251,7 +254,7 @@ export function ScanView({ onSolve }: ScanViewProps) {
           onPress={capture}
           disabled={!ready || busy}
           style={styles.shutterOuter}
-          accessibilityLabel="Take photo">
+          accessibilityLabel={t('scan.capture')}>
           <View style={[styles.shutterInner, (!ready || busy) && { opacity: 0.5 }]}>
             {busy ? <ActivityIndicator color="#000" /> : null}
           </View>
@@ -260,7 +263,7 @@ export function ScanView({ onSolve }: ScanViewProps) {
           accessibilityRole="button"
           onPress={() => setTorch((t) => !t)}
           style={styles.sideButton}
-          accessibilityLabel={torch ? 'Turn off light' : 'Turn on light'}>
+          accessibilityLabel={torch ? t('scan.lightOff') : t('scan.lightOn')}>
           {torch ? (
             <ZapIcon size={26} color="#FFD60A" strokeWidth={1.8} />
           ) : (
@@ -273,7 +276,7 @@ export function ScanView({ onSolve }: ScanViewProps) {
         <View style={[StyleSheet.absoluteFill, styles.previewBackdrop]}>
           <View style={[styles.previewCard, { backgroundColor: colors.card }]}>
             <AppText weight="semibold" size={17} align="center">
-              Solve this problem?
+              {t('scan.confirm')}
             </AppText>
             <Image
               source={{ uri: preview.uri }}
@@ -287,7 +290,7 @@ export function ScanView({ onSolve }: ScanViewProps) {
                 onPress={() => setPreview(null)}>
                 <RotateCcwIcon size={17} color={colors.text} />
                 <AppText weight="medium" size={16}>
-                  Retake
+                  {t('scan.retake')}
                 </AppText>
               </Pressable>
               <Pressable
@@ -299,7 +302,7 @@ export function ScanView({ onSolve }: ScanViewProps) {
                   onSolve(image);
                 }}>
                 <AppText weight="semibold" size={16} color="#fff">
-                  Solve
+                  {t('scan.solve')}
                 </AppText>
               </Pressable>
             </View>

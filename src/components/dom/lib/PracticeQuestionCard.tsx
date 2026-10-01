@@ -2,15 +2,17 @@ import { useState } from 'react';
 
 import type { PracticeQuestion } from '@/lib/types';
 
+import { useDomT } from './i18n';
 import { Icon } from './Icon';
 import { InlineMarkdown, Markdown } from './Markdown';
 
 /** Shown when an independent re-solve disagreed with the answer key. */
 export function UnverifiedNote() {
+  const { t } = useDomT();
   return (
     <div className="unverified" role="note">
       <Icon name="circleAlert" size={16} />
-      <span>A second check got a different answer for this one. Work it out yourself before trusting the key.</span>
+      <span>{t('question.unverified')}</span>
     </div>
   );
 }
@@ -27,6 +29,7 @@ interface Props {
 
 /** Interactive multiple-choice question: pick, check, hint, worked solution. */
 export function PracticeQuestionCard({ question, lastAnswer, onAnswered, onAnother }: Props) {
+  const { t } = useDomT();
   const [selected, setSelected] = useState<number | null>(lastAnswer?.choice ?? null);
   const [checked, setChecked] = useState(lastAnswer !== undefined);
   const [showHint, setShowHint] = useState(false);
@@ -43,10 +46,10 @@ export function PracticeQuestionCard({ question, lastAnswer, onAnswered, onAnoth
     <div className="card artifact-card fade-in">
       <div className="artifact-head">
         <span className="tag">
-          <Icon name="circleQuestionMark" size={14} /> Practice question
+          <Icon name="circleQuestionMark" size={14} /> {t('question.tag')}
         </span>
         <span className="muted" style={{ fontSize: 13 }}>
-          {question.difficulty[0].toUpperCase() + question.difficulty.slice(1)} · {question.topic}
+          {t(`question.difficulty.${question.difficulty}`)} · {question.topic}
         </span>
       </div>
       <div className="artifact-body">
@@ -85,13 +88,13 @@ export function PracticeQuestionCard({ question, lastAnswer, onAnswered, onAnoth
         {checked ? (
           <div className={`feedback ${correct ? 'ok' : 'bad'}`}>
             <Icon name={correct ? 'check' : 'x'} size={18} stroke={3} />
-            {correct ? 'Correct! Nice work.' : `Not quite — the answer is ${LETTERS[question.answerIndex]}.`}
+            {correct ? t('question.correct') : t('question.wrong', { letter: LETTERS[question.answerIndex] })}
           </div>
         ) : null}
 
         {showHint && question.hint && !checked ? (
           <div className="hint">
-            <strong>Hint: </strong>
+            <strong>{t('question.hintLabel')} </strong>
             <InlineMarkdown text={question.hint} />
           </div>
         ) : null}
@@ -106,11 +109,11 @@ export function PracticeQuestionCard({ question, lastAnswer, onAnswered, onAnoth
           {!checked ? (
             <>
               <button className="btn" disabled={selected === null} onClick={check}>
-                Check answer
+                {t('question.check')}
               </button>
               {question.hint && !showHint ? (
                 <button className="btn ghost" onClick={() => setShowHint(true)}>
-                  <Icon name="lightbulb" size={16} /> Hint
+                  <Icon name="lightbulb" size={16} /> {t('question.hint')}
                 </button>
               ) : null}
             </>
@@ -118,12 +121,12 @@ export function PracticeQuestionCard({ question, lastAnswer, onAnswered, onAnoth
             <>
               {!showSolution ? (
                 <button className="btn" onClick={() => setShowSolution(true)}>
-                  Show solution
+                  {t('question.showSolution')}
                 </button>
               ) : null}
               {onAnother ? (
                 <button className="btn secondary" onClick={onAnother}>
-                  <Icon name="refreshCw" size={15} /> Another question
+                  <Icon name="refreshCw" size={15} /> {t('question.another')}
                 </button>
               ) : null}
             </>

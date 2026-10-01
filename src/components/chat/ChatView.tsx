@@ -13,12 +13,12 @@ import type { TranscriptAction, TranscriptHandle } from '@/components/dom/transc
 import { headerHeight } from '@/components/header/MainHeader';
 import { NotebookPenIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
-import { DISCLAIMER } from '@/constants/app';
-import { getSubject } from '@/constants/subjects';
+import { APP_NAME } from '@/constants/app';
 import { MaxContentWidth } from '@/constants/theme';
 import { useDictation } from '@/hooks/useDictation';
 import { usePdfExport } from '@/hooks/usePdfExport';
 import { useTheme } from '@/hooks/useTheme';
+import { t as translate, useT } from '@/i18n';
 import {
   anotherQuestion,
   editFrom,
@@ -87,12 +87,13 @@ export async function pickImageFromLibrary() {
   try {
     useUI.getState().addPendingImage(await prepareImage(asset.uri, { width: asset.width, height: asset.height }));
   } catch {
-    toast.error("Couldn't read that image.");
+    toast.error(translate('chat.imageUnreadable'));
   }
 }
 
 export function ChatView() {
   const { scheme, colors } = useTheme();
+  const { t, lang } = useT();
   const insets = useSafeAreaInsets();
   const transcriptRef = useRef<TranscriptHandle>(null);
   const chatId = useChats((s) => s.activeChatId);
@@ -169,11 +170,11 @@ export function ChatView() {
     switch (action.type) {
       case 'copy':
         await Clipboard.setStringAsync(messageText(findMessage(action.messageId)));
-        toast.success('Copied');
+        toast.success(t('common.copied'));
         break;
       case 'copy-text':
         await Clipboard.setStringAsync(action.text);
-        toast.success('Copied');
+        toast.success(t('common.copied'));
         break;
       case 'share': {
         const text = messageText(findMessage(action.messageId));
@@ -187,12 +188,12 @@ export function ChatView() {
         const asked = chat?.messages[chat.messages.indexOf(m) - 1];
         const title =
           asked?.role === 'user' && asked.tool?.kind === 'study-guide' && asked.tool.topic
-            ? `Study Guide: ${asked.tool.topic}`
-            : (chat?.title ?? 'Answer');
+            ? t('pdf.studyGuideTitle', { topic: asked.tool.topic })
+            : (chat?.title ?? t('pdf.answerTitle'));
         pdf.exportPdf({
           title,
           sections: [m.content],
-          meta: `${new Date(m.createdAt).toLocaleDateString()} · ${chat ? getSubject(chat.subject).label : ''}`,
+          meta: `${new Date(m.createdAt).toLocaleDateString(lang)} · ${chat ? t(`subject.${chat.subject}`) : ''}`,
         });
         break;
       }
@@ -269,7 +270,7 @@ export function ChatView() {
         <View style={[styles.lecture, { backgroundColor: colors.primarySoft }]}>
           <NotebookPenIcon size={15} color={colors.primary} />
           <AppText size={13.5} color={colors.primary} numberOfLines={1} style={styles.flexShrink}>
-            Answers use your notes from {lectureTitle}
+            {t('chat.lectureBanner', { title: lectureTitle })}
           </AppText>
         </View>
       ) : null}
@@ -279,6 +280,7 @@ export function ChatView() {
           messages={messages}
           chatId={chatId}
           scheme={scheme}
+          lang={lang}
           busy={busy}
           onAction={onAction}
           dom={{ style: { flex: 1 }, containerStyle: { flex: 1 }, scrollEnabled: false, bounces: false }}
@@ -311,8 +313,8 @@ export function ChatView() {
             router.push('/math-input');
           }}
         />
-        <AppText size={12.5} align="center" color={colors.textMuted} style={styles.disclaimer} numberOfLines={1}>
-          {DISCLAIMER}
+        <AppText size={12.5} align="center" color={colors.textMuted} style={styles.disclaimer} numberOfLines={2}>
+          {t('chat.disclaimer', { app: APP_NAME })}
         </AppText>
       </View>
 

@@ -4,23 +4,25 @@ import { LayersIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
 import { useProblemPicker } from '@/store/problemPicker';
 
 /** "Which problem should I solve?" for photos with several exercises. Dismissing solves them all. */
 export function ProblemPicker() {
   const { colors } = useTheme();
+  const { t } = useT();
   const problems = useProblemPicker((s) => s.problems);
   const answer = useProblemPicker((s) => s.answer);
 
   return (
-    <BottomSheet visible={problems !== null} onClose={() => answer('all')} title="Which problem should I solve?">
+    <BottomSheet visible={problems !== null} onClose={() => answer('all')} title={t('picker.title')}>
       <ScrollView style={styles.list} contentContainerStyle={styles.content}>
         {(problems ?? []).map((p) => (
           <Pressable
             key={`${p.label}:${p.text}`}
             onPress={() => answer(p)}
             accessibilityRole="button"
-            accessibilityLabel={`Problem ${p.label}: ${p.text}`}
+            accessibilityLabel={t('picker.problem', { label: p.label, text: p.text })}
             style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}>
             <View style={[styles.label, { backgroundColor: colors.primarySoft }]}>
               <AppText size={14} weight="semibold" color={colors.primary} numberOfLines={1}>
@@ -41,7 +43,7 @@ export function ProblemPicker() {
             <LayersIcon size={22} color={colors.icon} strokeWidth={1.8} />
           </View>
           <AppText size={16} weight="medium" style={styles.text}>
-            Solve all of them
+            {t('picker.all')}
           </AppText>
         </Pressable>
       </ScrollView>

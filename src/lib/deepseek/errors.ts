@@ -1,3 +1,5 @@
+import { t } from '@/i18n';
+
 export type DeepSeekErrorKind =
   | 'missing_key'
   | 'auth'
@@ -39,26 +41,30 @@ export function errorFromResponse(status: number, apiMessage: string | undefined
     case 422:
       return new DeepSeekError(
         'bad_request',
-        detail ? `DeepSeek rejected the request: ${detail}` : 'DeepSeek rejected the request.',
+        detail ? t('error.badRequestDetail', { detail }) : t('error.badRequest'),
         opts,
       );
     case 401:
-      return new DeepSeekError('auth', 'Your DeepSeek API key was rejected. Check it in Settings.', opts);
+      return new DeepSeekError('auth', t('error.auth'), opts);
     case 402:
       return new DeepSeekError(
         'balance',
-        'Your DeepSeek account is out of credit. Top up at platform.deepseek.com, then try again.',
+        t('error.balance'),
         opts,
       );
     case 429:
-      return new DeepSeekError('rate_limit', 'You are sending requests too quickly. Wait a moment and try again.', opts);
+      return new DeepSeekError('rate_limit', t('error.rateLimit'), opts);
     case 503:
-      return new DeepSeekError('overloaded', 'DeepSeek is overloaded right now. Please try again shortly.', opts);
+      return new DeepSeekError('overloaded', t('error.overloaded'), opts);
     default:
       if (status >= 500) {
-        return new DeepSeekError('server', 'DeepSeek had a server error. Please try again.', opts);
+        return new DeepSeekError('server', t('error.server'), opts);
       }
-      return new DeepSeekError('unknown', detail ? `Request failed (${status}): ${detail}` : `Request failed (${status}).`, opts);
+      return new DeepSeekError(
+        'unknown',
+        detail ? t('error.unknownDetail', { status, detail }) : t('error.unknown', { status }),
+        opts,
+      );
   }
 }
 
@@ -74,7 +80,7 @@ export function isAbortError(error: unknown): boolean {
 
 export function toDeepSeekError(error: unknown): DeepSeekError {
   if (error instanceof DeepSeekError) return error;
-  if (isAbortError(error)) return new DeepSeekError('aborted', 'Stopped.');
+  if (isAbortError(error)) return new DeepSeekError('aborted', t('transcript.stopped'));
   const message = error instanceof Error ? error.message : String(error);
-  return new DeepSeekError('network', `Couldn't reach DeepSeek. Check your connection and try again. (${message})`);
+  return new DeepSeekError('network', t('error.network', { message }));
 }

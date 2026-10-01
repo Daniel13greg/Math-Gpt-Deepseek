@@ -1,5 +1,6 @@
 import type { SubjectId } from '@/constants/subjects';
-import { getDiagramKind, getTool, isArtifactTool, type ToolSelection } from '@/constants/tools';
+import { isArtifactTool, toolRequestLabel, type ToolSelection } from '@/constants/tools';
+import { t } from '@/i18n';
 import { apiConfig } from '@/lib/api';
 import { streamChat } from '@/lib/deepseek/client';
 import { toDeepSeekError } from '@/lib/deepseek/errors';
@@ -52,14 +53,7 @@ function chatApiConfig(chatId: string) {
 }
 
 export function toolRequestText(tool: ToolSelection, topic: string): string {
-  const t = topic.trim();
-  if (tool.kind === 'diagram') {
-    const name = getDiagramKind(tool.diagram).title.toLowerCase();
-    return t ? `Create a ${name} of ${t}` : `Create a ${name}`;
-  }
-  const { request } = getTool(tool.kind);
-  if (tool.kind === 'check-work') return t ? `${request}:\n\n${t}` : request;
-  return t ? `${request} ${t}` : request.replace(/\s+(on|about|of)$/, '');
+  return toolRequestLabel(tool, topic.trim(), t);
 }
 
 export interface SendInput {
@@ -95,7 +89,7 @@ export async function sendMessage(input: SendInput): Promise<void> {
   const chat = getChat(chatId)!;
   if (chat.subject !== input.subject) store.setChatSubject(chatId, input.subject);
   if (chat.messages.length === 0 && !chat.titleLocked) {
-    const provisional = toUnicodeMath(message.text) || (message.images ? 'Photo problem' : 'New chat');
+    const provisional = toUnicodeMath(message.text) || (message.images ? t('chat.photoProblem') : t('drawer.newChat'));
     store.renameChat(chatId, provisional.length > 48 ? `${provisional.slice(0, 47)}…` : provisional, false);
   }
   store.addMessage(chatId, message);
@@ -175,7 +169,7 @@ async function runAssistant(chatId: string): Promise<void> {
 
   try {
     if (tool && isArtifactTool(tool.kind)) {
-      update({ progress: 'Getting started…' });
+      update({ progress: t('progress.starting') });
       const updater = createUpdater(chatId, assistantId);
       let reasoned = false;
       let thinkingMs: number | undefined;
@@ -208,14 +202,14 @@ async function runAssistant(chatId: string): Promise<void> {
     } else {
       // A bare photo may hold several exercises: ask which one before solving.
       if (!tool && userMessage.images?.length === 1 && !userMessage.text.trim()) {
-        update({ progress: 'Reading your photo…' });
+        update({ progress: t('progress.readingPhoto') });
         const problems = await detectProblems(await imageToDataUrl(userMessage.images[0]), config, controller.signal).catch(
           (error) => {
             if (controller.signal.aborted) throw error;
             return [];
           },
         );
-        update({ progress: problems.length > 1 ? 'Which problem should I solve?' : undefined });
+        update({ progress: problems.length > 1 ? t('picker.title') : undefined });
         if (problems.length > 1) {
           const choice = await useProblemPicker.getState().ask(problems, controller.signal);
           useChats.getState().updateUser(chatId, userMessage.id, { text: problemRequest(choice) });
@@ -349,7 +343,7 @@ export async function anotherQuestion(chatId: string, messageId: string): Promis
     tool: { kind: 'practice-question' },
     subject: chat.subject,
     context: followUpContext(q, artifact.lastAnswer),
-    label: `Another ${level} question on ${q.topic}`,
+    label: t(`adaptive.another.${level}`, { topic: q.topic }),
   });
 }
 
@@ -366,17 +360,12 @@ export async function practiceMistakes(chatId: string, messageId: string): Promi
     tool: { kind: 'practice-test' },
     subject: chat.subject,
     context,
-    label: `Create a practice test on my mistakes in ${artifact.data.topic}`,
+    label: t('adaptive.mistakes', { topic: artifact.data.topic }),
   });
 }
 
 export type LectureTool = 'flashcards' | 'practice-test' | 'study-guide';
 
-const LECTURE_TOOL_LABELS: Record<LectureTool, string> = {
-  flashcards: 'Create flashcards from my lecture notes',
-  'practice-test': 'Create a practice test from my lecture notes',
-  'study-guide': 'Create a study guide from my lecture notes',
-};
 
 /** Starts a new chat that turns a lecture note into flashcards, a practice test or a study guide. */
 export async function studyFromNote(noteId: string, kind: LectureTool, subject: SubjectId): Promise<void> {
@@ -389,7 +378,7 @@ export async function studyFromNote(noteId: string, kind: LectureTool, subject: 
     tool: { kind },
     subject,
     context: lectureToolContext(note.title, note.notes, note.transcript),
-    label: `${LECTURE_TOOL_LABELS[kind]}: ${note.title}`,
+    label: t(`lecture.${kind}`, { title: note.title }),
   });
 }
 
@@ -398,7 +387,7 @@ export function askAboutNote(noteId: string, subject: SubjectId): void {
   const note = useNotes.getState().notes[noteId];
   if (!note) return;
   const chatId = useChats.getState().createChat(subject, undefined, { noteId });
-  useChats.getState().renameChat(chatId, `Lecture: ${note.title}`, true);
+  useChats.getState().renameChat(chatId, t('lecture.chatTitle', { title: note.title }), true);
 }
 
 /** Deletes a chat, the image files it owns and its flashcard review schedules. */

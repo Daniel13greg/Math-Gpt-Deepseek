@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { DEFAULT_ANSWER_STYLE, type AnswerStyle } from '@/constants/answerStyles';
+import { applyLanguagePreference, type LanguagePreference } from '@/i18n';
 import { DEFAULT_BASE_URL, DEFAULT_MODEL, type ReasoningEffort } from '@/lib/deepseek/models';
 import { kv } from '@/lib/storage/kv';
 import { secure } from '@/lib/storage/secure';
@@ -19,6 +20,8 @@ export interface PersistedSettings {
   answerStyle: AnswerStyle;
   baseUrl: string;
   theme: ThemePreference;
+  /** UI language; "system" follows the device. */
+  language: LanguagePreference;
   /** BCP-47 language for speech recognition, e.g. en-US. */
   speechLang: string;
   sttProvider: SttProvider;
@@ -50,6 +53,7 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
   answerStyle: DEFAULT_ANSWER_STYLE,
   baseUrl: DEFAULT_BASE_URL,
   theme: 'system',
+  language: 'system',
   speechLang: 'en-US',
   sttProvider: 'device',
   sttBaseUrl: 'https://api.openai.com/v1',
@@ -78,12 +82,16 @@ function loadSettings(): PersistedSettings {
 /** A key baked in at build time via EXPO_PUBLIC_DEEPSEEK_API_KEY (handy for development only). */
 const ENV_API_KEY = process.env.EXPO_PUBLIC_DEEPSEEK_API_KEY ?? '';
 
+const initialSettings = loadSettings();
+applyLanguagePreference(initialSettings.language);
+
 export const useSettings = create<SettingsState>()((set, get) => ({
-  ...loadSettings(),
+  ...initialSettings,
   apiKey: secure.getSync(API_KEY) ?? '',
   sttApiKey: secure.getSync(STT_API_KEY) ?? '',
   update: (patch) => {
     set(patch);
+    if (patch.language) applyLanguagePreference(patch.language);
     const { apiKey: _a, sttApiKey: _b, update: _u, setApiKey: _s, setSttApiKey: _t, ...persisted } = get();
     kv.setItem(SETTINGS_KEY, JSON.stringify(persisted));
   },

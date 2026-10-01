@@ -6,6 +6,8 @@ import { IS_DOM, type DOMProps } from 'expo/dom';
 import { MathfieldElement } from 'mathlive';
 import { useEffect, useRef } from 'react';
 
+import { translator, type LanguageCode } from '@/i18n/strings';
+
 import { BASE_CSS } from './lib/styles';
 
 // KaTeX's fonts are already inlined by katex-inline.css (MathLive uses the same families), so
@@ -31,13 +33,15 @@ interface Props {
   /** LaTeX to start from. */
   initialLatex?: string;
   scheme: 'light' | 'dark';
+  lang: LanguageCode;
   /** Called with the LaTeX after every edit. */
   onChange: (latex: string) => Promise<void>;
   dom?: DOMProps;
 }
 
 /** Structured math input (fractions, powers, roots…) with MathLive's on-screen math keyboard. */
-export default function MathEditor({ initialLatex = '', scheme, onChange }: Props) {
+export default function MathEditor({ initialLatex = '', scheme, lang, onChange }: Props) {
+  const { t } = translator(lang);
   const host = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -45,7 +49,7 @@ export default function MathEditor({ initialLatex = '', scheme, onChange }: Prop
     field.value = initialLatex;
     field.smartFence = true;
     field.mathVirtualKeyboardPolicy = 'manual';
-    field.setAttribute('aria-label', 'Math input');
+    field.setAttribute('aria-label', t('math.input'));
     const keyboard = window.mathVirtualKeyboard;
     keyboard.layouts = ['numeric', 'symbols', 'alphabetic', 'greek'];
     const show = () => keyboard.show({ animate: true });
@@ -76,7 +80,7 @@ export default function MathEditor({ initialLatex = '', scheme, onChange }: Prop
       <div className="math-editor-field">
         <div ref={host} />
         <div className="math-editor-hint">
-          Type with the math keyboard below. Use the arrow keys to move in and out of fractions, powers and roots.
+          {t('math.hint')}
         </div>
       </div>
     </div>

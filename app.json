@@ -102,7 +102,20 @@
       "expo-sqlite",
       "expo-web-browser",
       "expo-font",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-localization",
+        {
+          "supportedLocales": [
+            "en",
+            "es",
+            "pt-BR",
+            "fr",
+            "de",
+            "zh-Hans"
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

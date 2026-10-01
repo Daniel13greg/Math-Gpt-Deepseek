@@ -6,6 +6,7 @@ import { lectureNotesPrompt } from '@/lib/prompts';
 import { useNotes } from '@/store/notes';
 import { addToModel } from '@/lib/usage';
 import { useSettings } from '@/store/settings';
+import { t } from '@/i18n';
 
 const inflight = new Map<string, AbortController>();
 
@@ -29,7 +30,7 @@ export async function generateLectureNotes(noteId: string): Promise<void> {
   const update = useNotes.getState().updateNote;
 
   if (!note.transcript.trim()) {
-    update(noteId, { status: 'error', error: 'No speech was captured, so there is nothing to summarize.' });
+    update(noteId, { status: 'error', error: t('notes.noSpeech') });
     return;
   }
 
@@ -77,7 +78,7 @@ export async function generateLectureNotes(noteId: string): Promise<void> {
     update(noteId, {
       notes,
       status: error.kind === 'aborted' && notes ? 'done' : 'error',
-      error: error.kind === 'aborted' ? 'Stopped before finishing.' : error.message,
+      error: error.kind === 'aborted' ? t('notes.stopped') : error.message,
     });
   } finally {
     inflight.delete(noteId);

@@ -14,8 +14,9 @@ import {
 } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { BottomSheet } from '@/components/ui/BottomSheet';
-import { ANSWER_STYLES, getAnswerStyle } from '@/constants/answerStyles';
+import { ANSWER_STYLES } from '@/constants/answerStyles';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
 import { modelLabel } from '@/lib/deepseek/models';
 import { useSettings } from '@/store/settings';
 
@@ -67,14 +68,15 @@ export function AttachSheet({ visible, onClose, onCamera, onLibrary, onModel }: 
   const answerStyle = useSettings((s) => s.answerStyle);
   const update = useSettings((s) => s.update);
   const [stylesOpen, setStylesOpen] = useState(false);
+  const { t } = useT();
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Add to your question">
+    <BottomSheet visible={visible} onClose={onClose} title={t('attach.title')}>
       <View style={styles.list}>
         <Row
           icon={<CameraIcon size={24} color={colors.icon} strokeWidth={1.8} />}
-          title="Take a photo"
-          subtitle="Snap a problem from your homework"
+          title={t('attach.camera')}
+          subtitle={t('attach.camera.detail')}
           onPress={() => {
             onClose();
             onCamera();
@@ -82,8 +84,8 @@ export function AttachSheet({ visible, onClose, onCamera, onLibrary, onModel }: 
         />
         <Row
           icon={<ImageIcon size={24} color={colors.icon} strokeWidth={1.8} />}
-          title="Choose from photos"
-          subtitle="Attach a screenshot or picture"
+          title={t('attach.library')}
+          subtitle={t('attach.library.detail')}
           onPress={() => {
             onClose();
             onLibrary();
@@ -92,8 +94,8 @@ export function AttachSheet({ visible, onClose, onCamera, onLibrary, onModel }: 
         <View style={[styles.divider, { backgroundColor: colors.hairline }]} />
         <Row
           icon={<GraduationCapIcon size={24} color={colors.icon} strokeWidth={1.8} />}
-          title="Answer style"
-          subtitle={getAnswerStyle(answerStyle).label}
+          title={t('answerStyle.title')}
+          subtitle={t(`answerStyle.${answerStyle}`)}
           expanded={stylesOpen}
           onPress={() => setStylesOpen((o) => !o)}
           right={
@@ -105,24 +107,24 @@ export function AttachSheet({ visible, onClose, onCamera, onLibrary, onModel }: 
         {stylesOpen ? (
           <Animated.View entering={FadeIn.duration(160)} accessibilityRole="radiogroup">
             {ANSWER_STYLES.map((style) => {
-              const selected = style.id === answerStyle;
+              const selected = style === answerStyle;
               return (
                 <Pressable
-                  key={style.id}
+                  key={style}
                   accessibilityRole="radio"
                   accessibilityState={{ selected }}
                   onPress={() => {
-                    update({ answerStyle: style.id });
+                    update({ answerStyle: style });
                     setStylesOpen(false);
                     onClose();
                   }}
                   style={({ pressed }) => [styles.subRow, pressed && { backgroundColor: colors.surface }]}>
                   <View style={styles.text}>
                     <AppText size={16} weight={selected ? 'semibold' : 'regular'} color={colors.icon}>
-                      {style.label}
+                      {t(`answerStyle.${style}`)}
                     </AppText>
                     <AppText size={13} secondary>
-                      {style.description}
+                      {t(`answerStyle.${style}.description`)}
                     </AppText>
                   </View>
                   {selected ? <CheckIcon size={20} color={colors.primary} /> : null}
@@ -133,8 +135,8 @@ export function AttachSheet({ visible, onClose, onCamera, onLibrary, onModel }: 
         ) : null}
         <Row
           icon={<BrainIcon size={24} color={colors.icon} strokeWidth={1.8} />}
-          title="Deep Think"
-          subtitle="Reason carefully before answering (slower)"
+          title={t('deepThink.title')}
+          subtitle={t('attach.deepThink.detail')}
           onPress={() => update({ thinking: !thinking })}
           right={
             <Switch
@@ -147,7 +149,7 @@ export function AttachSheet({ visible, onClose, onCamera, onLibrary, onModel }: 
         />
         <Row
           icon={<SparklesIcon size={24} color={colors.icon} strokeWidth={1.8} />}
-          title="Model"
+          title={t('attach.model')}
           subtitle={modelLabel(model)}
           onPress={() => {
             onClose();

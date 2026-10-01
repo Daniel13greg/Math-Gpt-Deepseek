@@ -14,7 +14,7 @@ jest.mock('@/lib/storage/secure', () => ({ secure: { getSync: () => null, set: a
 
 describe('answer styles', () => {
   it('gives every style its own instructions', () => {
-    const prompts = ANSWER_STYLES.map((s) => tutorSystemPrompt('math', s.id));
+    const prompts = ANSWER_STYLES.map((s) => tutorSystemPrompt('math', s));
     expect(new Set(prompts).size).toBe(ANSWER_STYLES.length);
     expect(tutorSystemPrompt('math')).toBe(tutorSystemPrompt('math', 'steps'));
   });
@@ -27,7 +27,7 @@ describe('answer styles', () => {
   });
 
   it('keeps the shared math formatting rules in every style', () => {
-    for (const style of ANSWER_STYLES) expect(tutorSystemPrompt('math', style.id)).toContain('\\frac{a}{b}');
+    for (const style of ANSWER_STYLES) expect(tutorSystemPrompt('math', style)).toContain('\\frac{a}{b}');
   });
 });
 

@@ -5,6 +5,7 @@ import './katex-inline.css';
 import { IS_DOM, type DOMProps } from 'expo/dom';
 import { useRef, useState, type PointerEvent } from 'react';
 
+import { translator, type LanguageCode } from '@/i18n/strings';
 import type { FlashcardDeck } from '@/lib/types';
 
 import { Icon } from './lib/Icon';
@@ -50,6 +51,7 @@ const CARDS_CSS = `
 interface Props {
   deck: FlashcardDeck;
   scheme: 'light' | 'dark';
+  lang: LanguageCode;
   onFlip: () => Promise<void>;
   /** Saves the answer for spaced repetition (card index in the deck). */
   onGrade?: (card: number, gotIt: boolean) => Promise<void>;
@@ -69,7 +71,8 @@ function shuffled(n: number) {
   return a;
 }
 
-export default function Flashcards({ deck, scheme, onFlip, onGrade, initialOrder, nextReview }: Props) {
+export default function Flashcards({ deck, scheme, lang, onFlip, onGrade, initialOrder, nextReview }: Props) {
+  const { t, tp } = translator(lang);
   const [start] = useState(() => (initialOrder?.length ? initialOrder : deck.cards.map((_, i) => i)));
   const [order, setOrder] = useState(start);
   const [pos, setPos] = useState(0);
@@ -167,10 +170,10 @@ export default function Flashcards({ deck, scheme, onFlip, onGrade, initialOrder
               onPointerUp={onPointerUp}
               onPointerCancel={onPointerUp}>
               <div className="swipe-hint know" style={{ opacity: Math.max(0, Math.min(1, dragX / 90)) }}>
-                Got it
+                {t('cards.gotIt')}
               </div>
               <div className="swipe-hint learn" style={{ opacity: Math.max(0, Math.min(1, -dragX / 90)) }}>
-                Still learning
+                {t('cards.stillLearning')}
               </div>
               {/* The fade lives on a wrapper: its fill-mode would otherwise pin transform and block the flip. */}
               <div key={order[pos]} className="fade-in" style={{ position: 'absolute', inset: 0, perspective: 1400 }}>
@@ -185,12 +188,12 @@ export default function Flashcards({ deck, scheme, onFlip, onGrade, initialOrder
                       : undefined
                   }>
                   <div className="face front">
-                    <span className="side">Term</span>
+                    <span className="side">{t('cards.term')}</span>
                     <Markdown text={card.front} />
-                    <span className="tap">Tap to flip · swipe to sort</span>
+                    <span className="tap">{t('cards.tapHint')}</span>
                   </div>
                   <div className="face back">
-                    <span className="side">Definition</span>
+                    <span className="side">{t('cards.definition')}</span>
                     <Markdown text={card.back} />
                   </div>
                 </div>
@@ -198,16 +201,16 @@ export default function Flashcards({ deck, scheme, onFlip, onGrade, initialOrder
             </div>
             <div className="card-actions">
               <button className="btn learn" onClick={() => mark(false)}>
-                <Icon name="x" size={18} stroke={2.5} /> Still learning
+                <Icon name="x" size={18} stroke={2.5} /> {t('cards.stillLearning')}
               </button>
               <button className="btn know" onClick={() => mark(true)}>
-                <Icon name="check" size={18} stroke={2.5} /> Got it
+                <Icon name="check" size={18} stroke={2.5} /> {t('cards.gotIt')}
               </button>
             </div>
             <div className="tools-row">
               <button
                 className="icon-btn"
-                aria-label="Previous card"
+                aria-label={t('cards.previous')}
                 disabled={pos === 0}
                 onClick={() => {
                   setPos((p) => Math.max(0, p - 1));
@@ -217,7 +220,7 @@ export default function Flashcards({ deck, scheme, onFlip, onGrade, initialOrder
               </button>
               <button
                 className="icon-btn"
-                aria-label="Shuffle"
+                aria-label={t('cards.shuffle')}
                 onClick={() => {
                   setOrder(shuffled(deck.cards.length));
                   setPos(0);
@@ -225,7 +228,7 @@ export default function Flashcards({ deck, scheme, onFlip, onGrade, initialOrder
                 }}>
                 <Icon name="shuffle" size={19} />
               </button>
-              <button className="icon-btn" aria-label="Restart" onClick={() => restart()}>
+              <button className="icon-btn" aria-label={t('cards.restart')} onClick={() => restart()}>
                 <Icon name="rotateCcw" size={19} />
               </button>
             </div>
@@ -234,25 +237,25 @@ export default function Flashcards({ deck, scheme, onFlip, onGrade, initialOrder
           <div className="done fade-in">
             <div style={{ fontSize: 46 }}>{learning.size === 0 ? '🎉' : '💪'}</div>
             <h2>
-              You know {known.size} of {order.length}
+              {t('cards.youKnow', { known: known.size, total: order.length })}
             </h2>
             <div className="muted">
               {learning.size === 0
-                ? 'Every card mastered. Nice!'
-                : `${learning.size} card${learning.size > 1 ? 's' : ''} still need practice.`}
+                ? t('cards.allMastered')
+                : tp('cards.needPractice', learning.size)}
             </div>
             {nextReview ? (
               <div className="next-review">
-                <Icon name="clock" size={15} /> Next review {nextReview}
+                <Icon name="clock" size={15} /> {t('cards.nextReview', { when: nextReview })}
               </div>
             ) : null}
             {learning.size > 0 ? (
               <button className="btn" onClick={() => restart([...learning])}>
-                Practice the {learning.size} I missed
+                {tp('cards.practiceMissed', learning.size)}
               </button>
             ) : null}
             <button className="btn secondary" onClick={() => restart()}>
-              Start over
+              {t('cards.startOver')}
             </button>
           </div>
         )}

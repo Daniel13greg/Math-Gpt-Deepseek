@@ -27,6 +27,7 @@ practice tests, flashcards, graphs, diagrams, study guides and narrated video le
 | **Usage** | Tokens per chat (long-press it in the drawer), per lecture note, this month and all time, per model. Enter DeepSeek's prices in Settings to see costs too. |
 | **Upgrade** | Instead of a paywall, picks the model: *Flash* (fast, reads photos) or *Pro* (strongest reasoning). |
 | **Themes** | Light, dark or system. |
+| **Languages** | English, Español, Português (Brasil), Français, Deutsch and 简体中文, following the device language or chosen in Settings. Answers always follow the language the student writes in. |
 
 ## Quick start
 
@@ -108,6 +109,10 @@ note. Graph key points that don't lie on any plotted curve are removed.
   loose TeX is cleaned up (slash fractions → `\frac`, `<=` → `\le`, …), so fractions are stacked and
   symbols typeset everywhere — answers, thinking, notes, student messages and study tools. Places that
   can't run KaTeX (chat titles, diagram and graph labels) get the Unicode equivalent: "x² − 4", "⁶⁄₄".
+- **Localization** (`src/i18n/`): typed string keys with English as the source of truth, `{placeholder}`
+  interpolation and plural forms via `Intl.PluralRules`; a test checks every locale has every key and the same
+  placeholders. DOM components receive the language as a prop. Add a language by adding a file in
+  `src/i18n/locales/` and an entry in `LANGUAGES`. Prompts to DeepSeek stay in English.
 - **State**: zustand stores persisted to SQLite key-value storage (`expo-sqlite/kv-store`), one key per
   chat, written only when a chat changes and throttled during streaming. Photos live in the app's
   document directory.

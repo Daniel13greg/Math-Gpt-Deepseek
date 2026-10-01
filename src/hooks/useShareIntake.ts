@@ -6,6 +6,7 @@ import { imageSize, prepareImage } from '@/lib/images';
 import { readSharePayloads } from '@/lib/shareIntake';
 import { toast } from '@/store/toast';
 import { useUI } from '@/store/ui';
+import { t } from '@/i18n';
 
 /** Moves photos and text shared from other apps (the system share sheet) into the composer. */
 async function takeShared(): Promise<void> {
@@ -42,11 +43,11 @@ async function takeShared(): Promise<void> {
   }
   if (text) ui.setDraft(ui.draft.trim() ? `${ui.draft.trim()}\n\n${text}` : text);
   if (added === 0 && !text) {
-    if (imageUris.length) toast.error("Couldn't read the shared image.");
+    if (imageUris.length) toast.error(t('share.imageFailed'));
     return;
   }
   ui.setMode('chat');
-  toast.success(added ? 'Photo added. Tap send to solve it.' : 'Added to your question.');
+  toast.success(added ? t('share.photoAdded') : t('share.textAdded'));
 }
 
 export function useShareIntake() {

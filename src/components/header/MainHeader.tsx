@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MenuIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
 import type { AppMode } from '@/store/ui';
 
 import { ModeSwitcher } from './ModeSwitcher';
@@ -26,12 +27,13 @@ interface MainHeaderProps {
 
 export function MainHeader({ mode, onModeChange, onMenu, onUpgrade }: MainHeaderProps) {
   const { colors } = useTheme();
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   return (
     <View
       style={[styles.header, { paddingTop: insets.top, backgroundColor: colors.background, borderBottomColor: colors.hairline }]}>
       <View style={styles.row}>
-        <Pressable onPress={onMenu} hitSlop={12} style={styles.menu} accessibilityRole="button" accessibilityLabel="Open menu">
+        <Pressable onPress={onMenu} hitSlop={12} style={styles.menu} accessibilityRole="button" accessibilityLabel={t('header.menu')}>
           <MenuIcon size={21} color={colors.icon} />
         </Pressable>
 
@@ -43,10 +45,10 @@ export function MainHeader({ mode, onModeChange, onMenu, onUpgrade }: MainHeader
           <Pressable
             onPress={onUpgrade}
             accessibilityRole="button"
-            accessibilityLabel="Upgrade"
+            accessibilityLabel={t('header.upgrade')}
             style={({ pressed }) => [styles.upgrade, { backgroundColor: pressed ? colors.primaryPressed : colors.primary }]}>
             <AppText weight="medium" size={15} color={colors.onPrimary}>
-              Upgrade
+              {t('header.upgrade')}
             </AppText>
           </Pressable>
         ) : null}
