@@ -106,15 +106,19 @@ export function Composer(props: ComposerProps) {
           </Pressable>
         )}
 
-        {props.thinking && !tool ? (
+        {props.thinking ? (
           <Pressable
             onPress={props.onToggleThinking}
-            style={[styles.chip, styles.thinkChip, { backgroundColor: colors.primarySoft }]}
-            accessibilityLabel="Turn off Deep Think">
+            hitSlop={4}
+            style={[styles.chip, styles.thinkChip, tool && styles.thinkChipCompact, { backgroundColor: colors.primarySoft }]}
+            accessibilityRole="button"
+            accessibilityLabel="Deep Think is on. Tap to turn it off">
             <BrainIcon size={15} color={colors.primary} />
-            <AppText size={13} weight="medium" color={colors.primary}>
-              Deep Think
-            </AppText>
+            {tool ? null : (
+              <AppText size={13} weight="medium" color={colors.primary}>
+                Deep Think
+              </AppText>
+            )}
           </Pressable>
         ) : null}
 
@@ -203,6 +207,8 @@ const styles = StyleSheet.create({
   },
   chipText: { flexShrink: 1 },
   thinkChip: { height: 28, paddingHorizontal: 9, gap: 4 },
+  // Next to a tool chip there is only room for the icon.
+  thinkChipCompact: { width: 28, paddingHorizontal: 0, justifyContent: 'center' },
   spacer: { flex: 1 },
   send: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginLeft: 6 },
 });

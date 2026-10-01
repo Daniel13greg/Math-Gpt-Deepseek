@@ -2,7 +2,7 @@ import type { SubjectId } from '@/constants/subjects';
 import { getDiagramKind, getTool, type ToolSelection } from '@/constants/tools';
 import { streamChat, type ClientConfig } from '@/lib/deepseek/client';
 import { toDeepSeekError } from '@/lib/deepseek/errors';
-import { DEFAULT_VISION_MODEL, isKnownVisionModel } from '@/lib/deepseek/models';
+import { DEFAULT_VISION_MODEL, isKnownVisionModel, utilityModel } from '@/lib/deepseek/models';
 import { makeId } from '@/lib/id';
 import { deleteImageFiles, imageToDataUrl } from '@/lib/images';
 import { toUnicodeMath } from '@/lib/math';
@@ -13,7 +13,13 @@ import type { AssistantMessage, ImageAttachment, UserMessage } from '@/lib/types
 import { getChat, useChats } from '@/store/chats';
 import { getApiKey, useSettings } from '@/store/settings';
 
-import { toApiMessages } from './history';
+import { fitToBudget, toApiMessages } from './history';
+
+/**
+ * Tokens of conversation history sent with each request. Older turns are dropped beyond this,
+ * which keeps long chats fast and cheap and well inside the context window.
+ */
+const HISTORY_TOKEN_BUDGET = 48_000;
 
 /** One in-flight request per chat. */
 const inflight = new Map<string, AbortController>();
@@ -125,7 +131,8 @@ async function runAssistant(chatId: string): Promise<void> {
   if (!chat || !userMessage || userMessage.role !== 'user') return;
 
   const tool = userMessage.tool;
-  const thinking = !tool && settings.thinking;
+  // Deep Think applies to every model (Flash included) and to study tools as well as chat.
+  const thinking = settings.thinking;
   const assistantId = makeId('m');
   const startedAt = Date.now();
   useChats.getState().addMessage(chatId, {
@@ -146,6 +153,9 @@ async function runAssistant(chatId: string): Promise<void> {
   try {
     if (tool && tool.kind !== 'study-guide') {
       update({ progress: 'Getting started…' });
+      const updater = createUpdater(chatId, assistantId);
+      let reasoned = false;
+      let thinkingMs: number | undefined;
       const artifact = await generateArtifact({
         config: clientConfig(),
         model: settings.model,
@@ -153,9 +163,23 @@ async function runAssistant(chatId: string): Promise<void> {
         diagram: tool.diagram,
         subject: chat.subject,
         topic: tool.topic,
+        thinking,
+        reasoningEffort: settings.reasoningEffort,
         signal: controller.signal,
         onProgress: (progress) => update({ progress }),
+        onReasoning: (delta) => {
+          reasoned = true;
+          updater.reasoning(delta);
+        },
+        onThinkingDone: () => {
+          updater.flush();
+          if (reasoned && thinkingMs === undefined) {
+            thinkingMs = Date.now() - startedAt;
+            update({ thinkingMs });
+          }
+        },
       });
+      updater.flush();
       update({ artifact, status: 'done', progress: undefined, content: '' });
     } else {
       // Study guides are standalone documents; chat replies see the whole conversation.
@@ -166,7 +190,7 @@ async function runAssistant(chatId: string): Promise<void> {
           }
         : await toApiMessages(chat.messages, { thinking, loadImage: imageToDataUrl });
       const system = tool ? toolSystemPrompt('study-guide', chat.subject) : tutorSystemPrompt(chat.subject);
-      const messages = [{ role: 'system' as const, content: system }, ...built.messages];
+      const messages = [{ role: 'system' as const, content: system }, ...fitToBudget(built.messages, HISTORY_TOKEN_BUDGET)];
       const model = built.hasImages && !isKnownVisionModel(settings.model) ? DEFAULT_VISION_MODEL : settings.model;
 
       const updater = createUpdater(chatId, assistantId);
@@ -229,7 +253,7 @@ async function maybeGenerateTitle(chatId: string) {
   const replyText = reply.artifact ? '' : reply.content.slice(0, 400);
   try {
     const result = await streamChat(clientConfig(), {
-      model: useSettings.getState().model,
+      model: utilityModel(useSettings.getState().model),
       thinking: false,
       maxTokens: 24,
       temperature: 0.3,

@@ -45,6 +45,12 @@ $$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} = \frac{5 \pm \sqrt{25 - 24}}{2} = \fra
 const REASONING =
   'The user wants the roots of x^2 - 5x + 6. Product 6, sum -5 gives -2 and -3, so (x-2)(x-3). Roots 2 and 3. Let me double-check with the discriminant: 25 - 24 = 1, sqrt = 1, (5±1)/2 = 3 or 2. Good. I will present factoring, then verify with the formula and a table.';
 
+const TOOL_REASONING =
+  'The student wants study material on this topic. I will cover the main sub-skills, pick clean numbers, and make sure every answer key is correct before writing the JSON.';
+
+const NOTES_REASONING =
+  'The transcript covers derivatives. "The rivet of" is a mishearing of "the derivative of". I will reconstruct the power rule example and add review questions.';
+
 const STUDY_GUIDE = String.raw`### Overview
 Quadratic equations have the form \(ax^2 + bx + c = 0\) with \(a \neq 0\).
 
@@ -308,11 +314,12 @@ const server = createServer(async (req, res) => {
   );
 
   if (system.includes('short title')) return stream(res, { content: 'Solving x^2 - 5x + 6 = 0', model });
-  if (system.includes('note-taker')) return stream(res, { content: NOTES, model });
-  if (system.includes('study guide')) return stream(res, { content: STUDY_GUIDE, model });
-  if (body.response_format?.type === 'json_object') {
+  const thought = (text) => (thinking ? text : '');
+  if (system.includes('note-taker')) return stream(res, { reasoning: thought(NOTES_REASONING), content: NOTES, model });
+  if (system.includes('study guide')) return stream(res, { reasoning: thought(TOOL_REASONING), content: STUDY_GUIDE, model });
+  if (body.response_format?.type === 'json_object' || system.includes('single valid JSON object')) {
     const tool = pickTool(system, userText) ?? 'practice-question';
-    return stream(res, { content: JSON.stringify(TOOLS[tool], null, 1), model });
+    return stream(res, { reasoning: thought(TOOL_REASONING), content: JSON.stringify(TOOLS[tool], null, 1), model });
   }
   return stream(res, { reasoning: thinking ? REASONING : '', content: ANSWER, model });
 });

@@ -22,7 +22,7 @@ const FEATURES = [
 const PLAN_COPY: Record<string, { name: string; blurb: string; badge?: string }> = {
   'deepseek-flash': {
     name: 'Flash',
-    blurb: 'DeepSeek V4.1 Flash. Fast answers and reads photos of problems.',
+    blurb: 'DeepSeek V4.1 Flash. Fast answers, reads photos of problems, and Deep Think included.',
     badge: 'Recommended',
   },
   'deepseek-v4-pro': {
@@ -122,7 +122,7 @@ export default function UpgradeScreen() {
               Deep Think
             </AppText>
             <AppText size={14} secondary>
-              Thinks before answering. Slower, but more accurate on multi-step problems.
+              On for every model. Thinks before answering and before writing tests, flashcards and notes. Slower, but more accurate.
             </AppText>
           </View>
           <Switch

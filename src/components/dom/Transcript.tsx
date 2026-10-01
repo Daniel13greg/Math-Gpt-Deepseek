@@ -88,7 +88,8 @@ const UserTurn = memo(
 
 function Thinking({ m }: { m: AssistantMessage }) {
   const streaming = m.status === 'streaming';
-  const live = streaming && !m.content;
+  // Tool replies never stream text; they record thinkingMs once the JSON starts arriving.
+  const live = streaming && !m.content && !m.thinkingMs;
   const [open, setOpen] = useState<boolean | null>(null);
   const expanded = open ?? live;
   const seconds = m.thinkingMs ? Math.max(1, Math.round(m.thinkingMs / 1000)) : null;
@@ -132,7 +133,7 @@ const AssistantTurn = memo(
           </span>
         ) : null}
 
-        {m.thinking && (m.reasoning || (streaming && !hasText)) ? <Thinking m={m} /> : null}
+        {m.thinking && (m.reasoning || (streaming && !hasText && !generatingArtifact)) ? <Thinking m={m} /> : null}
 
         {generatingArtifact ? (
           <div className="card progress-card fade-in">

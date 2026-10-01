@@ -13,7 +13,7 @@ practice tests, flashcards, graphs, diagrams, study guides and narrated video le
 | | |
 |---|---|
 | **Chat** | Step-by-step answers for 10 subjects (Math, Physics, Accounting, Chemistry, Statistics, Biology, Economics, Finance, Computer Science, Engineering). Streaming Markdown with **LaTeX math** (KaTeX, incl. `\ce{}` chemistry), tables and code. Fractions are always stacked and symbols typeset, even when the model or student types plain text like `6/4`, `x^2`, `sqrt(16)` or `a <= b`. Copy, share, read aloud, regenerate, edit. |
-| **Deep Think** | DeepSeek thinking mode with a live, collapsible chain of thought and adjustable reasoning effort. |
+| **Deep Think** | DeepSeek thinking mode with a live, collapsible chain of thought and adjustable reasoning effort. On by default for every model (Flash included) and used for study tools and lecture notes too. |
 | **Scan** | In-app camera with a resizable crop frame (or pick from photos). The photo goes straight to DeepSeek's vision model. |
 | **Record** | "Create lecture notes": record a lecture (live transcript) or upload MP3/AAC/WAV/OGG/FLAC, then DeepSeek writes structured notes with formulas, examples and review questions. |
 | **Tools** | Create Video (animated slides + text-to-speech narration), Practice Test (scored, with review), Practice Question (interactive, hints, solution), Graph (pan/zoom plot), Diagram (flowchart, mind map, geometry, free-body, Venn), Study Guide, Flashcards (flip + swipe). |
@@ -72,7 +72,7 @@ the iOS Keychain / Android Keystore instead.
 | Setting | Default | Notes |
 |---|---|---|
 | Model | `deepseek-flash` | DeepSeek V4.1 Flash; accepts images. `deepseek-v4-pro` is the strongest text model. Any custom model ID can be entered. |
-| Deep Think | off | Sends `thinking: {type: "enabled"}` and `reasoning_effort` (low/high/max). The API defaults to thinking *on*, so the app always sends the flag explicitly. |
+| Deep Think | on | Sends `thinking: {type: "enabled"}` and `reasoning_effort` (low/high/max) for answers, study tools and notes, on every model. The app always sends the flag explicitly. If an endpoint refuses JSON mode together with thinking, tools retry without `response_format`. |
 | API base URL | `https://api.deepseek.com` | Point it at your own proxy to keep keys off devices (see Security). |
 
 Photos are always routed to a vision-capable model. Tools use JSON mode (`response_format: json_object`)
@@ -82,7 +82,10 @@ with schema validation, LaTeX-safe JSON repair and one automatic retry.
 
 - **Expo SDK 57**, React Native 0.86, React 19.2 + React Compiler, **Expo Router** (drawer + stack), TypeScript.
 - **DeepSeek client** (`src/lib/deepseek/`): SSE streaming over `expo/fetch`, separate `reasoning_content`
-  stream, `reasoning_content` round-trip for multi-turn thinking mode, friendly errors for 401/402/429/5xx.
+  stream, `reasoning_content` round-trip for multi-turn thinking mode, friendly errors for 401/402/429/5xx,
+  automatic retry with backoff for rate limits, overload and network errors (only before any text has streamed).
+- **Chat history** is capped at about 48K tokens per request: the opening message and the latest turns are kept,
+  older turns in between are dropped. Chat titles are written by Flash.
 - **Rich content** is rendered with [Expo DOM components](https://docs.expo.dev/guides/dom-components/)
   (`'use dom'`): Markdown (`marked`) + KaTeX, interactive graphs/diagrams/tests/flashcards. The chat
   transcript is one WebView; streamed tokens are pushed into it imperatively so the whole conversation

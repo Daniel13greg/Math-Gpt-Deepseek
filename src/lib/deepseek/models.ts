@@ -36,6 +36,14 @@ export function modelLabel(id: string): string {
   return MODELS.find((m) => m.id === id)?.label ?? id;
 }
 
+/**
+ * Model for small housekeeping calls such as chat titles: Flash when the user picked one of
+ * DeepSeek's models, otherwise their custom model (it may be the only one their endpoint serves).
+ */
+export function utilityModel(selected: string): string {
+  return MODELS.some((m) => m.id === selected) ? DEFAULT_MODEL : selected;
+}
+
 export function isKnownVisionModel(id: string): boolean {
   return MODELS.some((m) => m.id === id && m.vision);
 }

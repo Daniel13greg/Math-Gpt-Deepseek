@@ -2,6 +2,7 @@ import type { SubjectId } from '@/constants/subjects';
 import type { DiagramKind, ToolKind } from '@/constants/tools';
 import { streamChat, type ApiMessage, type ClientConfig } from '@/lib/deepseek/client';
 import { DeepSeekError } from '@/lib/deepseek/errors';
+import type { ReasoningEffort } from '@/lib/deepseek/models';
 import { extractJson } from '@/lib/json';
 import { toolSystemPrompt, toolUserPrompt } from '@/lib/prompts';
 import type { Artifact } from '@/lib/types';
@@ -67,8 +68,14 @@ export interface GenerateArtifactOptions {
   diagram?: DiagramKind;
   subject: SubjectId;
   topic: string;
+  /** Deep Think: reason before writing the JSON. */
+  thinking: boolean;
+  reasoningEffort?: ReasoningEffort;
   signal?: AbortSignal;
   onProgress?: (label: string) => void;
+  onReasoning?: (delta: string) => void;
+  /** Called when the first JSON arrives, i.e. once the model has finished thinking. */
+  onThinkingDone?: () => void;
 }
 
 /**
@@ -84,11 +91,28 @@ export async function generateArtifact(opts: GenerateArtifactOptions): Promise<A
   for (let attempt = 0; ; attempt++) {
     let partial = '';
     let lastLabel = '';
+    let thinkingLabelShown = false;
     const result = await streamChat(
       opts.config,
-      { model: opts.model, messages, thinking: false, json: true, maxTokens: 8192, temperature: 0.7 },
       {
+        model: opts.model,
+        messages,
+        thinking: opts.thinking,
+        reasoningEffort: opts.reasoningEffort,
+        json: true,
+        maxTokens: opts.thinking ? 32768 : 8192,
+        temperature: 0.7,
+      },
+      {
+        onReasoning: (delta) => {
+          if (!thinkingLabelShown) {
+            thinkingLabelShown = true;
+            opts.onProgress?.('Thinking it through…');
+          }
+          opts.onReasoning?.(delta);
+        },
         onContent: (delta) => {
+          if (!partial) opts.onThinkingDone?.();
           partial += delta;
           const label = progressLabel(opts.kind, partial);
           if (label !== lastLabel) {
@@ -111,7 +135,7 @@ export async function generateArtifact(opts: GenerateArtifactOptions): Promise<A
       const reason = error instanceof Error ? error.message : 'invalid JSON';
       opts.onProgress?.('Fixing a formatting issue…');
       messages.push(
-        { role: 'assistant', content: result.content },
+        { role: 'assistant', content: result.content, ...(opts.thinking ? { reasoning_content: result.reasoning } : {}) },
         {
           role: 'user',
           content: `That reply could not be used (${reason}). Reply again with only the complete, valid JSON object in exactly the required format.`,

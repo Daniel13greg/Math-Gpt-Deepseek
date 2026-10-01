@@ -47,7 +47,11 @@ export interface ClientConfig {
   baseUrl?: string;
   /** Injected in tests; defaults to the global fetch (expo/fetch on native, which streams). */
   fetch?: typeof fetch;
+  /** Waits before each automatic retry of a rate-limit, overload, server or network error. */
+  retryDelaysMs?: number[];
 }
+
+const DEFAULT_RETRY_DELAYS_MS = [1000, 3000];
 
 export function chatCompletionsUrl(baseUrl: string | undefined): string {
   const base = (baseUrl?.trim() || DEFAULT_BASE_URL).replace(/\/+$/, '');
@@ -232,6 +236,55 @@ async function attempt(
   return builder.result();
 }
 
+function sleep(ms: number, signal: AbortSignal | undefined): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(new DeepSeekError('aborted', 'Stopped.'));
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new DeepSeekError('aborted', 'Stopped.'));
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+/**
+ * Retries rate-limit, overload, server and network errors with backoff, but only while
+ * nothing has been streamed yet: a retry after partial output would duplicate text.
+ */
+async function attemptWithRetry(
+  config: ClientConfig,
+  req: ChatRequest,
+  handlers: StreamHandlers,
+  signal: AbortSignal | undefined,
+): Promise<ChatResult> {
+  const delays = config.retryDelaysMs ?? DEFAULT_RETRY_DELAYS_MS;
+  let streamed = false;
+  const tracked: StreamHandlers = {
+    onContent: (delta) => {
+      streamed = true;
+      handlers.onContent?.(delta);
+    },
+    onReasoning: (delta) => {
+      streamed = true;
+      handlers.onReasoning?.(delta);
+    },
+  };
+  for (let i = 0; ; i++) {
+    try {
+      return await attempt(config, req, tracked, signal);
+    } catch (error) {
+      if (signal?.aborted) throw new DeepSeekError('aborted', 'Stopped.');
+      const retryable = error instanceof DeepSeekError && error.retryable;
+      if (!retryable || streamed || i >= delays.length) throw error;
+      await sleep(delays[i], signal);
+    }
+  }
+}
+
 /**
  * Sends a chat completion request and streams the reply.
  * Resolves with the full content once the stream completes; rejects with a DeepSeekError.
@@ -243,12 +296,17 @@ export async function streamChat(
   signal?: AbortSignal,
 ): Promise<ChatResult> {
   try {
-    return await attempt(config, req, handlers, signal);
+    return await attemptWithRetry(config, req, handlers, signal);
   } catch (error) {
     const apiMessage = error instanceof DeepSeekError ? error.apiMessage : undefined;
-    if (error instanceof DeepSeekError && error.kind === 'bad_request' && apiMessage && /reasoning_content/i.test(apiMessage)) {
+    if (!(error instanceof DeepSeekError) || error.kind !== 'bad_request' || !apiMessage) throw error;
+    if (/reasoning_content/i.test(apiMessage)) {
       const mode = /must be passed|missing|required/i.test(apiMessage) ? 'add' : 'strip';
-      return attempt(config, { ...req, messages: patchReasoningContent(req.messages, mode) }, handlers, signal);
+      return attemptWithRetry(config, { ...req, messages: patchReasoningContent(req.messages, mode) }, handlers, signal);
+    }
+    // Some deployments refuse JSON mode together with thinking; the prompt still asks for JSON.
+    if (req.json && /response_format|json/i.test(apiMessage)) {
+      return attemptWithRetry(config, { ...req, json: false }, handlers, signal);
     }
     throw error;
   }

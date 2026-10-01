@@ -240,7 +240,9 @@ export default function SettingsScreen() {
             />
           </View>
           <Divider />
-          <Row label="Deep Think" detail="Reason step by step before answering. Slower, more accurate on hard problems.">
+          <Row
+            label="Deep Think"
+            detail="Reason step by step before answers, study tools and notes, on every model. Slower, more accurate.">
             <Switch
               value={settings.thinking}
               onValueChange={(thinking) => settings.update({ thinking })}

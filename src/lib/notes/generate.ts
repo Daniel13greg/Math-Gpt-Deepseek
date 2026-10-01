@@ -49,8 +49,10 @@ export async function generateLectureNotes(noteId: string): Promise<void> {
       { apiKey: getApiKey(), baseUrl: settings.baseUrl },
       {
         model: settings.model,
-        thinking: false,
-        maxTokens: 16384,
+        // Deep Think helps untangle misheard terms and reconstruct skipped steps.
+        thinking: settings.thinking,
+        reasoningEffort: settings.reasoningEffort,
+        maxTokens: settings.thinking ? 32768 : 16384,
         temperature: 0.3,
         messages: [
           { role: 'system', content: lectureNotesPrompt() },

@@ -8,8 +8,10 @@ export type ThemePreference = 'system' | 'light' | 'dark';
 export type SttProvider = 'device' | 'cloud';
 
 export interface PersistedSettings {
+  /** Bumped when a stored setting needs migrating (see loadSettings). */
+  version: number;
   model: string;
-  /** "Deep Think": DeepSeek thinking mode for chat answers. */
+  /** "Deep Think": DeepSeek thinking mode for answers, study tools and notes, on every model. */
   thinking: boolean;
   reasoningEffort: ReasoningEffort;
   baseUrl: string;
@@ -35,9 +37,12 @@ const SETTINGS_KEY = 'settings:v1';
 const API_KEY = 'deepseek_api_key';
 const STT_API_KEY = 'stt_api_key';
 
+const SETTINGS_VERSION = 2;
+
 export const DEFAULT_SETTINGS: PersistedSettings = {
+  version: SETTINGS_VERSION,
   model: DEFAULT_MODEL,
-  thinking: false,
+  thinking: true,
   reasoningEffort: 'high',
   baseUrl: DEFAULT_BASE_URL,
   theme: 'system',
@@ -48,10 +53,19 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
   ttsRate: 1,
 };
 
+/** Upgrades settings saved by older versions of the app. */
+export function migrateSettings(stored: Partial<PersistedSettings>): PersistedSettings {
+  const settings = { ...DEFAULT_SETTINGS, ...stored };
+  // v2: Deep Think is on by default for every model, so turn it on once for existing installs.
+  if ((stored.version ?? 1) < 2) settings.thinking = true;
+  settings.version = SETTINGS_VERSION;
+  return settings;
+}
+
 function loadSettings(): PersistedSettings {
   try {
     const raw = kv.getItemSync(SETTINGS_KEY);
-    return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS;
+    return raw ? migrateSettings(JSON.parse(raw)) : DEFAULT_SETTINGS;
   } catch {
     return DEFAULT_SETTINGS;
   }

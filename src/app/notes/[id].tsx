@@ -12,6 +12,7 @@ import { MaxContentWidth } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { generateLectureNotes, stopNotes } from '@/lib/notes/generate';
 import { useNotes } from '@/store/notes';
+import { useSettings } from '@/store/settings';
 import { toast } from '@/store/toast';
 
 type Tab = 'notes' | 'transcript';
@@ -28,6 +29,7 @@ export default function NoteScreen() {
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<Tab>('notes');
+  const thinking = useSettings((s) => s.thinking);
 
   if (!note) {
     return (
@@ -97,7 +99,7 @@ export default function NoteScreen() {
               markdown={note.notes}
               scheme={scheme}
               streaming={generating}
-              placeholder="Writing your notes…"
+              placeholder={thinking ? 'Thinking through the lecture, then writing your notes…' : 'Writing your notes…'}
               onLink={async (url) => {
                 if (/^https?:/.test(url)) await WebBrowser.openBrowserAsync(url);
               }}
