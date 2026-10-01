@@ -13,10 +13,12 @@ practice tests, flashcards, graphs, diagrams, study guides and narrated video le
 | | |
 |---|---|
 | **Chat** | Step-by-step answers for 10 subjects (Math, Physics, Accounting, Chemistry, Statistics, Biology, Economics, Finance, Computer Science, Engineering). Streaming Markdown with **LaTeX math** (KaTeX, incl. `\ce{}` chemistry), tables and code. Fractions are always stacked and symbols typeset, even when the model or student types plain text like `6/4`, `x^2`, `sqrt(16)` or `a <= b`. Copy, share, read aloud, regenerate, edit. |
+| **Answer styles** | Step by step, **Tutor mode** (Socratic: hints first, the student does the steps), Just the answer, Explain simply, Exam-style working. Pick one from the **+** menu or Settings. |
+| **Check My Work** | Photograph or type your own working; the reply gives a verdict, marks each step and explains the first mistake with a corrected solution. |
 | **Deep Think** | DeepSeek thinking mode with a live, collapsible chain of thought and adjustable reasoning effort. On by default for every model (Flash included) and used for study tools and lecture notes too. |
 | **Scan** | In-app camera with a resizable crop frame (or pick from photos). The photo goes straight to DeepSeek's vision model. |
 | **Record** | "Create lecture notes": record a lecture (live transcript) or upload MP3/AAC/WAV/OGG/FLAC, then DeepSeek writes structured notes with formulas, examples and review questions. |
-| **Tools** | Create Video (animated slides + text-to-speech narration), Practice Test (scored, with review), Practice Question (interactive, hints, solution), Graph (pan/zoom plot), Diagram (flowchart, mind map, geometry, free-body, Venn), Study Guide, Flashcards (flip + swipe). |
+| **Tools** | Check My Work, Create Video (animated slides + text-to-speech narration), Practice Test (scored, with review), Practice Question (interactive, hints, solution), Graph (pan/zoom plot), Diagram (flowchart, mind map, geometry, free-body, Venn), Study Guide, Flashcards (flip + swipe). |
 | **History** | Chats and notes are saved on the device; searchable drawer grouped by date; rename/delete. |
 | **Usage** | Tokens per chat (long-press it in the drawer), per lecture note, this month and all time, per model. Enter DeepSeek's prices in Settings to see costs too. |
 | **Upgrade** | Instead of a paywall, picks the model: *Flash* (fast, reads photos) or *Pro* (strongest reasoning). |

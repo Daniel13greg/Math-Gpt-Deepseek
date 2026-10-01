@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 
+import { getAnswerStyle, type AnswerStyle } from '@/constants/answerStyles';
 import { getSubject, type SubjectId } from '@/constants/subjects';
 import { toolChipLabel, toolPlaceholder, type ToolSelection } from '@/constants/tools';
 import { ArrowUpIcon, BrainIcon, MicIcon, PlusIcon, SquareIcon, ToolCaseIcon, XIcon } from '@/components/icons';
@@ -23,6 +24,7 @@ export interface ComposerProps {
   onClearTool: () => void;
   thinking: boolean;
   onToggleThinking: () => void;
+  answerStyle: AnswerStyle;
   busy: boolean;
   listening: boolean;
   onSend: () => void;
@@ -38,7 +40,9 @@ export function Composer(props: ComposerProps) {
   const inputRef = useRef<TextInput>(null);
   const { tool, images } = props;
 
-  const placeholder = tool ? toolPlaceholder(tool) : `Type your ${getSubject(props.subject).noun} question here`;
+  const placeholder = tool
+    ? toolPlaceholder(tool)
+    : (getAnswerStyle(props.answerStyle).placeholder ?? `Type your ${getSubject(props.subject).noun} question here`);
   const canSend = props.draft.trim().length > 0 || images.length > 0 || tool !== null;
 
   const send = () => {

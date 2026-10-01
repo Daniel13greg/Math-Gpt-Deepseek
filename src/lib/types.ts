@@ -17,7 +17,13 @@ export interface UserMessage {
   text: string;
   createdAt: number;
   images?: ImageAttachment[];
-  tool?: { kind: ToolKind; diagram?: DiagramKind; topic: string };
+  tool?: {
+    kind: ToolKind;
+    diagram?: DiagramKind;
+    topic: string;
+    /** Hidden source material for the tool (lecture notes, missed questions); not shown in the bubble. */
+    context?: string;
+  };
 }
 
 export type MessageStatus = 'streaming' | 'done' | 'error' | 'stopped';

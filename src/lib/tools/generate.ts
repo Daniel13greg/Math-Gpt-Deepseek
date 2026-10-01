@@ -1,5 +1,5 @@
 import type { SubjectId } from '@/constants/subjects';
-import type { DiagramKind, ToolKind } from '@/constants/tools';
+import type { ArtifactToolKind, DiagramKind } from '@/constants/tools';
 import { streamChat, type ApiMessage, type ClientConfig } from '@/lib/deepseek/client';
 import { DeepSeekError } from '@/lib/deepseek/errors';
 import type { ReasoningEffort } from '@/lib/deepseek/models';
@@ -18,7 +18,7 @@ import {
 } from './normalize';
 import { applyKeyChecks, checkAnswerKeys } from './verify';
 
-export type ArtifactToolKind = Exclude<ToolKind, 'study-guide'>;
+export type { ArtifactToolKind };
 
 export function buildArtifact(kind: ArtifactToolKind, raw: unknown, topic: string, diagram?: DiagramKind): Artifact {
   switch (kind) {

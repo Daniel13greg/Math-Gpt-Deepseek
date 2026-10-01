@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import { DEFAULT_ANSWER_STYLE, type AnswerStyle } from '@/constants/answerStyles';
 import { DEFAULT_BASE_URL, DEFAULT_MODEL, type ReasoningEffort } from '@/lib/deepseek/models';
 import { kv } from '@/lib/storage/kv';
 import { secure } from '@/lib/storage/secure';
@@ -14,6 +15,8 @@ export interface PersistedSettings {
   /** "Deep Think": DeepSeek thinking mode for answers, study tools and notes, on every model. */
   thinking: boolean;
   reasoningEffort: ReasoningEffort;
+  /** How chat answers are written: full steps, Socratic tutor, just the answer, simple, exam-style. */
+  answerStyle: AnswerStyle;
   baseUrl: string;
   theme: ThemePreference;
   /** BCP-47 language for speech recognition, e.g. en-US. */
@@ -44,6 +47,7 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
   model: DEFAULT_MODEL,
   thinking: true,
   reasoningEffort: 'high',
+  answerStyle: DEFAULT_ANSWER_STYLE,
   baseUrl: DEFAULT_BASE_URL,
   theme: 'system',
   speechLang: 'en-US',

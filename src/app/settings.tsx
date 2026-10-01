@@ -9,6 +9,7 @@ import { confirm, Divider, Field, Row, Section } from '@/components/settings/Set
 import { UsageSection } from '@/components/settings/UsageSection';
 import { AppText } from '@/components/ui/AppText';
 import { Segmented } from '@/components/ui/Segmented';
+import { ANSWER_STYLES } from '@/constants/answerStyles';
 import { APP_NAME } from '@/constants/app';
 import { MaxContentWidth } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
@@ -182,6 +183,17 @@ export default function SettingsScreen() {
               />
             </View>
           ) : null}
+        </Section>
+
+        <Section title="Answer style" footer="Applies to chat answers. Change it any time from the + menu.">
+          {ANSWER_STYLES.map((style, i) => (
+            <View key={style.id}>
+              {i > 0 ? <Divider /> : null}
+              <Row label={style.label} detail={style.description} onPress={() => settings.update({ answerStyle: style.id })}>
+                {settings.answerStyle === style.id ? <CheckIcon size={20} color={colors.primary} /> : null}
+              </Row>
+            </View>
+          ))}
         </Section>
 
         <Section

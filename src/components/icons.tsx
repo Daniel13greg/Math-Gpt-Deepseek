@@ -12,9 +12,11 @@ export { default as ChevronDownIcon } from 'lucide-react-native/icons/chevron-do
 export { default as ChevronLeftIcon } from 'lucide-react-native/icons/chevron-left';
 export { default as ChevronRightIcon } from 'lucide-react-native/icons/chevron-right';
 export { default as CircleHelpIcon } from 'lucide-react-native/icons/circle-question-mark';
+export { default as ClipboardCheckIcon } from 'lucide-react-native/icons/clipboard-check';
 export { default as CopyIcon } from 'lucide-react-native/icons/copy';
 export { default as FileIcon } from 'lucide-react-native/icons/file';
 export { default as FileTextIcon } from 'lucide-react-native/icons/file-text';
+export { default as GraduationCapIcon } from 'lucide-react-native/icons/graduation-cap';
 export { default as ImageIcon } from 'lucide-react-native/icons/image';
 export { default as KeyboardIcon } from 'lucide-react-native/icons/keyboard';
 export { default as KeyRoundIcon } from 'lucide-react-native/icons/key-round';

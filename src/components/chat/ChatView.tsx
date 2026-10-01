@@ -85,6 +85,7 @@ export function ChatView() {
   const messages = useStructuralMessages(chatId);
   const ui = useUI();
   const thinking = useSettings((s) => s.thinking);
+  const answerStyle = useSettings((s) => s.answerStyle);
   const updateSettings = useSettings((s) => s.update);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [attachOpen, setAttachOpen] = useState(false);
@@ -257,6 +258,7 @@ export function ChatView() {
           onClearTool={() => ui.setTool(null)}
           thinking={thinking}
           onToggleThinking={() => updateSettings({ thinking: !thinking })}
+          answerStyle={answerStyle}
           busy={busy || isGenerating(chatId)}
           listening={dictation.state !== 'idle'}
           onSend={send}

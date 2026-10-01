@@ -42,6 +42,25 @@ $$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} = \frac{5 \pm \sqrt{25 - 24}}{2} = \fra
 
 **Final answer:** \(\boxed{x = 2 \text{ or } x = 3}\)`;
 
+const TUTOR = String.raw`We want to solve \(x^2 - 5x + 6 = 0\).
+
+**Hint:** can you find two numbers that **multiply** to \(6\) and **add** to \(-5\)?
+
+Try it, then tell me which two numbers you found.`;
+
+const CHECK = String.raw`### Verdict
+❌ First mistake in step 2. Nice setup though: your first step is exactly right.
+
+### Step by step
+1. \(2x + 3 = 11\) ✓
+2. "\(2x = 14\)": here \(3\) was **added** to both sides instead of subtracted. It should be \(2x = 11 - 3 = 8\).
+3. Dividing by \(2\) was the right move; it just started from the wrong number.
+
+### Corrected solution
+\[ 2x = 8 \quad\Rightarrow\quad x = 4 \]
+
+**Final answer:** \(oxed{x = 4}\)`;
+
 const REASONING =
   'The user wants the roots of x^2 - 5x + 6. Product 6, sum -5 gives -2 and -3, so (x-2)(x-3). Roots 2 and 3. Let me double-check with the discriminant: 25 - 24 = 1, sqrt = 1, (5±1)/2 = 3 or 2. Good. I will present factoring, then verify with the formula and a table.';
 
@@ -330,6 +349,8 @@ const server = createServer(async (req, res) => {
     const tool = pickTool(system, userText) ?? 'practice-question';
     return stream(res, { reasoning: thought(TOOL_REASONING), content: JSON.stringify(TOOLS[tool], null, 1), model });
   }
+  if (system.includes('checking a student')) return stream(res, { reasoning: thought(REASONING), content: CHECK, model });
+  if (system.includes('Socratic tutor')) return stream(res, { reasoning: thought(REASONING), content: TUTOR, model });
   return stream(res, { reasoning: thinking ? REASONING : '', content: ANSWER, model });
 });
 

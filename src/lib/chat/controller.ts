@@ -1,5 +1,5 @@
 import type { SubjectId } from '@/constants/subjects';
-import { getDiagramKind, getTool, type ToolSelection } from '@/constants/tools';
+import { getDiagramKind, getTool, isArtifactTool, type ToolSelection } from '@/constants/tools';
 import { apiConfig } from '@/lib/api';
 import { streamChat } from '@/lib/deepseek/client';
 import { toDeepSeekError } from '@/lib/deepseek/errors';
@@ -45,6 +45,7 @@ export function toolRequestText(tool: ToolSelection, topic: string): string {
     return t ? `Create a ${name} of ${t}` : `Create a ${name}`;
   }
   const { request } = getTool(tool.kind);
+  if (tool.kind === 'check-work') return t ? `${request}:\n\n${t}` : request;
   return t ? `${request} ${t}` : request.replace(/\s+(on|about|of)$/, '');
 }
 
@@ -154,7 +155,7 @@ async function runAssistant(chatId: string): Promise<void> {
   const config = chatApiConfig(chatId);
 
   try {
-    if (tool && tool.kind !== 'study-guide') {
+    if (tool && isArtifactTool(tool.kind)) {
       update({ progress: 'Getting started…' });
       const updater = createUpdater(chatId, assistantId);
       let reasoned = false;
@@ -185,14 +186,17 @@ async function runAssistant(chatId: string): Promise<void> {
       updater.flush();
       update({ artifact, status: 'done', progress: undefined, content: '' });
     } else {
-      // Study guides are standalone documents; chat replies see the whole conversation.
-      const built = tool
-        ? {
-            messages: [{ role: 'user' as const, content: toolUserPrompt('study-guide', tool.topic) }],
-            hasImages: false,
-          }
-        : await toApiMessages(chat.messages, { thinking, loadImage: imageToDataUrl });
-      const system = tool ? toolSystemPrompt('study-guide', chat.subject) : tutorSystemPrompt(chat.subject);
+      // Study guides are standalone documents; chat replies and work checks see the whole conversation.
+      const built =
+        tool?.kind === 'study-guide'
+          ? {
+              messages: [{ role: 'user' as const, content: toolUserPrompt('study-guide', tool.topic, undefined, tool.context) }],
+              hasImages: false,
+            }
+          : await toApiMessages(chat.messages, { thinking, loadImage: imageToDataUrl });
+      const system = tool
+        ? toolSystemPrompt(tool.kind, chat.subject)
+        : tutorSystemPrompt(chat.subject, settings.answerStyle);
       const messages = [{ role: 'system' as const, content: system }, ...fitToBudget(built.messages, HISTORY_TOKEN_BUDGET)];
       const model = built.hasImages && !isKnownVisionModel(settings.model) ? DEFAULT_VISION_MODEL : settings.model;
 
@@ -206,7 +210,7 @@ async function runAssistant(chatId: string): Promise<void> {
           thinking,
           reasoningEffort: settings.reasoningEffort,
           maxTokens: thinking ? 32768 : 8192,
-          temperature: tool ? 0.6 : 0.3,
+          temperature: tool?.kind === 'study-guide' ? 0.6 : tool?.kind === 'check-work' ? 0.2 : 0.3,
         },
         {
           onReasoning: updater.reasoning,

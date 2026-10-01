@@ -1,4 +1,20 @@
-export type ToolKind = 'video' | 'practice-test' | 'practice-question' | 'graph' | 'diagram' | 'study-guide' | 'flashcards';
+export type ToolKind =
+  | 'check-work'
+  | 'video'
+  | 'practice-test'
+  | 'practice-question'
+  | 'graph'
+  | 'diagram'
+  | 'study-guide'
+  | 'flashcards';
+
+/** Tools that reply with streamed Markdown, like a chat answer, instead of an interactive artifact. */
+export type TextToolKind = 'study-guide' | 'check-work';
+export type ArtifactToolKind = Exclude<ToolKind, TextToolKind>;
+
+export function isArtifactTool(kind: ToolKind): kind is ArtifactToolKind {
+  return kind !== 'study-guide' && kind !== 'check-work';
+}
 
 export type DiagramKind = 'flowchart' | 'mindmap' | 'geometry' | 'free-body' | 'venn';
 
@@ -20,6 +36,13 @@ export interface ToolInfo {
 }
 
 export const TOOLS: ToolInfo[] = [
+  {
+    kind: 'check-work',
+    title: 'Check My Work',
+    chip: 'Check My Work',
+    placeholder: 'Add a photo of your working, or type it here',
+    request: 'Check my work',
+  },
   {
     kind: 'video',
     title: 'Create Video',

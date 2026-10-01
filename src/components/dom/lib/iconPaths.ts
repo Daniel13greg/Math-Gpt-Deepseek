@@ -31,6 +31,11 @@ export const ICONS = {
     ['path', { d: 'M19.364 18.364a9 9 0 0 0 0-12.728' }],
   ] as IconNode,
   check: [['path', { d: 'M20 6 9 17l-5-5' }]] as IconNode,
+  clipboardCheck: [
+    ['rect', { width: '8', height: '4', x: '8', y: '2', rx: '1', ry: '1' }],
+    ['path', { d: 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' }],
+    ['path', { d: 'm9 14 2 2 4-4' }],
+  ] as IconNode,
   x: [
     ['path', { d: 'M18 6 6 18' }],
     ['path', { d: 'm6 6 12 12' }],

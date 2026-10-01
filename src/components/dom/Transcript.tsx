@@ -5,7 +5,7 @@ import './katex-inline.css';
 import { IS_DOM, useDOMImperativeHandle, type DOMProps } from 'expo/dom';
 import { memo, useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type Ref } from 'react';
 
-import { getTool, toolChipLabel } from '@/constants/tools';
+import { getTool, isArtifactTool, toolChipLabel } from '@/constants/tools';
 import type { AssistantMessage, Message, UserMessage } from '@/lib/types';
 
 import { ArtifactView } from './lib/ArtifactView';
@@ -30,6 +30,7 @@ type Act = (action: TranscriptAction) => void;
 const PAGE_CSS = `html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: transparent; } #root { height: 100%; }`;
 
 const TOOL_ICONS: Record<string, IconName> = {
+  'check-work': 'clipboardCheck',
   video: 'play',
   'practice-test': 'bookCheck',
   'practice-question': 'circleQuestionMark',
@@ -121,7 +122,7 @@ function Thinking({ m }: { m: AssistantMessage }) {
 const AssistantTurn = memo(
   function AssistantTurn({ m, isLast, busy, act }: { m: AssistantMessage; isLast: boolean; busy: boolean; act: Act }) {
     const streaming = m.status === 'streaming';
-    const generatingArtifact = streaming && m.tool && m.tool !== 'study-guide';
+    const generatingArtifact = streaming && m.tool && isArtifactTool(m.tool);
     const hasText = m.content.trim().length > 0;
     const settingsError = m.errorKind === 'missing_key' || m.errorKind === 'auth';
 
@@ -130,6 +131,10 @@ const AssistantTurn = memo(
         {m.tool === 'study-guide' ? (
           <span className="tag" style={{ marginBottom: 10 }}>
             <Icon name="bookOpen" size={13} /> Study guide
+          </span>
+        ) : m.tool === 'check-work' ? (
+          <span className="tag" style={{ marginBottom: 10 }}>
+            <Icon name="clipboardCheck" size={13} /> Work check
           </span>
         ) : null}
 
