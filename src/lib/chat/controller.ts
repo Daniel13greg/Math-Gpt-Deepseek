@@ -24,7 +24,10 @@ import { useNotes } from '@/store/notes';
 import { useReviews } from '@/store/reviews';
 import { useSettings } from '@/store/settings';
 
+import { useProblemPicker } from '@/store/problemPicker';
+
 import { fitToBudget, toApiMessages } from './history';
+import { detectProblems, problemRequest } from './problems';
 
 /**
  * Tokens of conversation history sent with each request. Older turns are dropped beyond this,
@@ -203,14 +206,32 @@ async function runAssistant(chatId: string): Promise<void> {
       updater.flush();
       update({ artifact, status: 'done', progress: undefined, content: '' });
     } else {
+      // A bare photo may hold several exercises: ask which one before solving.
+      if (!tool && userMessage.images?.length === 1 && !userMessage.text.trim()) {
+        update({ progress: 'Reading your photo…' });
+        const problems = await detectProblems(await imageToDataUrl(userMessage.images[0]), config, controller.signal).catch(
+          (error) => {
+            if (controller.signal.aborted) throw error;
+            return [];
+          },
+        );
+        update({ progress: problems.length > 1 ? 'Which problem should I solve?' : undefined });
+        if (problems.length > 1) {
+          const choice = await useProblemPicker.getState().ask(problems, controller.signal);
+          useChats.getState().updateUser(chatId, userMessage.id, { text: problemRequest(choice) });
+          update({ progress: undefined });
+        }
+      }
+
       // Study guides are standalone documents; chat replies and work checks see the whole conversation.
+      const history = getChat(chatId)?.messages ?? chat.messages;
       const built =
         tool?.kind === 'study-guide'
           ? {
               messages: [{ role: 'user' as const, content: toolUserPrompt('study-guide', tool.topic, undefined, tool.context) }],
               hasImages: false,
             }
-          : await toApiMessages(chat.messages, { thinking, loadImage: imageToDataUrl });
+          : await toApiMessages(history, { thinking, loadImage: imageToDataUrl });
       const note = chat.noteId ? useNotes.getState().notes[chat.noteId] : undefined;
       const system =
         (tool ? toolSystemPrompt(tool.kind, chat.subject) : tutorSystemPrompt(chat.subject, settings.answerStyle)) +

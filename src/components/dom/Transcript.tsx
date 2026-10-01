@@ -138,7 +138,11 @@ const AssistantTurn = memo(
           </span>
         ) : null}
 
-        {m.thinking && (m.reasoning || (streaming && !hasText && !generatingArtifact)) ? <Thinking m={m} /> : null}
+        {m.thinking && (m.reasoning || (streaming && !hasText && !generatingArtifact && !m.progress)) ? <Thinking m={m} /> : null}
+
+        {streaming && !hasText && !m.reasoning && m.progress && !generatingArtifact ? (
+          <div className="step-progress pulse-text">{m.progress}</div>
+        ) : null}
 
         {generatingArtifact ? (
           <div className="card progress-card fade-in">
@@ -153,7 +157,7 @@ const AssistantTurn = memo(
           </div>
         ) : null}
 
-        {streaming && !hasText && !m.thinking && !generatingArtifact ? (
+        {streaming && !hasText && !m.thinking && !generatingArtifact && !m.progress ? (
           <div className="typing" aria-label="MathGPT is typing">
             <span />
             <span />

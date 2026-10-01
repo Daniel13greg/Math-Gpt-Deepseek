@@ -137,6 +137,7 @@ export const TRANSCRIPT_CSS = `
 .mg .icon-btn:active { background: var(--surface); }
 .mg .icon-btn.small { width: 30px; height: 30px; }
 .mg .notice { font-size: 13px; color: var(--text-3); margin-top: 6px; }
+.mg .step-progress { font-size: 15px; color: var(--text-2); padding: 4px 0; }
 
 .mg .thinking { margin: 0 0 12px; }
 .mg .thinking-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-2); font-weight: 500; }

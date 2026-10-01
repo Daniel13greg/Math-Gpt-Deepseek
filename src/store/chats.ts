@@ -4,7 +4,7 @@ import { DEFAULT_SUBJECT, type SubjectId } from '@/constants/subjects';
 import { makeId } from '@/lib/id';
 import { toUnicodeMath } from '@/lib/math';
 import { createCollectionSaver, loadCollection } from '@/lib/storage/collection';
-import type { AssistantMessage, Chat, Message, TokenUsage } from '@/lib/types';
+import type { AssistantMessage, Chat, Message, TokenUsage, UserMessage } from '@/lib/types';
 import { addToModel } from '@/lib/usage';
 
 interface ChatsState {
@@ -18,6 +18,7 @@ interface ChatsState {
     messageId: string,
     patch: Partial<AssistantMessage> | ((m: AssistantMessage) => Partial<AssistantMessage>),
   ) => void;
+  updateUser: (chatId: string, messageId: string, patch: Partial<Omit<UserMessage, 'id' | 'role'>>) => void;
   /** Removes `messageId` and everything after it (used by regenerate / edit). */
   truncateFrom: (chatId: string, messageId: string) => void;
   /** `lock` (default true) marks the title as final so it won't be auto-replaced. */
@@ -85,6 +86,12 @@ export const useChats = create<ChatsState>()((set, get) => {
           if (m.id !== messageId || m.role !== 'assistant') return m;
           return { ...m, ...(typeof patch === 'function' ? patch(m) : patch) };
         }),
+      })),
+
+    updateUser: (chatId, messageId, patch) =>
+      updateChat(chatId, (chat) => ({
+        ...chat,
+        messages: chat.messages.map((m) => (m.id === messageId && m.role === 'user' ? { ...m, ...patch } : m)),
       })),
 
     truncateFrom: (chatId, messageId) =>

@@ -334,6 +334,14 @@ const server = createServer(async (req, res) => {
 
   if (system.includes('short title')) return stream(res, { content: 'Solving x^2 - 5x + 6 = 0', model });
   const thought = (text) => (thinking ? text : '');
+  if (system.includes('separate problems')) {
+    const problems = [
+      { label: '1', text: 'Solve x² − 5x + 6 = 0' },
+      { label: '2', text: 'Find the vertex of y = x² − 4x + 1' },
+      { label: '3', text: 'Factor 2x² + 7x + 3' },
+    ];
+    return stream(res, { content: JSON.stringify({ problems }), model });
+  }
   if (system.includes('examiner')) {
     // Answer-key check: agree with the canned keys.
     const known = [TOOLS['practice-question'], ...TOOLS['practice-test'].questions];

@@ -38,6 +38,7 @@ import { useUI } from '@/store/ui';
 
 import { AttachSheet } from './AttachSheet';
 import { Composer } from './Composer';
+import { ProblemPicker } from './ProblemPicker';
 import { SubjectTabs } from './SubjectTabs';
 import { ToolsSheet } from './ToolsSheet';
 
@@ -292,6 +293,7 @@ export function ChatView() {
         </AppText>
       </View>
 
+      <ProblemPicker />
       <ToolsSheet visible={toolsOpen} onClose={() => setToolsOpen(false)} onSelect={(tool) => ui.setTool(tool)} />
       <AttachSheet
         visible={attachOpen}
