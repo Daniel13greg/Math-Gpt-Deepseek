@@ -1,6 +1,8 @@
 import { test as base, expect, type Page } from '@playwright/test';
 
 export interface Seed {
+  /** Defaults to a dummy key (the mock accepts anything). */
+  apiKey?: string;
   settings?: Record<string, unknown>;
   /** Raw key-value storage entries (chats, notes, reviews…). */
   kv?: Record<string, unknown>;
@@ -12,7 +14,7 @@ export async function seed(page: Page, data: Seed = {}) {
     if (sessionStorage.getItem('seeded')) return;
     sessionStorage.setItem('seeded', '1');
     localStorage.clear();
-    localStorage.setItem('secure:deepseek_api_key', 'sk-e2e');
+    localStorage.setItem('secure:deepseek_api_key', s.apiKey ?? 'sk-e2e');
     localStorage.setItem('settings:v1', JSON.stringify({ version: 2, baseUrl: 'http://localhost:8787', ...s.settings }));
     for (const [key, value] of Object.entries(s.kv ?? {})) {
       localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));

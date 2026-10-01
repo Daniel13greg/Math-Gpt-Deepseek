@@ -68,10 +68,12 @@
     "web": "expo start --web",
     "android:dev-build": "expo run:android",
     "ios:dev-build": "expo run:ios",
-    "lint": "expo lint",
+    "lint": "expo lint && eslint server scripts",
     "typecheck": "tsc --noEmit",
     "test": "jest",
+    "test:server": "node --test server/proxy.test.mjs",
     "mock": "node scripts/mock-deepseek.mjs",
+    "proxy": "node server/proxy.mjs",
     "katex:css": "node scripts/build-katex-css.mjs",
     "e2e": "expo export -p web && playwright test"
   },
@@ -81,7 +83,8 @@
     "testPathIgnorePatterns": [
       "/node_modules/",
       "/dist/",
-      "/e2e/"
+      "/e2e/",
+      "/server/"
     ],
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|react-native-svg|lucide-react-native|marked|zustand|@dagrejs/.*)"

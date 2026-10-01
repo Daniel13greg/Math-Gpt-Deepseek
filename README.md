@@ -73,7 +73,8 @@ In the app set **Settings → API base URL** to `http://<your-computer-ip>:8787`
 
 Create `.env.local` with `EXPO_PUBLIC_DEEPSEEK_API_KEY=sk-...`. `EXPO_PUBLIC_` values are embedded in
 the JavaScript bundle, so **never ship a build made this way**. Keys entered in Settings are stored in
-the iOS Keychain / Android Keystore instead.
+the iOS Keychain / Android Keystore instead. (Baking in an *app token* for the
+[key-holding proxy](server/README.md) is fine: it only reaches your proxy, inside its limits.)
 
 ## DeepSeek models & settings
 
@@ -135,6 +136,7 @@ src/
   i18n/                   translations (en, es, pt, fr, de, zh) and the t()/useT() helpers
   store/                  zustand stores (chats, notes, reviews, usage, settings, ui, toast)
 scripts/                  mock DeepSeek server, KaTeX CSS generator
+server/                   key-holding DeepSeek proxy for public releases
 e2e/                      Playwright tests of the web build
 .maestro/                 Maestro flows for the native app
 ```
@@ -147,6 +149,7 @@ npm run typecheck
 npm run lint
 npm run web         # quickest way to iterate on UI in a browser
 npm run e2e         # exports the web build, then runs the Playwright tests against it and the mock server
+npm run test:server # tests for the key-holding proxy (server/proxy.mjs)
 ```
 
 ### End-to-end tests (web)
@@ -154,7 +157,8 @@ npm run e2e         # exports the web build, then runs the Playwright tests agai
 `e2e/` drives the exported web build in a phone-sized Chromium against the mock DeepSeek server, so no
 API key is needed: a Deep Think answer and chat title, tutor mode, Check My Work, the math keyboard, the
 photo problem picker, a practice test → **Practice my mistakes**, flashcards → **Review today**, lecture
-notes → flashcards, switching language, backup → restore on a fresh device, and usage counting.
+notes → flashcards, switching language, backup → restore on a fresh device, usage counting, and chatting
+through the key-holding proxy with an app token.
 Playwright starts both servers itself (`playwright.config.ts`); run `npx playwright install chromium` once.
 
 ### Native flows (Maestro)
@@ -173,7 +177,8 @@ They aren't run in CI (that needs an emulator runner or Maestro Cloud).
 
 ### CI
 
-`.github/workflows/ci.yml` runs on every pull request and push to `main`: typecheck, lint and Jest, then
+`.github/workflows/ci.yml` runs on every pull request and push to `main`: typecheck, lint, Jest and the
+proxy tests, then
 the web build with the Playwright tests (the report is uploaded when they fail). An **EAS Update** job can
 publish an over-the-air update after `main` goes green; it stays off until you run
 `npx expo install expo-updates` and `npx eas-cli@latest update:configure`, add an `EXPO_TOKEN` secret and
@@ -182,7 +187,9 @@ set the repository variable `EAS_UPDATE_ENABLED` to `true`.
 ## Security & publishing notes
 
 - A DeepSeek key on a phone can be extracted by its owner. That's fine for personal use; for a public
-  release, run a small proxy that holds the key and set **API base URL** to it.
+  release, run the key-holding proxy in [`server/`](server/README.md) (app tokens, per-client rate limits,
+  a daily token budget) and point the app at it with **API base URL**, or at build time with
+  `EXPO_PUBLIC_DEEPSEEK_BASE_URL`.
 - "MathGPT" is another company's product name, mirrored here to match the original UI. Change
   `APP_NAME` in `src/constants/app.ts`, `name` in `app.json` and the bundle IDs before publishing.
 - The "video" tool produces narrated, animated slides played in the app (on-device text-to-speech),

@@ -79,7 +79,7 @@ function loadSettings(): PersistedSettings {
   }
 }
 
-/** A key baked in at build time via EXPO_PUBLIC_DEEPSEEK_API_KEY (handy for development only). */
+/** A key baked in at build time via EXPO_PUBLIC_DEEPSEEK_API_KEY: for development, or an app token for your proxy. */
 const ENV_API_KEY = process.env.EXPO_PUBLIC_DEEPSEEK_API_KEY ?? '';
 
 const initialSettings = loadSettings();

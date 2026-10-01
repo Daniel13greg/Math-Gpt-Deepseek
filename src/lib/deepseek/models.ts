@@ -1,4 +1,5 @@
-export const DEFAULT_BASE_URL = 'https://api.deepseek.com';
+/** DeepSeek's API, or a URL baked in with EXPO_PUBLIC_DEEPSEEK_BASE_URL (e.g. your key-holding proxy). */
+export const DEFAULT_BASE_URL = process.env.EXPO_PUBLIC_DEEPSEEK_BASE_URL?.trim() || 'https://api.deepseek.com';
 
 export interface ModelOption {
   id: string;

@@ -26,5 +26,18 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     { command: 'node e2e/serve.mjs', port: 8090, reuseExistingServer: !process.env.CI },
+    {
+      // The key-holding proxy in front of the mock, for e2e/proxy.spec.ts.
+      command: 'node server/proxy.mjs',
+      port: 8788,
+      env: {
+        DEEPSEEK_API_KEY: 'sk-mock',
+        APP_TOKENS: 'e2e-app-token',
+        UPSTREAM_URL: 'http://localhost:8787',
+        PORT: '8788',
+        HOST: '127.0.0.1',
+      },
+      reuseExistingServer: !process.env.CI,
+    },
   ],
 });
