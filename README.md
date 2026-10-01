@@ -12,6 +12,7 @@ practice tests, flashcards, graphs, diagrams, study guides and narrated video le
 
 | | |
 |---|---|
+| **Math keyboard** | The **∑** button in the composer opens a structured math editor ([MathLive](https://mathlive.io), with an on-screen math keyboard) for fractions, powers, roots and symbols; **Insert** adds it to your question as LaTeX. Works offline. |
 | **Chat** | Step-by-step answers for 10 subjects (Math, Physics, Accounting, Chemistry, Statistics, Biology, Economics, Finance, Computer Science, Engineering). Streaming Markdown with **LaTeX math** (KaTeX, incl. `\ce{}` chemistry), tables and code. Fractions are always stacked and symbols typeset, even when the model or student types plain text like `6/4`, `x^2`, `sqrt(16)` or `a <= b`. Copy, share, read aloud, regenerate, edit. |
 | **Answer styles** | Step by step, **Tutor mode** (Socratic: hints first, the student does the steps), Just the answer, Explain simply, Exam-style working. Pick one from the **+** menu or Settings. |
 | **Check My Work** | Photograph or type your own working; the reply gives a verdict, marks each step and explains the first mistake with a corrected solution. |

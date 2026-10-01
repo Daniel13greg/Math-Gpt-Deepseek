@@ -35,6 +35,7 @@ export { default as SearchIcon } from 'lucide-react-native/icons/search';
 export { default as SettingsIcon } from 'lucide-react-native/icons/settings';
 export { default as ShareIcon } from 'lucide-react-native/icons/share-2';
 export { default as ShuffleIcon } from 'lucide-react-native/icons/shuffle';
+export { default as SigmaIcon } from 'lucide-react-native/icons/sigma';
 export { default as SkipBackIcon } from 'lucide-react-native/icons/skip-back';
 export { default as SkipForwardIcon } from 'lucide-react-native/icons/skip-forward';
 export { default as SparklesIcon } from 'lucide-react-native/icons/sparkles';

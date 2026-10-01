@@ -6,7 +6,7 @@ import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanim
 import { getAnswerStyle, type AnswerStyle } from '@/constants/answerStyles';
 import { getSubject, type SubjectId } from '@/constants/subjects';
 import { toolChipLabel, toolPlaceholder, type ToolSelection } from '@/constants/tools';
-import { ArrowUpIcon, BrainIcon, MicIcon, PlusIcon, SquareIcon, ToolCaseIcon, XIcon } from '@/components/icons';
+import { ArrowUpIcon, BrainIcon, MicIcon, PlusIcon, SigmaIcon, SquareIcon, ToolCaseIcon, XIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { FontFamily } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
@@ -32,6 +32,7 @@ export interface ComposerProps {
   onPlus: () => void;
   onTools: () => void;
   onMic: () => void;
+  onMathKeyboard: () => void;
 }
 
 /** The rounded input card: text field, "+" attachments, Tools, mic and the blue send button. */
@@ -69,6 +70,15 @@ export function Composer(props: ComposerProps) {
           ))}
         </Animated.View>
       ) : null}
+
+      <Pressable
+        onPress={props.onMathKeyboard}
+        hitSlop={6}
+        style={[styles.mathButton, images.length > 0 && styles.mathButtonBelowThumbs]}
+        accessibilityRole="button"
+        accessibilityLabel="Math keyboard">
+        <SigmaIcon size={19} color={colors.icon} strokeWidth={1.9} />
+      </Pressable>
 
       <TextInput
         ref={inputRef}
@@ -185,13 +195,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  mathButton: {
+    position: 'absolute',
+    top: 14,
+    right: 10,
+    zIndex: 1,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mathButtonBelowThumbs: { top: 86 },
   input: {
     fontFamily: FontFamily.regular,
     fontSize: 15.5,
     lineHeight: 22,
     minHeight: 46,
     maxHeight: 150,
-    paddingHorizontal: 8,
+    paddingLeft: 8,
+    paddingRight: 40,
     paddingTop: 12,
     paddingBottom: 8,
     textAlignVertical: 'top',

@@ -287,6 +287,10 @@ export function ChatView() {
           onPlus={() => setAttachOpen(true)}
           onTools={() => setToolsOpen(true)}
           onMic={onMic}
+          onMathKeyboard={() => {
+            if (dictation.state !== 'idle') void dictation.stop();
+            router.push('/math-input');
+          }}
         />
         <AppText size={12.5} align="center" color={colors.textFaint} style={styles.disclaimer} numberOfLines={1}>
           {DISCLAIMER}

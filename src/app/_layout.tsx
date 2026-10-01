@@ -61,6 +61,7 @@ export default function RootLayout() {
           <Stack.Screen name="video" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
           <Stack.Screen name="notes/[id]" options={{ ...header, title: 'Lecture Notes' }} />
           <Stack.Screen name="image" options={{ presentation: 'transparentModal', animation: 'fade' }} />
+          <Stack.Screen name="math-input" options={{ ...header, title: 'Write math', presentation: 'modal' }} />
         </Stack>
         <ToastHost />
       </ThemeProvider>
