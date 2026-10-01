@@ -205,6 +205,7 @@ export interface LectureNote {
   id: string;
   title: string;
   createdAt: number;
+  updatedAt?: number;
   durationSec?: number;
   source: 'recording' | 'upload';
   fileName?: string;

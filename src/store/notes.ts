@@ -9,6 +9,8 @@ interface NotesState {
   createNote: (init: Pick<LectureNote, 'source' | 'transcript' | 'status'> & Partial<LectureNote>) => string;
   updateNote: (id: string, patch: Partial<LectureNote> | ((n: LectureNote) => Partial<LectureNote>)) => void;
   deleteNote: (id: string) => void;
+  /** Replaces all notes (backup restore merges before calling this). */
+  importNotes: (notes: Record<string, LectureNote>) => void;
 }
 
 const PREFIX = 'note';
@@ -39,8 +41,11 @@ export const useNotes = create<NotesState>()((set, get) => ({
   updateNote: (id, patch) => {
     const note = get().notes[id];
     if (!note) return;
-    set({ notes: { ...get().notes, [id]: { ...note, ...(typeof patch === 'function' ? patch(note) : patch) } } });
+    const changes = typeof patch === 'function' ? patch(note) : patch;
+    set({ notes: { ...get().notes, [id]: { ...note, ...changes, updatedAt: Date.now() } } });
   },
+
+  importNotes: (notes) => set({ notes: recoverInterrupted(notes) }),
 
   deleteNote: (id) => {
     const { [id]: _removed, ...rest } = get().notes;

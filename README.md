@@ -23,6 +23,7 @@ practice tests, flashcards, graphs, diagrams, study guides and narrated video le
 | **Tools** | Check My Work, Create Video (animated slides + text-to-speech narration), Practice Test (scored, with review and **Practice my mistakes**, which writes a new test aimed at the questions you missed), Practice Question (interactive, hints, solution; **Another question** gets harder after a right answer and easier after a wrong one), Graph (pan/zoom plot), Diagram (flowchart, mind map, geometry, free-body, Venn), Study Guide, Flashcards (flip + swipe, with spaced repetition: every "Got it" / "Still learning" schedules the card, and decks with cards due show under **Review today** in the drawer). |
 | **PDF export** | Save answers and study guides (chat actions), lecture notes, practice tests (questions, then the answer key on its own page) and flashcards as PDFs to share or print. Math prints as native MathML. |
 | **History** | Chats and notes are saved on the device; searchable drawer grouped by date; rename/delete. |
+| **Backup** | Settings → Backup saves chats (with photos), notes, flashcard progress, usage and settings (never API keys) to a JSON file; restoring merges it in without deleting anything. |
 | **Usage** | Tokens per chat (long-press it in the drawer), per lecture note, this month and all time, per model. Enter DeepSeek's prices in Settings to see costs too. |
 | **Upgrade** | Instead of a paywall, picks the model: *Flash* (fast, reads photos) or *Pro* (strongest reasoning). |
 | **Themes** | Light, dark or system. |

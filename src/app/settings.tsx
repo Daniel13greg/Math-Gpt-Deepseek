@@ -14,6 +14,8 @@ import { APP_NAME } from '@/constants/app';
 import { MaxContentWidth } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { apiConfig } from '@/lib/api';
+import { BackupError } from '@/lib/backup';
+import { exportBackup, importBackup } from '@/lib/backupActions';
 import { streamChat } from '@/lib/deepseek/client';
 import { toDeepSeekError } from '@/lib/deepseek/errors';
 import { DEFAULT_BASE_URL, MODELS } from '@/lib/deepseek/models';
@@ -35,6 +37,32 @@ export default function SettingsScreen() {
   const [testing, setTesting] = useState(false);
   const envKey = !settings.apiKey && Boolean(process.env.EXPO_PUBLIC_DEEPSEEK_API_KEY);
   const deviceSpeech = getSpeechLib() !== null;
+
+  const [backingUp, setBackingUp] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+
+  const runExport = async () => {
+    setBackingUp(true);
+    try {
+      await exportBackup();
+    } catch (e) {
+      toast.error(e instanceof Error && e.message ? e.message : "Couldn't create the backup.");
+    } finally {
+      setBackingUp(false);
+    }
+  };
+
+  const runImport = async () => {
+    setRestoring(true);
+    try {
+      const summary = await importBackup();
+      if (summary) toast.success(summary);
+    } catch (e) {
+      toast.error(e instanceof BackupError ? e.message : "Couldn't read that backup.");
+    } finally {
+      setRestoring(false);
+    }
+  };
 
   const saveKey = async () => {
     await settings.setApiKey(keyDraft);
@@ -297,7 +325,22 @@ export default function SettingsScreen() {
 
         <UsageSection />
 
-        <Section title="Data" footer="Chats and notes are stored only on this device.">
+        <Section
+          title="Backup"
+          footer="A backup file holds your chats (with photos), lecture notes, flashcard progress, usage and settings, but never your API keys. Restoring adds what's missing and keeps the newer copy of anything on both.">
+          <Row
+            label={backingUp ? 'Preparing backup…' : 'Back up to a file'}
+            detail="Save it to Files, Drive or anywhere you like"
+            onPress={backingUp ? undefined : runExport}>
+            {backingUp ? <ActivityIndicator size="small" color={colors.textMuted} /> : null}
+          </Row>
+          <Divider />
+          <Row label={restoring ? 'Restoring…' : 'Restore from a backup'} onPress={restoring ? undefined : runImport}>
+            {restoring ? <ActivityIndicator size="small" color={colors.textMuted} /> : null}
+          </Row>
+        </Section>
+
+        <Section title="Data" footer="Chats and notes are stored only on this device. Back them up above.">
           <Row
             label="Delete all chats"
             onPress={() =>

@@ -15,6 +15,8 @@ interface UsageState extends PersistedUsage {
   record: (model: string, usage: TokenUsage) => void;
   setPrice: (model: string, price: ModelPrice | null) => void;
   resetStats: () => void;
+  /** Replaces usage and prices (backup restore merges before calling this). */
+  importUsage: (months: PersistedUsage['months'], prices: PersistedUsage['prices']) => void;
 }
 
 const KEY = 'usage:v1';
@@ -45,6 +47,10 @@ export const useUsage = create<UsageState>()((set, get) => {
     setPrice: (model, price) => {
       const { [model]: _old, ...rest } = get().prices;
       set({ prices: price ? { ...rest, [model]: price } : rest });
+      save();
+    },
+    importUsage: (months, prices) => {
+      set({ months, prices });
       save();
     },
     resetStats: () => {

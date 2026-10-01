@@ -27,6 +27,8 @@ interface ChatsState {
   addChatUsage: (chatId: string, model: string, usage: TokenUsage) => void;
   deleteChat: (chatId: string) => void;
   deleteAllChats: () => void;
+  /** Replaces all chats (backup restore merges before calling this). */
+  importChats: (chats: Record<string, Chat>) => void;
 }
 
 const PREFIX = 'chat';
@@ -119,6 +121,8 @@ export const useChats = create<ChatsState>()((set, get) => {
     },
 
     deleteAllChats: () => set({ chats: {}, activeChatId: null }),
+
+    importChats: (chats) => set({ chats: recoverInterrupted(chats) }),
   };
 });
 
