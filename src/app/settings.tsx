@@ -21,11 +21,11 @@ import { Segmented } from '@/components/ui/Segmented';
 import { APP_NAME } from '@/constants/app';
 import { FontFamily, MaxContentWidth } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
+import { deleteAllChatsWithFiles } from '@/lib/chat/controller';
 import { streamChat } from '@/lib/deepseek/client';
 import { toDeepSeekError } from '@/lib/deepseek/errors';
 import { DEFAULT_BASE_URL, MODELS } from '@/lib/deepseek/models';
 import { getSpeechLib } from '@/lib/speech/recognition';
-import { useChats } from '@/store/chats';
 import { useNotes } from '@/store/notes';
 import { getApiKey, useSettings } from '@/store/settings';
 import { toast } from '@/store/toast';
@@ -367,7 +367,7 @@ export default function SettingsScreen() {
         <Section title="Data" footer="Chats and notes are stored only on this device.">
           <Row
             label="Delete all chats"
-            onPress={() => confirm('Delete all chats?', 'This cannot be undone.', () => useChats.getState().deleteAllChats())}
+            onPress={() => confirm('Delete all chats?', 'This cannot be undone.', deleteAllChatsWithFiles)}
           />
           <Divider />
           <Row

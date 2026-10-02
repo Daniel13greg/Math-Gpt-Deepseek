@@ -258,3 +258,12 @@ export function deleteChatWithFiles(chatId: string) {
   chat?.messages.forEach((m) => m.role === 'user' && deleteImageFiles(m.images));
   useChats.getState().deleteChat(chatId);
 }
+
+/** Deletes every chat and the image files they own. */
+export function deleteAllChatsWithFiles() {
+  for (const chat of Object.values(useChats.getState().chats)) {
+    stopGeneration(chat.id);
+    chat.messages.forEach((m) => m.role === 'user' && deleteImageFiles(m.images));
+  }
+  useChats.getState().deleteAllChats();
+}
