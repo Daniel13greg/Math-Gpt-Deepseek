@@ -35,7 +35,8 @@ export function SubjectTabs({ value, onChange }: { value: SubjectId; onChange: (
             }}
             hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
             accessibilityRole="tab"
-            accessibilityState={{ selected: active }}>
+            accessibilityState={{ selected: active }}
+            style={[styles.tab, { borderBottomColor: active ? colors.textStrong : 'transparent' }]}>
             <AppText size={15.5} weight="semibold" color={active ? colors.textStrong : colors.tabInactive}>
               {s.label}
             </AppText>
@@ -48,4 +49,6 @@ export function SubjectTabs({ value, onChange }: { value: SubjectId; onChange: (
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: 23, gap: 23, alignItems: 'center', height: 38 },
+  // The underline marks the active subject by shape, not only by color; paddingTop keeps the label centered.
+  tab: { borderBottomWidth: 2, paddingTop: 5, paddingBottom: 3 },
 });

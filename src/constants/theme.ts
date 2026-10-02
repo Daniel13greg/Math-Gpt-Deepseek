@@ -1,7 +1,13 @@
 import { Platform } from 'react-native';
 
-/** Brand blue sampled from the MathGPT Upgrade / send buttons. */
-export const BRAND_BLUE = '#3490DD';
+/**
+ * Brand blue. Light mode uses the deeper shade so white text on it and blue text on white both reach
+ * WCAG AA (5.1:1); dark mode uses the lighter one, which reads on dark backgrounds (5.6:1).
+ */
+export const BRAND_BLUE = '#2271B6';
+const BRAND_BLUE_ON_DARK = '#3490DD';
+
+// Gray text below meets WCAG AA (4.5:1) on its background in both themes.
 
 export const Colors = {
   light: {
@@ -9,10 +15,10 @@ export const Colors = {
     text: '#0A0A0A',
     textStrong: '#000000',
     icon: '#232323',
-    textSecondary: '#787878',
-    textMuted: '#9CA2AE',
-    textFaint: '#C6CAD1',
-    tabInactive: '#C9C9C9',
+    textSecondary: '#5F6368',
+    textMuted: '#6B7280',
+    textFaint: '#71767F',
+    tabInactive: '#71767F',
     segmentBg: '#F3F3F3',
     segmentSelected: '#FFFFFF',
     segmentText: '#575757',
@@ -27,13 +33,13 @@ export const Colors = {
     fileCircle: '#F1F1F1',
     fileIcon: '#A6A6A6',
     uploadText: '#505050',
-    formatsText: '#AAAAAA',
-    dividerText: '#999999',
+    formatsText: '#6B7280',
+    dividerText: '#71767F',
     divider: '#EBEBEB',
     backdrop: 'rgba(0,0,0,0.10)',
     grabber: '#8B8B8B',
     primary: BRAND_BLUE,
-    primaryPressed: '#2B7CC2',
+    primaryPressed: '#1C5E99',
     primarySoft: '#E8F2FC',
     onPrimary: '#FFFFFF',
     recordButton: '#000000',
@@ -52,9 +58,9 @@ export const Colors = {
     textStrong: '#FFFFFF',
     icon: '#E4E5E7',
     textSecondary: '#A0A4AB',
-    textMuted: '#7D838D',
-    textFaint: '#4C5058',
-    tabInactive: '#5A5E66',
+    textMuted: '#868C95',
+    textFaint: '#7D838D',
+    tabInactive: '#7D838D',
     segmentBg: '#1C1D21',
     segmentSelected: '#2C2E33',
     segmentText: '#C6C8CC',
@@ -69,12 +75,12 @@ export const Colors = {
     fileCircle: '#24262B',
     fileIcon: '#80858E',
     uploadText: '#C8CACE',
-    formatsText: '#71767F',
-    dividerText: '#71767F',
+    formatsText: '#868C95',
+    dividerText: '#868C95',
     divider: '#26282D',
     backdrop: 'rgba(0,0,0,0.55)',
     grabber: '#5C6068',
-    primary: BRAND_BLUE,
+    primary: BRAND_BLUE_ON_DARK,
     primaryPressed: '#2B7CC2',
     primarySoft: '#16283A',
     onPrimary: '#FFFFFF',

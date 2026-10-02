@@ -7,11 +7,11 @@ export const BASE_CSS = `
   --bg: #ffffff;
   --text: #0a0a0a;
   --text-2: #5f6368;
-  --text-3: #9ca2ae;
+  --text-3: #6b7280;
   --border: #e6e7eb;
   --surface: #f4f4f5;
   --surface-2: #fafafa;
-  --primary: #3490dd;
+  --primary: #2271b6;
   --primary-soft: #e8f2fc;
   --primary-text: #1f6fb5;
   --success: #2f9e5e;
@@ -36,10 +36,11 @@ export const BASE_CSS = `
   --bg: #0e0f11;
   --text: #ecedee;
   --text-2: #a0a4ab;
-  --text-3: #6f747c;
+  --text-3: #868c95;
   --border: #2a2c31;
   --surface: #1d1f23;
   --surface-2: #16171a;
+  --primary: #3490dd;
   --primary-soft: #16283a;
   --primary-text: #7cb8ee;
   --success-soft: #12301f;
@@ -156,7 +157,7 @@ export const TRANSCRIPT_CSS = `
 
 .mg .error-card { background: var(--danger-soft); border-radius: 14px; padding: 12px 14px; color: var(--text); font-size: 15px; }
 .mg .error-card .row { display: flex; gap: 10px; align-items: flex-start; }
-.mg .error-card svg { color: var(--danger); flex: none; margin-top: 2px; }
+.mg .error-card .row svg { color: var(--danger); flex: none; margin-top: 2px; }
 .mg .error-card .btn { margin-top: 10px; height: 34px; font-size: 14px; padding: 0 14px; }
 
 .mg .progress-card { padding: 16px; display: flex; gap: 14px; align-items: center; }
