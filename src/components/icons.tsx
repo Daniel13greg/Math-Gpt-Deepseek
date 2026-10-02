@@ -2,6 +2,7 @@ import Svg, { Path, Rect } from 'react-native-svg';
 
 // Individual imports keep the bundle from pulling in all ~3,700 Lucide icons.
 export { default as ArrowUpIcon } from 'lucide-react-native/icons/arrow-up';
+export { default as ArrowUpRightIcon } from 'lucide-react-native/icons/arrow-up-right';
 export { default as BookIcon } from 'lucide-react-native/icons/book';
 export { default as BookCheckIcon } from 'lucide-react-native/icons/book-check';
 export { default as BrainIcon } from 'lucide-react-native/icons/brain';

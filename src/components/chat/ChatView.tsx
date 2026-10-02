@@ -28,6 +28,7 @@ import { useUI } from '@/store/ui';
 
 import { AttachSheet } from './AttachSheet';
 import { Composer } from './Composer';
+import { EmptyState } from './EmptyState';
 import { SubjectTabs } from './SubjectTabs';
 import { ToolsSheet } from './ToolsSheet';
 
@@ -298,6 +299,8 @@ export function ChatView() {
           onAction={onAction}
           dom={{ style: { flex: 1 }, containerStyle: { flex: 1 }, scrollEnabled: false, bounces: false }}
         />
+        {/* Drawn over the (empty) transcript so its WebView is already loaded by the first message. */}
+        {messages.length === 0 ? <EmptyState onTools={() => setToolsOpen(true)} /> : null}
       </View>
 
       <ComposerArea chatId={chatId} busy={busy} onPlus={() => setAttachOpen(true)} onTools={() => setToolsOpen(true)} />
