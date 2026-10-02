@@ -91,6 +91,13 @@ export const BASE_CSS = `
 .mg .math-display { overflow-x: auto; overflow-y: hidden; margin: 6px 0 14px; padding: 2px 0; }
 .mg .math-display .katex-display { margin: 0; }
 .mg .math-error { color: var(--danger); }
+/* Wide equations and tables scroll sideways; Markdown.tsx marks the side that hides more. */
+.mg .more-right { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); }
+.mg .more-left { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 36px), transparent); }
+.mg .more-left.more-right {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent);
+}
 .mg .math-pending, .mg .shimmer {
   height: 22px; border-radius: 6px; margin: 4px 0 12px; max-width: 220px;
   background: linear-gradient(90deg, var(--surface) 0%, var(--border) 50%, var(--surface) 100%);
