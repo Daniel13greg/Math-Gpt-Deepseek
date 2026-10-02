@@ -126,7 +126,11 @@ export function ChatView() {
   });
 
   const onMic = () => {
-    if (dictation.state === 'idle') dictationBase.current = useUI.getState().draft.trim();
+    if (dictation.state === 'idle') {
+      // Dictation and lecture recording share one speech recognizer.
+      if (useUI.getState().lecture) return toast.info('Voice input is off while a lecture is recording.');
+      dictationBase.current = useUI.getState().draft.trim();
+    }
     void dictation.toggle();
   };
 

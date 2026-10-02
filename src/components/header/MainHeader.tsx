@@ -1,10 +1,12 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MenuIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { useTheme } from '@/hooks/useTheme';
-import type { AppMode } from '@/store/ui';
+import { formatClock } from '@/lib/dates';
+import type { AppMode, LectureActivity } from '@/store/ui';
 
 import { ModeSwitcher } from './ModeSwitcher';
 
@@ -19,12 +21,49 @@ export function headerHeight(topInset: number) {
 
 interface MainHeaderProps {
   mode: AppMode;
+  /** A lecture still recording or transcribing while another mode is open. */
+  lecture: LectureActivity | null;
   onModeChange: (mode: AppMode) => void;
   onMenu: () => void;
   onUpgrade: () => void;
 }
 
-export function MainHeader({ mode, onModeChange, onMenu, onUpgrade }: MainHeaderProps) {
+/** "● 12:34" while a lecture records in the background (a spinner while it transcribes); tap to go back to it. */
+function LectureBadge({ lecture, onPress }: { lecture: LectureActivity; onPress: () => void }) {
+  const { colors } = useTheme();
+  const [now, setNow] = useState(Date.now);
+  const recording = lecture.status === 'recording';
+
+  useEffect(() => {
+    if (!recording) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [recording]);
+
+  const elapsed = recording ? formatClock(Math.max(0, Math.floor((now - lecture.startedAt) / 1000))) : '';
+
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={recording ? `Recording lecture, ${elapsed}. Show recording` : 'Transcribing lecture. Show progress'}
+      style={({ pressed }) => [styles.badge, { backgroundColor: colors.dangerSoft, opacity: pressed ? 0.75 : 1 }]}>
+      {recording ? (
+        <>
+          <View style={[styles.badgeDot, { backgroundColor: colors.recordDot }]} />
+          <AppText weight="semibold" size={14} color={colors.danger} style={styles.badgeTime}>
+            {elapsed}
+          </AppText>
+        </>
+      ) : (
+        <ActivityIndicator size="small" color={colors.danger} />
+      )}
+    </Pressable>
+  );
+}
+
+export function MainHeader({ mode, lecture, onModeChange, onMenu, onUpgrade }: MainHeaderProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   return (
@@ -39,7 +78,9 @@ export function MainHeader({ mode, onModeChange, onMenu, onUpgrade }: MainHeader
           <ModeSwitcher mode={mode} onChange={onModeChange} />
         </View>
 
-        {mode !== 'record' ? (
+        {mode !== 'record' && lecture ? <LectureBadge lecture={lecture} onPress={() => onModeChange('record')} /> : null}
+
+        {mode !== 'record' && !lecture ? (
           <Pressable
             onPress={onUpgrade}
             accessibilityRole="button"
@@ -67,4 +108,17 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     justifyContent: 'center',
   },
+  badge: {
+    marginLeft: 'auto',
+    height: 30,
+    minWidth: 44,
+    paddingHorizontal: 10,
+    borderRadius: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  badgeDot: { width: 8, height: 8, borderRadius: 4 },
+  badgeTime: { fontVariant: ['tabular-nums'] },
 });

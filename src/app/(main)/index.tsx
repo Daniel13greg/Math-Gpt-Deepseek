@@ -16,6 +16,7 @@ export default function MainScreen() {
   const navigation = useNavigation<DrawerNavigationProp<Record<string, undefined>>>();
   const mode = useUI((s) => s.mode);
   const setMode = useUI((s) => s.setMode);
+  const lecture = useUI((s) => s.lecture);
 
   const solvePhoto = (image: ImageAttachment) => {
     const { draft, pendingImages, subject, clearComposer } = useUI.getState();
@@ -28,14 +29,20 @@ export default function MainScreen() {
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <MainHeader
         mode={mode}
+        lecture={lecture}
         onModeChange={setMode}
         onMenu={() => navigation.openDrawer()}
         onUpgrade={() => router.push('/upgrade')}
       />
       <View style={styles.body}>
         {mode === 'chat' ? <ChatView /> : null}
-        {mode === 'record' ? <RecordView /> : null}
         {mode === 'camera' ? <ScanView onSolve={solvePhoto} /> : null}
+        {/* Unmounting would stop the recorder, so a lecture in progress keeps this mounted (just hidden). */}
+        {mode === 'record' || lecture ? (
+          <View style={[styles.body, mode !== 'record' && styles.hidden]}>
+            <RecordView />
+          </View>
+        ) : null}
       </View>
     </View>
   );
@@ -44,4 +51,5 @@ export default function MainScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   body: { flex: 1 },
+  hidden: { display: 'none' },
 });

@@ -49,6 +49,7 @@ const BENIGN = new Set(['no-speech', 'speech-timeout', 'aborted', 'nomatch']);
 export function useLectureRecorder() {
   const [phase, setPhase] = useState<LecturePhase>('idle');
   const [engine, setEngine] = useState<LectureEngine | null>(null);
+  const [startedAt, setStartedAt] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [transcript, setTranscript] = useState('');
   const [level, setLevel] = useState(0);
@@ -60,7 +61,6 @@ export function useLectureRecorder() {
   const active = useRef(false);
   const committed = useRef('');
   const current = useRef('');
-  const startedAt = useRef(0);
   const subscriptions = useRef<{ remove: () => void }[]>([]);
   const onEnded = useRef<(() => void) | null>(null);
   const restartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -69,9 +69,9 @@ export function useLectureRecorder() {
 
   useEffect(() => {
     if (phase !== 'recording') return;
-    const timer = setInterval(() => setElapsed(Math.floor((Date.now() - startedAt.current) / 1000)), 500);
+    const timer = setInterval(() => setElapsed(Math.floor((Date.now() - startedAt) / 1000)), 500);
     return () => clearInterval(timer);
-  }, [phase]);
+  }, [phase, startedAt]);
 
   useEffect(
     () => () => {
@@ -185,7 +185,7 @@ export function useLectureRecorder() {
       return false;
     }
     setEngine(useDevice ? 'device' : 'cloud');
-    startedAt.current = Date.now();
+    setStartedAt(Date.now());
     setPhase('recording');
     holdScreenAwake();
     return true;
@@ -193,7 +193,7 @@ export function useLectureRecorder() {
 
   /** Stops recording and resolves with the full transcript (cloud mode transcribes here). */
   const stop = async (): Promise<{ transcript: string; durationSec: number }> => {
-    const durationSec = Math.round((Date.now() - startedAt.current) / 1000);
+    const durationSec = Math.round((Date.now() - startedAt) / 1000);
     active.current = false;
     if (restartTimer.current) clearTimeout(restartTimer.current);
     setPhase('finishing');
@@ -244,6 +244,7 @@ export function useLectureRecorder() {
   return {
     phase,
     engine,
+    startedAt,
     elapsed,
     transcript,
     level: engine === 'cloud' ? cloudLevel : level,

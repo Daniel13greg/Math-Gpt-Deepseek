@@ -11,10 +11,12 @@ import { AppText } from '@/components/ui/AppText';
 import { MaxContentWidth } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { useLectureRecorder } from '@/hooks/useLectureRecorder';
+import { formatClock } from '@/lib/dates';
 import { generateLectureNotes } from '@/lib/notes/generate';
 import { transcribeAudioFile } from '@/lib/speech/file';
 import { useHasApiKey } from '@/store/settings';
 import { sortNotes, useNotes } from '@/store/notes';
+import { useUI } from '@/store/ui';
 
 const AUDIO_TYPES = [
   'audio/*',
@@ -27,14 +29,6 @@ const AUDIO_TYPES = [
   'audio/mp4',
   'audio/x-m4a',
 ];
-
-function formatTime(sec: number) {
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  const mm = String(m).padStart(h ? 2 : 1, '0');
-  return `${h ? `${h}:` : ''}${mm}:${String(s).padStart(2, '0')}`;
-}
 
 /** The red recording dot with its dark ring, from the MathGPT "Start recording" button. */
 function RecordDot({ pulsing }: { pulsing: boolean }) {
@@ -128,6 +122,13 @@ export function RecordView() {
   const recording = lecture.phase === 'recording';
   const busy = lecture.phase === 'finishing' || upload !== null;
 
+  // While a lecture records or transcribes, the main screen keeps this view mounted and shows a header badge.
+  const { startedAt } = lecture;
+  useEffect(() => {
+    useUI.getState().setLecture(recording ? { status: 'recording', startedAt } : busy ? { status: 'processing' } : null);
+  }, [recording, busy, startedAt]);
+  useEffect(() => () => useUI.getState().setLecture(null), []);
+
   return (
     <ScrollView
       contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
@@ -145,7 +146,7 @@ export function RecordView() {
             <View style={styles.recRow}>
               <RecordDot pulsing />
               <AppText weight="semibold" size={30} color={colors.textStrong} style={styles.timer}>
-                {formatTime(lecture.elapsed)}
+                {formatClock(lecture.elapsed)}
               </AppText>
             </View>
             <LevelBars level={lecture.level} />
