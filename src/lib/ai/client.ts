@@ -1,4 +1,4 @@
-import { ApiError, errorFromResponse, toApiError } from './errors';
+import { ApiError, errorFromResponse, toApiError, withModelNames } from './errors';
 import { DEFAULT_BASE_URL, type ReasoningEffort } from './models';
 import { SSEParser } from './sse';
 
@@ -130,7 +130,7 @@ class ResultBuilder {
     }
     if (json.error) {
       const message = json.error.message ?? 'Unknown error';
-      throw new ApiError('server', `DeepSeek reported an error: ${message}`, { apiMessage: message });
+      throw new ApiError('server', `The model reported an error: ${withModelNames(message)}`, { apiMessage: message });
     }
     if (json.model) this.model = json.model;
     const choice = json.choices?.[0];
@@ -167,7 +167,7 @@ async function attempt(
   signal: AbortSignal | undefined,
 ): Promise<ChatResult> {
   if (!config.apiKey) {
-    throw new ApiError('missing_key', 'Add your DeepSeek API key in Settings to start solving.');
+    throw new ApiError('missing_key', 'Add your API key in Settings to start solving.');
   }
   const fetchImpl = config.fetch ?? fetch;
   let response: Response;

@@ -58,10 +58,10 @@ export function EmptyState({ onTools }: { onTools: () => void }) {
             <View style={styles.keyHead}>
               <KeyRoundIcon size={18} color={colors.primary} />
               <AppText weight="semibold" size={15.5}>
-                Add your DeepSeek API key
+                Add your API key
               </AppText>
             </View>
-            <AppText size={14}>{APP_NAME} answers with your own key from platform.deepseek.com. It takes a minute.</AppText>
+            <AppText size={14}>{APP_NAME} needs an API key to answer. You only have to add it once.</AppText>
             <Pressable
               onPress={() => router.push('/settings')}
               accessibilityRole="button"

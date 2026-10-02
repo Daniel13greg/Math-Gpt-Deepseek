@@ -1,4 +1,3 @@
-import * as WebBrowser from 'expo-web-browser';
 import { useState, type ReactNode } from 'react';
 import { useHeaderHeight } from 'expo-router/react-navigation';
 import {
@@ -24,7 +23,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { deleteAllChatsWithFiles } from '@/lib/chat/controller';
 import { streamChat } from '@/lib/ai/client';
 import { toApiError } from '@/lib/ai/errors';
-import { DEFAULT_BASE_URL, MODELS } from '@/lib/ai/models';
+import { DEFAULT_VISION_MODEL, MODELS, modelLabel } from '@/lib/ai/models';
 import { getSpeechLib } from '@/lib/speech/recognition';
 import { useNotes } from '@/store/notes';
 import { getApiKey, useSettings } from '@/store/settings';
@@ -127,7 +126,7 @@ export default function SettingsScreen() {
     if (keyDraft.trim() !== settings.apiKey) await settings.setApiKey(keyDraft);
     setTesting(true);
     try {
-      const result = await streamChat(
+      await streamChat(
         { apiKey: getApiKey(), baseUrl: useSettings.getState().baseUrl },
         {
           model: useSettings.getState().model,
@@ -136,7 +135,7 @@ export default function SettingsScreen() {
           messages: [{ role: 'user', content: 'Reply with OK.' }],
         },
       );
-      toast.success(`Connected to ${result.model ?? 'DeepSeek'} ✓`);
+      toast.success(`Connected to ${modelLabel(useSettings.getState().model)} ✓`);
     } catch (e) {
       toast.error(toApiError(e).message);
     } finally {
@@ -151,11 +150,11 @@ export default function SettingsScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
         keyboardShouldPersistTaps="handled">
         <Section
-          title="DeepSeek API"
+          title="Connection"
           footer={
             envKey
-              ? 'Using the key from EXPO_PUBLIC_API_KEY. Saving a key here overrides it.'
-              : 'Your key is stored in the device keychain and only sent to the API base URL below.'
+              ? 'Using the key built into this app. Saving a key here replaces it.'
+              : 'Your key is stored in the device keychain and only sent to the server above.'
           }>
           <View style={styles.block}>
             <View style={styles.labelRow}>
@@ -171,7 +170,7 @@ export default function SettingsScreen() {
               placeholder="sk-..."
               secureTextEntry
               onSubmitEditing={saveKey}
-              accessibilityLabel="DeepSeek API key"
+              accessibilityLabel="API key"
             />
             <View style={styles.buttons}>
               <Pressable style={[styles.button, { backgroundColor: colors.primary }]} onPress={saveKey}>
@@ -189,35 +188,32 @@ export default function SettingsScreen() {
                 </AppText>
               </Pressable>
             </View>
-            <Pressable onPress={() => WebBrowser.openBrowserAsync('https://platform.deepseek.com/api_keys')} hitSlop={6}>
-              <AppText size={14} color={colors.primary} weight="medium">
-                Get an API key at platform.deepseek.com →
-              </AppText>
-            </Pressable>
           </View>
           <Divider />
           <View style={styles.block}>
             <AppText size={15} weight="medium">
-              API base URL
+              Server
             </AppText>
             <Field
               value={settings.baseUrl}
               onChangeText={(baseUrl) => settings.update({ baseUrl })}
-              placeholder={DEFAULT_BASE_URL}
+              placeholder="Built-in server"
               keyboardType="url"
-              accessibilityLabel="API base URL"
+              accessibilityLabel="Server URL"
             />
-            {settings.baseUrl !== DEFAULT_BASE_URL ? (
-              <Pressable onPress={() => settings.update({ baseUrl: DEFAULT_BASE_URL })} hitSlop={6}>
+            {settings.baseUrl ? (
+              <Pressable onPress={() => settings.update({ baseUrl: '' })} hitSlop={6}>
                 <AppText size={14} color={colors.primary}>
-                  Reset to {DEFAULT_BASE_URL}
+                  Use the built-in server
                 </AppText>
               </Pressable>
             ) : null}
           </View>
         </Section>
 
-        <Section title="Model" footer="Photos are always sent to a vision-capable model (DeepSeek Flash).">
+        <Section
+          title="Model"
+          footer={`Flash and Pro are ${APP_NAME}'s own math models. Photos are always read by ${modelLabel(DEFAULT_VISION_MODEL)}.`}>
           {MODELS.map((m, i) => (
             <View key={m.id}>
               {i > 0 ? <Divider /> : null}
@@ -235,7 +231,7 @@ export default function SettingsScreen() {
               value={customModel}
               onChangeText={setCustomModel}
               onEndEditing={() => customModel.trim() && settings.update({ model: customModel.trim() })}
-              placeholder="e.g. deepseek-chat"
+              placeholder="A model ID your server accepts"
               accessibilityLabel="Custom model ID"
             />
           </View>
@@ -297,8 +293,7 @@ export default function SettingsScreen() {
               <Divider />
               <View style={styles.block}>
                 <AppText size={13} secondary>
-                  Any OpenAI-compatible /audio/transcriptions endpoint works (OpenAI, Groq, a local whisper server). DeepSeek has
-                  no speech API.
+                  Any OpenAI-compatible /audio/transcriptions endpoint works (OpenAI, Groq, a local whisper server).
                 </AppText>
                 <AppText size={15} weight="medium">
                   Base URL
@@ -382,7 +377,7 @@ export default function SettingsScreen() {
         </Section>
 
         <AppText size={13} color={colors.textMuted} align="center" style={styles.about}>
-          {APP_NAME} · powered by DeepSeek{'\n'}Answers can be wrong — double-check important work.
+          {APP_NAME} · powered by our own math models{'\n'}Answers can be wrong — double-check important work.
         </AppText>
       </ScrollView>
     </KeyboardAvoidingView>

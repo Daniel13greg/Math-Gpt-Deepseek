@@ -1,6 +1,6 @@
 import { buildRequestBody, chatCompletionsUrl, patchReasoningContent, streamChat, type ChatRequest } from '../client';
-import { ApiError } from '../errors';
-import { DEFAULT_BASE_URL } from '../models';
+import { ApiError, errorFromResponse } from '../errors';
+import { DEFAULT_BASE_URL, MODELS } from '../models';
 
 /** Minimal Response stand-in whose body yields the given byte chunks. */
 function fakeResponse(status: number, chunks: Uint8Array[], contentType = 'text/event-stream') {
@@ -195,5 +195,20 @@ describe('patchReasoningContent', () => {
     expect(patchReasoningContent(messages, 'strip')[1]).toEqual({ role: 'assistant', content: 'a' });
     expect(patchReasoningContent(messages, 'add')[1]).toEqual({ role: 'assistant', content: 'a', reasoning_content: 'r' });
     expect(patchReasoningContent(messages, 'add')[0]).toBe(messages[0]);
+  });
+});
+
+describe('errorFromResponse', () => {
+  it('shows model names instead of raw model IDs from the server', () => {
+    const pro = MODELS[1];
+    const error = errorFromResponse(400, `${pro.id} does not accept images`);
+    expect(error.kind).toBe('bad_request');
+    expect(error.message).toBe(`The request was rejected: ${pro.label} does not accept images`);
+    expect(error.apiMessage).toBe(`${pro.id} does not accept images`);
+  });
+
+  it('names the app rather than the server in its own messages', () => {
+    expect(errorFromResponse(503, undefined).message).toBe('MathGPT is busy right now. Please try again shortly.');
+    expect(errorFromResponse(401, 'Authentication Fails').message).toBe('Your API key was rejected. Check it in Settings.');
   });
 });

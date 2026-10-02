@@ -12,6 +12,7 @@ export interface PersistedSettings {
   /** "Deep Think": thinking mode for chat answers. */
   thinking: boolean;
   reasoningEffort: ReasoningEffort;
+  /** Server for chat requests; empty means the built-in one (its address is never shown). */
   baseUrl: string;
   theme: ThemePreference;
   /** BCP-47 language for speech recognition, e.g. en-US. */
@@ -39,7 +40,7 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
   model: DEFAULT_MODEL,
   thinking: false,
   reasoningEffort: 'high',
-  baseUrl: DEFAULT_BASE_URL,
+  baseUrl: '',
   theme: 'system',
   speechLang: 'en-US',
   sttProvider: 'device',
@@ -51,7 +52,9 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
 function loadSettings(): PersistedSettings {
   try {
     const raw = kv.getItemSync(SETTINGS_KEY);
-    return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS;
+    const settings: PersistedSettings = raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS;
+    // Older versions saved the built-in server's address; keep it hidden.
+    return settings.baseUrl.replace(/\/+$/, '') === DEFAULT_BASE_URL ? { ...settings, baseUrl: '' } : settings;
   } catch {
     return DEFAULT_SETTINGS;
   }

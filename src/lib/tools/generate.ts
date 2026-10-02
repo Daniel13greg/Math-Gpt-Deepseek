@@ -106,7 +106,7 @@ export async function generateArtifact(opts: GenerateArtifactOptions): Promise<A
     } catch (error) {
       if (error instanceof ApiError || attempt >= 1) {
         if (error instanceof ArtifactError || error instanceof ApiError) throw error;
-        throw new ArtifactError("DeepSeek's reply couldn't be read. Please try again.");
+        throw new ArtifactError("The reply couldn't be read. Please try again.");
       }
       const reason = error instanceof Error ? error.message : 'invalid JSON';
       opts.onProgress?.('Fixing a formatting issue…');

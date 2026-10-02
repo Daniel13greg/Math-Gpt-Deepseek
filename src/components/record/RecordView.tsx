@@ -63,7 +63,7 @@ function LevelBars({ level }: { level: number }) {
   );
 }
 
-/** "Create lecture notes": record live or upload audio, then DeepSeek writes the notes. */
+/** "Create lecture notes": record live or upload audio, then the model writes the notes. */
 export function RecordView() {
   const { colors, dark } = useTheme();
   const insets = useSafeAreaInsets();
@@ -86,7 +86,7 @@ export function RecordView() {
     const id = createNote({ source, transcript, status: 'generating', ...extra });
     if (hasKey) void generateLectureNotes(id);
     else
-      useNotes.getState().updateNote(id, { status: 'error', error: 'Add your DeepSeek API key in Settings to generate notes.' });
+      useNotes.getState().updateNote(id, { status: 'error', error: 'Add your API key in Settings to generate notes.' });
     router.push({ pathname: '/notes/[id]', params: { id } });
   };
 
