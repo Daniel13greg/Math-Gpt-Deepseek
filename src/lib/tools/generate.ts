@@ -1,7 +1,7 @@
 import type { SubjectId } from '@/constants/subjects';
 import type { DiagramKind, ToolKind } from '@/constants/tools';
-import { streamChat, type ApiMessage, type ClientConfig } from '@/lib/deepseek/client';
-import { DeepSeekError } from '@/lib/deepseek/errors';
+import { streamChat, type ApiMessage, type ClientConfig } from '@/lib/ai/client';
+import { ApiError } from '@/lib/ai/errors';
 import { extractJson } from '@/lib/json';
 import { toolSystemPrompt, toolUserPrompt } from '@/lib/prompts';
 import type { Artifact } from '@/lib/types';
@@ -72,7 +72,7 @@ export interface GenerateArtifactOptions {
 }
 
 /**
- * Generates a tool artifact with DeepSeek JSON mode. If the reply can't be parsed
+ * Generates a tool artifact with the model's JSON mode. If the reply can't be parsed
  * or validated, the model gets one chance to correct itself.
  */
 export async function generateArtifact(opts: GenerateArtifactOptions): Promise<Artifact> {
@@ -104,9 +104,9 @@ export async function generateArtifact(opts: GenerateArtifactOptions): Promise<A
       if (!result.content.trim()) throw new ArtifactError('The reply was empty.');
       return buildArtifact(opts.kind, extractJson(result.content), opts.topic, opts.diagram);
     } catch (error) {
-      if (error instanceof DeepSeekError || attempt >= 1) {
-        if (error instanceof ArtifactError || error instanceof DeepSeekError) throw error;
-        throw new ArtifactError("DeepSeek's reply couldn't be read. Please try again.");
+      if (error instanceof ApiError || attempt >= 1) {
+        if (error instanceof ArtifactError || error instanceof ApiError) throw error;
+        throw new ArtifactError("The reply couldn't be read. Please try again.");
       }
       const reason = error instanceof Error ? error.message : 'invalid JSON';
       opts.onProgress?.('Fixing a formatting issue…');

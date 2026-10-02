@@ -6,6 +6,9 @@ import type { ImageAttachment } from '@/lib/types';
 
 export type AppMode = 'camera' | 'chat' | 'record';
 
+/** A lecture being recorded or transcribed. It keeps going while other modes are open. */
+export type LectureActivity = { status: 'recording'; startedAt: number } | { status: 'processing' };
+
 interface UIState {
   mode: AppMode;
   /** Subject used for the next new chat (and mirrored from the active chat). */
@@ -13,6 +16,7 @@ interface UIState {
   tool: ToolSelection | null;
   draft: string;
   pendingImages: ImageAttachment[];
+  lecture: LectureActivity | null;
   setMode: (mode: AppMode) => void;
   setSubject: (subject: SubjectId) => void;
   setTool: (tool: ToolSelection | null) => void;
@@ -20,6 +24,7 @@ interface UIState {
   addPendingImage: (image: ImageAttachment) => void;
   removePendingImage: (id: string) => void;
   clearComposer: () => void;
+  setLecture: (lecture: LectureActivity | null) => void;
 }
 
 export const useUI = create<UIState>()((set, get) => ({
@@ -28,6 +33,7 @@ export const useUI = create<UIState>()((set, get) => ({
   tool: null,
   draft: '',
   pendingImages: [],
+  lecture: null,
   setMode: (mode) => set({ mode }),
   setSubject: (subject) => set({ subject }),
   setTool: (tool) => set({ tool }),
@@ -35,4 +41,5 @@ export const useUI = create<UIState>()((set, get) => ({
   addPendingImage: (image) => set({ pendingImages: [...get().pendingImages, image].slice(-4) }),
   removePendingImage: (id) => set({ pendingImages: get().pendingImages.filter((i) => i.id !== id) }),
   clearComposer: () => set({ draft: '', pendingImages: [], tool: null }),
+  setLecture: (lecture) => set({ lecture }),
 }));

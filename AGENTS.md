@@ -42,10 +42,10 @@ Docs: https://docs.expo.dev/eas/index.md
 
 ## This project
 
-MathGPT copy powered by the DeepSeek API. See README.md for features and setup.
+MathGPT: a STEM tutor app that runs on its own math models (Flash and Pro). See README.md for features and setup.
 
-- Routes: `src/app/` (`(main)` drawer screen with Scan / Chat / Record modes; stack screens for settings, upgrade, notes, tool viewers).
-- DeepSeek API: `src/lib/deepseek/` (SSE streaming via `expo/fetch`, `thinking` toggle, `reasoning_content`). Chat orchestration: `src/lib/chat/controller.ts`. Tool JSON generation + validation: `src/lib/tools/`.
+- Routes: `src/app/` (`(main)` drawer screen with Scan / Chat / Record modes; stack screens for settings, models, notes, tool viewers).
+- Model API client: `src/lib/ai/` (SSE streaming via `expo/fetch`, `thinking` toggle, `reasoning_content`). The server URL and model IDs live only in `src/lib/ai/models.ts`; user-facing text names the models "MathGPT Flash" / "MathGPT Pro". Chat orchestration: `src/lib/chat/controller.ts`. Tool JSON generation + validation: `src/lib/tools/`.
 - Rich rendering (Markdown + KaTeX, graphs, diagrams, tests, flashcards) lives in `'use dom'` components under `src/components/dom/`. Code imported there runs in a WebView: only pass JSON-serializable props, keep `marked`/`katex` imports out of native code, and run `npm run katex:css` after upgrading `katex`.
 - Speech: `expo-speech-recognition` is not in Expo Go; always access it through `getSpeechLib()` in `src/lib/speech/recognition.ts`.
-- Verify with `npm test`, `npm run typecheck`, `npm run lint`. `npm run mock` starts a fake DeepSeek server for UI work without an API key.
+- Verify with `npm test`, `npm run typecheck`, `npm run lint`. `npm run mock` starts a fake model server for UI work without an API key.

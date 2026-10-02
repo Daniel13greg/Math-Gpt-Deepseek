@@ -4,7 +4,7 @@ import { BrainIcon, CameraIcon, ChevronRightIcon, ImageIcon, SparklesIcon } from
 import { AppText } from '@/components/ui/AppText';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { useTheme } from '@/hooks/useTheme';
-import { modelLabel } from '@/lib/deepseek/models';
+import { modelLabel } from '@/lib/ai/models';
 import { useSettings } from '@/store/settings';
 
 interface AttachSheetProps {

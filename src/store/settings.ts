@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { DEFAULT_BASE_URL, DEFAULT_MODEL, type ReasoningEffort } from '@/lib/deepseek/models';
+import { DEFAULT_BASE_URL, DEFAULT_MODEL, type ReasoningEffort } from '@/lib/ai/models';
 import { kv } from '@/lib/storage/kv';
 import { secure } from '@/lib/storage/secure';
 
@@ -9,9 +9,10 @@ export type SttProvider = 'device' | 'cloud';
 
 export interface PersistedSettings {
   model: string;
-  /** "Deep Think": DeepSeek thinking mode for chat answers. */
+  /** "Deep Think": thinking mode for chat answers. */
   thinking: boolean;
   reasoningEffort: ReasoningEffort;
+  /** Server for chat requests; empty means the built-in one (its address is never shown). */
   baseUrl: string;
   theme: ThemePreference;
   /** BCP-47 language for speech recognition, e.g. en-US. */
@@ -32,14 +33,14 @@ interface SettingsState extends PersistedSettings {
 }
 
 const SETTINGS_KEY = 'settings:v1';
-const API_KEY = 'deepseek_api_key';
+const API_KEY = 'api_key';
 const STT_API_KEY = 'stt_api_key';
 
 export const DEFAULT_SETTINGS: PersistedSettings = {
   model: DEFAULT_MODEL,
   thinking: false,
   reasoningEffort: 'high',
-  baseUrl: DEFAULT_BASE_URL,
+  baseUrl: '',
   theme: 'system',
   speechLang: 'en-US',
   sttProvider: 'device',
@@ -51,14 +52,16 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
 function loadSettings(): PersistedSettings {
   try {
     const raw = kv.getItemSync(SETTINGS_KEY);
-    return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS;
+    const settings: PersistedSettings = raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS;
+    // Older versions saved the built-in server's address; keep it hidden.
+    return settings.baseUrl.replace(/\/+$/, '') === DEFAULT_BASE_URL ? { ...settings, baseUrl: '' } : settings;
   } catch {
     return DEFAULT_SETTINGS;
   }
 }
 
-/** A key baked in at build time via EXPO_PUBLIC_DEEPSEEK_API_KEY (handy for development only). */
-const ENV_API_KEY = process.env.EXPO_PUBLIC_DEEPSEEK_API_KEY ?? '';
+/** A key baked in at build time via EXPO_PUBLIC_API_KEY (handy for development only). */
+const ENV_API_KEY = process.env.EXPO_PUBLIC_API_KEY ?? '';
 
 export const useSettings = create<SettingsState>()((set, get) => ({
   ...loadSettings(),

@@ -7,17 +7,19 @@ export const BASE_CSS = `
   --bg: #ffffff;
   --text: #0a0a0a;
   --text-2: #5f6368;
-  --text-3: #9ca2ae;
+  --text-3: #6b7280;
   --border: #e6e7eb;
   --surface: #f4f4f5;
   --surface-2: #fafafa;
-  --primary: #3490dd;
+  --primary: #2271b6;
   --primary-soft: #e8f2fc;
   --primary-text: #1f6fb5;
   --success: #2f9e5e;
   --success-soft: #e7f6ee;
   --danger: #e5484d;
   --danger-soft: #fdecec;
+  --warning: #f59e0b;
+  --warning-soft: #fff4db;
   --code-bg: #f6f7f9;
   --shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 18px rgba(0,0,0,.06);
   color: var(--text);
@@ -34,14 +36,16 @@ export const BASE_CSS = `
   --bg: #0e0f11;
   --text: #ecedee;
   --text-2: #a0a4ab;
-  --text-3: #6f747c;
+  --text-3: #868c95;
   --border: #2a2c31;
   --surface: #1d1f23;
   --surface-2: #16171a;
+  --primary: #3490dd;
   --primary-soft: #16283a;
   --primary-text: #7cb8ee;
   --success-soft: #12301f;
   --danger-soft: #3a1d1f;
+  --warning-soft: #3a2c10;
   --code-bg: #16171a;
   --shadow: 0 1px 2px rgba(0,0,0,.3);
 }
@@ -87,6 +91,13 @@ export const BASE_CSS = `
 .mg .math-display { overflow-x: auto; overflow-y: hidden; margin: 6px 0 14px; padding: 2px 0; }
 .mg .math-display .katex-display { margin: 0; }
 .mg .math-error { color: var(--danger); }
+/* Wide equations and tables scroll sideways; Markdown.tsx marks the side that hides more. */
+.mg .more-right { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); }
+.mg .more-left { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 36px), transparent); }
+.mg .more-left.more-right {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent);
+}
 .mg .math-pending, .mg .shimmer {
   height: 22px; border-radius: 6px; margin: 4px 0 12px; max-width: 220px;
   background: linear-gradient(90deg, var(--surface) 0%, var(--border) 50%, var(--surface) 100%);
@@ -153,7 +164,7 @@ export const TRANSCRIPT_CSS = `
 
 .mg .error-card { background: var(--danger-soft); border-radius: 14px; padding: 12px 14px; color: var(--text); font-size: 15px; }
 .mg .error-card .row { display: flex; gap: 10px; align-items: flex-start; }
-.mg .error-card svg { color: var(--danger); flex: none; margin-top: 2px; }
+.mg .error-card .row svg { color: var(--danger); flex: none; margin-top: 2px; }
 .mg .error-card .btn { margin-top: 10px; height: 34px; font-size: 14px; padding: 0 14px; }
 
 .mg .progress-card { padding: 16px; display: flex; gap: 14px; align-items: center; }

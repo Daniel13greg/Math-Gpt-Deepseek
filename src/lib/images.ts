@@ -6,7 +6,7 @@ import { makeId } from '@/lib/id';
 import type { ImageAttachment } from '@/lib/types';
 
 /**
- * DeepSeek downsamples images to roughly 800×800 pixels' worth, so anything much
+ * The vision model downsamples images to roughly 800×800 pixels' worth, so anything much
  * larger only costs upload time. Keep enough detail for small handwriting.
  */
 const MAX_SIDE = 1600;
@@ -75,7 +75,7 @@ export async function prepareImage(
   };
 }
 
-/** Base64 data URL for the DeepSeek `image_url` content part. */
+/** Base64 data URL for the API's `image_url` content part. */
 export async function imageToDataUrl(image: ImageAttachment): Promise<string> {
   if (image.uri.startsWith('data:')) return image.uri;
   try {

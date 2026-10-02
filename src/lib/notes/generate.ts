@@ -1,5 +1,5 @@
-import { streamChat } from '@/lib/deepseek/client';
-import { toDeepSeekError } from '@/lib/deepseek/errors';
+import { streamChat } from '@/lib/ai/client';
+import { toApiError } from '@/lib/ai/errors';
 import { toUnicodeMath } from '@/lib/math';
 import { lectureNotesPrompt } from '@/lib/prompts';
 import { useNotes } from '@/store/notes';
@@ -33,7 +33,9 @@ export async function generateLectureNotes(noteId: string): Promise<void> {
 
   const controller = new AbortController();
   inflight.set(noteId, controller);
-  update(noteId, { status: 'generating', notes: '', error: undefined });
+  // On a regenerate, the old notes stay until new text arrives, and come back if this run fails or is stopped.
+  const previous = note.notes;
+  update(noteId, { status: 'generating', error: undefined });
 
   let notes = '';
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -69,12 +71,21 @@ export async function generateLectureNotes(noteId: string): Promise<void> {
     update(noteId, { notes: result.content, status: 'done', title: titleFrom(result.content) ?? note.title });
   } catch (e) {
     if (timer) clearTimeout(timer);
-    const error = toDeepSeekError(e);
-    update(noteId, {
-      notes,
-      status: error.kind === 'aborted' && notes ? 'done' : 'error',
-      error: error.kind === 'aborted' ? 'Stopped before finishing.' : error.message,
-    });
+    const error = toApiError(e);
+    const aborted = error.kind === 'aborted';
+    if (previous) {
+      update(noteId, {
+        notes: previous,
+        status: aborted ? 'done' : 'error',
+        error: aborted ? undefined : `${error.message} Your previous notes were kept.`,
+      });
+    } else {
+      update(noteId, {
+        notes,
+        status: aborted && notes ? 'done' : 'error',
+        error: aborted ? 'Stopped before finishing.' : error.message,
+      });
+    }
   } finally {
     inflight.delete(noteId);
   }

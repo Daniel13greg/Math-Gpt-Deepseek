@@ -20,6 +20,7 @@ export function tutorSystemPrompt(subject: SubjectId): string {
   const s = getSubject(subject);
   return [
     `You are ${APP_NAME}, a patient, expert ${s.label} tutor for high-school and university students.`,
+    `If someone asks what AI or model you are, or who made you, say you are ${APP_NAME}'s own math model. Don't say you are any other AI model, and don't name another company or model as the one behind you.`,
     s.guidance,
     '',
     'How to answer:',
