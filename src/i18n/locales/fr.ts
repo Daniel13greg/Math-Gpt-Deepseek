@@ -247,7 +247,7 @@ export const fr: Dictionary = {
   'usage.price.a11y': 'Prix {field} de {model}, en dollars par million de jetons',
   'usage.title': 'Utilisation',
   'usage.footer':
-    "Comptée sur cet appareil d'après ce que DeepSeek indique pour chaque requête, y compris les vérifications de réponses et les titres. Ton tableau de bord DeepSeek fait foi pour la facturation.",
+    "Comptée sur cet appareil d'après ce que le serveur indique pour chaque requête, y compris les vérifications de réponses et les titres.",
   'usage.thisMonth': 'Ce mois-ci',
   'usage.allTime': 'Depuis le début',
   'usage.reset': 'Réinitialiser les statistiques',
@@ -255,8 +255,7 @@ export const fr: Dictionary = {
   'usage.resetMessage': 'Les prix sont conservés.',
   'usage.prices': 'Prix (USD par million de jetons)',
   'usage.prices.footer':
-    "Renseigne-les d'après la page de tarifs de DeepSeek pour voir les coûts à côté des jetons. Laisse un modèle vide pour n'afficher que les jetons.",
-  'usage.openPricing': 'Ouvrir les tarifs DeepSeek →',
+    "Saisis tes tarifs pour voir les coûts à côté des jetons. Laisse un modèle vide pour n'afficher que les jetons.",
   'question.unverified':
     'Une deuxième vérification a trouvé une autre réponse à cette question. Résous-la toi-même avant de te fier au corrigé.',
   'question.tag': "Question d'entraînement",

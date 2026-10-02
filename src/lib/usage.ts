@@ -2,7 +2,7 @@ import type { Usage } from '@/lib/ai/client';
 import type { TokenUsage, UsageByModel } from '@/lib/types';
 import { t } from '@/i18n';
 
-/** USD per million tokens, as listed on DeepSeek's pricing page. */
+/** USD per million tokens, as entered by the user. */
 export interface ModelPrice {
   /** Input tokens that miss the context cache. */
   input: number;

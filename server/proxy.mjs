@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Key-holding proxy for the DeepSeek API, so a public build of the app never ships the DeepSeek key.
+ * Key-holding proxy for the model API, so a public build of the app never ships the API key.
  *
- * The app talks to this server exactly as it talks to DeepSeek: set **API base URL** to the proxy and put an
- * app token in the **API key** field (or bake both in with EXPO_PUBLIC_API_BASE_URL /
+ * The app talks to this server exactly as it talks to the model API: set **Server** in Settings to the proxy
+ * and put an app token in the **API key** field (or bake both in with EXPO_PUBLIC_API_BASE_URL /
  * EXPO_PUBLIC_API_KEY). The proxy checks the token, rate-limits each client, enforces an optional
- * daily token budget, and streams `/chat/completions` to DeepSeek with the real key.
+ * daily token budget, and streams `/chat/completions` to UPSTREAM_URL with the real key.
  *
- *   DEEPSEEK_API_KEY=sk-... APP_TOKENS=some-long-random-string node server/proxy.mjs
+ *   UPSTREAM_URL=https://... UPSTREAM_API_KEY=sk-... APP_TOKENS=some-long-random-string node server/proxy.mjs
  *
  * No dependencies; Node 20 or newer. State (rate limits, budget) is in memory, so run one instance.
  * See server/README.md for every setting.
@@ -35,8 +35,10 @@ export function configFromEnv(env = process.env) {
   };
   const flag = (name) => /^(1|true|yes)$/i.test(env[name]?.trim() ?? '');
 
-  const apiKey = env.DEEPSEEK_API_KEY?.trim();
-  if (!apiKey) throw new Error('Set DEEPSEEK_API_KEY to your DeepSeek API key.');
+  const upstreamUrl = env.UPSTREAM_URL?.trim().replace(/\/+$/, '');
+  if (!upstreamUrl) throw new Error('Set UPSTREAM_URL to the base URL of the model API.');
+  const apiKey = env.UPSTREAM_API_KEY?.trim();
+  if (!apiKey) throw new Error('Set UPSTREAM_API_KEY to the model API key.');
   const appTokens = list(env.APP_TOKENS);
   const allowAnonymous = flag('ALLOW_ANONYMOUS');
   if (appTokens.length === 0 && !allowAnonymous) {
@@ -48,7 +50,7 @@ export function configFromEnv(env = process.env) {
     allowAnonymous,
     host: env.HOST?.trim() || '0.0.0.0',
     port: number('PORT', 8788),
-    upstreamUrl: (env.UPSTREAM_URL?.trim() || 'https://api.deepseek.com').replace(/\/+$/, ''),
+    upstreamUrl,
     requestsPerMinute: number('REQUESTS_PER_MINUTE', 20),
     requestsPerDay: number('REQUESTS_PER_DAY', 500),
     tokensPerDay: number('TOKENS_PER_DAY', 0),
@@ -306,17 +308,17 @@ export function createProxy(config, { fetch: fetchImpl = fetch, now = Date.now, 
     } catch (error) {
       if (controller.signal.aborted) return { who, model: body.model, status: 499, tokens: 0 };
       log(`upstream unreachable: ${error?.message ?? error}`);
-      throw new HttpError(502, 'Could not reach DeepSeek. Try again shortly.', 'upstream_unreachable');
+      throw new HttpError(502, 'Could not reach the model server. Try again shortly.', 'upstream_unreachable');
     }
 
     // The server's own key or balance is the problem: not something the app user can fix.
     if ([401, 402, 403].includes(upstream.status)) {
       const detail = (await upstream.text().catch(() => '')).slice(0, 300);
-      log(`DeepSeek rejected the server's key (${upstream.status}): ${detail}`);
+      log(`upstream rejected the server's key (${upstream.status}): ${detail}`);
       const message =
         upstream.status === 402
-          ? "The server's DeepSeek account is out of balance."
-          : "DeepSeek rejected the server's API key.";
+          ? "The server's model account is out of balance."
+          : "The model server rejected the server's API key.";
       throw new HttpError(502, message, 'upstream_auth');
     }
 
@@ -395,7 +397,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const server = createProxy(config);
   server.listen(config.port, config.host, () => {
     const auth = config.appTokens.length ? `${config.appTokens.length} app token(s)` : 'no app token (anonymous)';
-    console.log(`DeepSeek proxy on http://${config.host}:${config.port} → ${config.upstreamUrl}, ${auth}`);
+    console.log(`Model proxy on http://${config.host}:${config.port} → ${config.upstreamUrl}, ${auth}`);
   });
   const stop = () => server.close(() => process.exit(0));
   process.on('SIGTERM', stop);

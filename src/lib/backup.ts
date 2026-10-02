@@ -3,7 +3,7 @@ import type { Chat, LectureNote, UsageByModel } from '@/lib/types';
 import type { ModelPrice } from '@/lib/usage';
 import { t, tp } from '@/i18n';
 
-export const BACKUP_FORMAT = 'math-gpt-deepseek-backup';
+export const BACKUP_FORMAT = 'math-gpt-backup';
 export const BACKUP_VERSION = 1;
 
 type Decks = Record<string, Record<number, CardSchedule>>;

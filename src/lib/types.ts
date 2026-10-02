@@ -31,7 +31,7 @@ export type MessageStatus = 'streaming' | 'done' | 'error' | 'stopped';
 /** Tokens billed by the API, summed over requests. */
 export interface TokenUsage {
   requests: number;
-  /** All input tokens, including those served from DeepSeek's context cache. */
+  /** All input tokens, including those served from the server's context cache. */
   promptTokens: number;
   cacheHitTokens: number;
   /** All output tokens, including reasoning. */

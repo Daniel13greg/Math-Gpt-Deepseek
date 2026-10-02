@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * End-to-end tests of the web build against the mock DeepSeek server (no API key needed).
+ * End-to-end tests of the web build against the mock model server (no API key needed).
  * Run `npm run e2e` (it exports the web build first).
  */
 export default defineConfig({
@@ -31,9 +31,9 @@ export default defineConfig({
       command: 'node server/proxy.mjs',
       port: 8788,
       env: {
-        DEEPSEEK_API_KEY: 'sk-mock',
-        APP_TOKENS: 'e2e-app-token',
         UPSTREAM_URL: 'http://localhost:8787',
+        UPSTREAM_API_KEY: 'sk-mock',
+        APP_TOKENS: 'e2e-app-token',
         PORT: '8788',
         HOST: '127.0.0.1',
       },

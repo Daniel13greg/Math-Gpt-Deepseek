@@ -2,6 +2,7 @@
  * Integration test of the chat flow: controller → API client (fake fetch) → stores.
  * Storage is in memory; everything else is the real code.
  */
+import { DEFAULT_MODEL } from '@/lib/ai/models';
 import { deleteImageFiles } from '@/lib/images';
 import type { AssistantMessage, ImageAttachment } from '@/lib/types';
 import { useChats } from '@/store/chats';
@@ -37,7 +38,7 @@ type Reply = { reasoning?: string; content: string; usage?: { prompt_tokens: num
 function sseResponse({ reasoning = '', content, usage }: Reply): Response {
   const events = [
     ...(reasoning ? [{ choices: [{ delta: { reasoning_content: reasoning } }] }] : []),
-    ...content.match(/.{1,12}/gs)!.map((piece) => ({ model: 'deepseek-flash', choices: [{ delta: { content: piece } }] })),
+    ...content.match(/.{1,12}/gs)!.map((piece) => ({ model: DEFAULT_MODEL, choices: [{ delta: { content: piece } }] })),
     { choices: [{ delta: {}, finish_reason: 'stop' }] },
     { choices: [], usage: usage ?? { prompt_tokens: 100, completion_tokens: 20 } },
   ];
@@ -101,10 +102,10 @@ describe('sendMessage', () => {
 
     const chat = useChats.getState().chats[useChats.getState().activeChatId!];
     expect(chat.title).toBe('Solving a Quadratic');
-    expect(calls[1].model).toBe('deepseek-flash');
+    expect(calls[1].model).toBe(DEFAULT_MODEL);
     expect(calls[1].thinking).toEqual({ type: 'disabled' });
-    expect(chat.usage?.['deepseek-flash']).toMatchObject({ requests: 2, promptTokens: 130 });
-    expect(Object.values(useUsage.getState().months)[0]['deepseek-flash'].requests).toBe(2);
+    expect(chat.usage?.[DEFAULT_MODEL]).toMatchObject({ requests: 2, promptTokens: 130 });
+    expect(Object.values(useUsage.getState().months)[0][DEFAULT_MODEL].requests).toBe(2);
   });
 
   it('uses the tutor prompt when tutor mode is on', async () => {

@@ -5,7 +5,7 @@ import { getApiKey, useSettings } from '@/store/settings';
 import { useUsage } from '@/store/usage';
 
 /**
- * Connection settings for a DeepSeek request. Every request's usage is added to the monthly
+ * Connection settings for a model request. Every request's usage is added to the monthly
  * totals; `onUsage` also receives it, e.g. to attribute it to the message that caused it.
  */
 export function apiConfig(onUsage?: (usage: TokenUsage, model: string) => void): ClientConfig {

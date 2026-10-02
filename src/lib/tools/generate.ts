@@ -152,7 +152,7 @@ async function generateOnce(opts: GenerateArtifactOptions): Promise<Artifact> {
 const MIN_TEST_QUESTIONS = 4;
 
 /**
- * Generates a tool artifact with DeepSeek JSON mode. Multiple-choice answer keys are then
+ * Generates a tool artifact in JSON mode. Multiple-choice answer keys are then
  * checked by an independent solve: a test drops questions whose key disagrees, and a single
  * question is rewritten once (and flagged if the rewrite disagrees too).
  */

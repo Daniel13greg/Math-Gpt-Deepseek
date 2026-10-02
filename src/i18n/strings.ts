@@ -1,7 +1,7 @@
 /**
  * UI strings. Pure (no native imports), so DOM components can use it inside their WebView too.
  * English is the source of truth: every other locale must define the same keys (see the test).
- * Prompts sent to DeepSeek stay in English; the model already replies in the student's language.
+ * Prompts sent to the model stay in English; the model already replies in the student's language.
  */
 import { de } from './locales/de';
 import { en } from './locales/en';

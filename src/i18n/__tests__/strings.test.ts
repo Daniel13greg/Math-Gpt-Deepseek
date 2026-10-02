@@ -30,7 +30,7 @@ describe('dictionaries', () => {
 
 describe('translate', () => {
   it('fills placeholders and leaves unknown ones visible', () => {
-    expect(translate('en', 'settings.connected', { model: 'deepseek-flash' })).toBe('Connected to deepseek-flash ✓');
+    expect(translate('en', 'settings.connected', { model: 'MathGPT Flash' })).toBe('Connected to MathGPT Flash ✓');
     expect(translate('es', 'test.questionOf', { n: 2, total: 8 })).toBe('Pregunta 2 de 8');
     expect(translate('en', 'test.questionOf', { n: 2 })).toBe('Question 2 of {total}');
   });

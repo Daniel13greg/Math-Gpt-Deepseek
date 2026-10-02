@@ -15,8 +15,8 @@ const SSE = [
   '',
 ].join('\n\n');
 
-/** A stand-in for DeepSeek that records what it receives. */
-function fakeDeepSeek() {
+/** A stand-in for the model API that records what it receives. */
+function fakeUpstream() {
   const state = { requests: [], status: 200, reply: SSE, contentType: 'text/event-stream', hang: false, closed: 0 };
   const server = createServer(async (req, res) => {
     const chunks = [];
@@ -43,14 +43,14 @@ async function listen(server) {
 }
 
 const config = (overrides = {}) => ({
-  ...configFromEnv({ DEEPSEEK_API_KEY: 'sk-server', APP_TOKENS: 'token-a,token-b' }),
+  ...configFromEnv({ UPSTREAM_URL: 'http://upstream.test', UPSTREAM_API_KEY: 'sk-server', APP_TOKENS: 'token-a,token-b' }),
   ...overrides,
 });
 
-const request = { model: 'deepseek-chat', messages: [{ role: 'user', content: 'Hi' }], stream: true };
+const request = { model: 'math-model', messages: [{ role: 'user', content: 'Hi' }], stream: true };
 
 describe('proxy', () => {
-  const upstream = fakeDeepSeek();
+  const upstream = fakeUpstream();
   let upstreamUrl;
   let proxy;
   let url;
@@ -93,7 +93,7 @@ describe('proxy', () => {
     assert.equal(sent.headers.authorization, 'Bearer sk-server');
     assert.deepEqual(sent.body.messages, request.messages);
     assert.deepEqual(sent.body.stream_options, { include_usage: true });
-    assert.ok(logs.some((line) => line.includes('deepseek-chat 200 40 tokens')));
+    assert.ok(logs.some((line) => line.includes('math-model 200 40 tokens')));
     assert.ok(!logs.join('\n').includes('token-a'));
   });
 
@@ -170,9 +170,9 @@ describe('proxy', () => {
   });
 
   test('validates the request', async () => {
-    await start({ allowedModels: ['deepseek-chat'], maxBodyBytes: 2_000 });
+    await start({ allowedModels: ['math-model'], maxBodyBytes: 2_000 });
     assert.equal((await post('not json')).status, 400);
-    assert.equal((await post({ model: 'deepseek-chat', messages: [] })).status, 400);
+    assert.equal((await post({ model: 'math-model', messages: [] })).status, 400);
 
     const model = await post({ ...request, model: 'expensive-model' });
     assert.equal(model.status, 400);
@@ -194,7 +194,7 @@ describe('proxy', () => {
     );
   });
 
-  test("hides DeepSeek rejecting the server's key behind a 502", async () => {
+  test("hides the upstream rejecting the server's key behind a 502", async () => {
     upstream.state.status = 402;
     upstream.state.contentType = 'application/json';
     upstream.state.reply = JSON.stringify({ error: { message: 'Insufficient Balance' } });
@@ -252,20 +252,22 @@ describe('proxy', () => {
 });
 
 describe('configFromEnv', () => {
-  test('needs the DeepSeek key and app tokens (or anonymous mode)', () => {
-    assert.throws(() => configFromEnv({}), /DEEPSEEK_API_KEY/);
-    assert.throws(() => configFromEnv({ DEEPSEEK_API_KEY: 'sk' }), /APP_TOKENS/);
-    assert.equal(configFromEnv({ DEEPSEEK_API_KEY: 'sk', ALLOW_ANONYMOUS: 'true' }).allowAnonymous, true);
+  test('needs the upstream URL and key, and app tokens (or anonymous mode)', () => {
+    const upstream = { UPSTREAM_URL: 'https://example.com', UPSTREAM_API_KEY: 'sk' };
+    assert.throws(() => configFromEnv({}), /UPSTREAM_URL/);
+    assert.throws(() => configFromEnv({ UPSTREAM_URL: 'https://example.com' }), /UPSTREAM_API_KEY/);
+    assert.throws(() => configFromEnv(upstream), /APP_TOKENS/);
+    assert.equal(configFromEnv({ ...upstream, ALLOW_ANONYMOUS: 'true' }).allowAnonymous, true);
   });
 
   test('parses lists and numbers, with defaults', () => {
     const c = configFromEnv({
-      DEEPSEEK_API_KEY: ' sk ',
+      UPSTREAM_API_KEY: ' sk ',
       APP_TOKENS: 'a, b ,,c',
       UPSTREAM_URL: 'https://example.com/v1/',
       TOKENS_PER_DAY: '1000000',
       MAX_BODY_MB: '1',
-      ALLOWED_MODELS: 'deepseek-chat',
+      ALLOWED_MODELS: 'math-model',
       TRUST_PROXY: '1',
     });
     assert.equal(c.apiKey, 'sk');
@@ -273,11 +275,11 @@ describe('configFromEnv', () => {
     assert.equal(c.upstreamUrl, 'https://example.com/v1');
     assert.equal(c.tokensPerDay, 1_000_000);
     assert.equal(c.maxBodyBytes, 1024 * 1024);
-    assert.deepEqual(c.allowedModels, ['deepseek-chat']);
+    assert.deepEqual(c.allowedModels, ['math-model']);
     assert.equal(c.trustProxy, true);
     assert.equal(c.port, 8788);
     assert.equal(c.requestsPerMinute, 20);
     assert.deepEqual(c.allowedOrigins, ['*']);
-    assert.throws(() => configFromEnv({ DEEPSEEK_API_KEY: 'sk', APP_TOKENS: 'a', PORT: 'abc' }), /PORT/);
+    assert.throws(() => configFromEnv({ UPSTREAM_URL: 'https://example.com', UPSTREAM_API_KEY: 'sk', APP_TOKENS: 'a', PORT: 'abc' }), /PORT/);
   });
 });

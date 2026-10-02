@@ -7,7 +7,7 @@ import { addToModel, monthKey, type ModelPrice } from '@/lib/usage';
 interface PersistedUsage {
   /** Usage per calendar month ("2026-10") and model. */
   months: Record<string, UsageByModel>;
-  /** USD per million tokens, entered by the user from DeepSeek's pricing page. */
+  /** USD per million tokens, entered by the user. */
   prices: Record<string, ModelPrice>;
 }
 

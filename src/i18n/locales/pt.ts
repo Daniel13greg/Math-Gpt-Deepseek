@@ -246,16 +246,14 @@ export const pt: Dictionary = {
   'usage.price.a11y': 'Preço de {field} do {model}, em dólares por milhão de tokens',
   'usage.title': 'Uso',
   'usage.footer':
-    'Contado neste dispositivo a partir do que a DeepSeek informa em cada solicitação, incluindo verificações de respostas e títulos. O painel da DeepSeek é a referência para cobrança.',
+    'Contado neste dispositivo a partir do que o servidor informa em cada solicitação, incluindo verificações de respostas e títulos.',
   'usage.thisMonth': 'Este mês',
   'usage.allTime': 'Total',
   'usage.reset': 'Redefinir estatísticas de uso',
   'usage.resetConfirm': 'Redefinir estatísticas de uso?',
   'usage.resetMessage': 'Os preços são mantidos.',
   'usage.prices': 'Preços (USD por 1 mi de tokens)',
-  'usage.prices.footer':
-    'Preencha com a página de preços da DeepSeek para ver custos ao lado dos tokens. Deixe um modelo em branco para ver só tokens.',
-  'usage.openPricing': 'Abrir preços da DeepSeek →',
+  'usage.prices.footer': 'Informe seus preços para ver custos ao lado dos tokens. Deixe um modelo em branco para ver só tokens.',
   'question.unverified':
     'Uma segunda verificação chegou a outra resposta nesta questão. Resolva você mesmo antes de confiar no gabarito.',
   'question.tag': 'Questão de prática',

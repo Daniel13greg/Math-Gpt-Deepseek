@@ -1,9 +1,7 @@
-import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/AppText';
-import { useTheme } from '@/hooks/useTheme';
 import { t, tp, useT } from '@/i18n';
 import { MODELS, modelLabel } from '@/lib/ai/models';
 import type { UsageByModel } from '@/lib/types';
@@ -87,7 +85,6 @@ function PriceEditor({ model }: { model: string }) {
 
 /** Token usage this month and overall, with optional prices to turn tokens into cost. */
 export function UsageSection() {
-  const { colors } = useTheme();
   const { t } = useT();
   const months = useUsage((s) => s.months);
   const prices = useUsage((s) => s.prices);
@@ -130,15 +127,6 @@ export function UsageSection() {
             <PriceEditor model={model} />
           </View>
         ))}
-        <Divider />
-        <Pressable
-          style={styles.block}
-          onPress={() => WebBrowser.openBrowserAsync('https://api-docs.deepseek.com/quick_start/pricing')}
-          accessibilityRole="link">
-          <AppText size={14} color={colors.primary} weight="medium">
-            {t('usage.openPricing')}
-          </AppText>
-        </Pressable>
       </Section>
     </>
   );

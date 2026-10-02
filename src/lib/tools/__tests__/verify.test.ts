@@ -1,4 +1,5 @@
 import type { ClientConfig } from '@/lib/ai/client';
+import { DEFAULT_MODEL } from '@/lib/ai/models';
 import type { MultipleChoiceQuestion } from '@/lib/types';
 
 import { generateArtifact } from '../generate';
@@ -52,7 +53,7 @@ describe('applyKeyChecks', () => {
   });
 });
 
-/** Fake DeepSeek: tool prompts get `tool` replies in turn, checker prompts get `checks` replies in turn. */
+/** Fake model API: tool prompts get `tool` replies in turn, checker prompts get `checks` replies in turn. */
 function fakeApi(tool: unknown[], checks: unknown[]) {
   const calls: { system: string; user: string }[] = [];
   const fetchImpl = jest.fn(async (_url: string, init: { body: string }) => {
@@ -81,7 +82,7 @@ const rawQuestion = (answerIndex: number) => ({
   explanation: '2 + 2 = 4',
 });
 
-const base = { model: 'deepseek-flash', subject: 'math' as const, topic: 'arithmetic', thinking: false };
+const base = { model: DEFAULT_MODEL, subject: 'math' as const, topic: 'arithmetic', thinking: false };
 
 describe('generateArtifact answer checks', () => {
   it('returns a practice question whose key is confirmed', async () => {

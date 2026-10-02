@@ -1,6 +1,6 @@
 import { ask, expect, seed, test } from './fixtures';
 
-// The web app talking to server/proxy.mjs (which holds the DeepSeek key) instead of DeepSeek directly.
+// The web app talking to server/proxy.mjs (which holds the real API key) instead of the model API directly.
 const PROXY = 'http://localhost:8788';
 
 test('chats through the key-holding proxy with an app token', async ({ page }) => {
