@@ -13,6 +13,7 @@ import type { TranscriptAction, TranscriptHandle } from '@/components/dom/transc
 import { headerHeight } from '@/components/header/MainHeader';
 import { AppText } from '@/components/ui/AppText';
 import { DISCLAIMER } from '@/constants/app';
+import type { SubjectId } from '@/constants/subjects';
 import { MaxContentWidth } from '@/constants/theme';
 import { useDictation } from '@/hooks/useDictation';
 import { useTheme } from '@/hooks/useTheme';
@@ -77,19 +78,99 @@ export async function pickImageFromLibrary() {
   }
 }
 
+interface ComposerAreaProps {
+  chatId: string | null;
+  busy: boolean;
+  onPlus: () => void;
+  onTools: () => void;
+}
+
+/**
+ * Subject tabs, composer and disclaimer. The draft is read here, not in ChatView, so typing only
+ * re-renders this part: a ChatView render re-sends every message to the transcript WebView.
+ */
+function ComposerArea({ chatId, busy, onPlus, onTools }: ComposerAreaProps) {
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const subject = useUI((s) => s.subject);
+  const draft = useUI((s) => s.draft);
+  const pendingImages = useUI((s) => s.pendingImages);
+  const tool = useUI((s) => s.tool);
+  const setDraft = useUI((s) => s.setDraft);
+  const removePendingImage = useUI((s) => s.removePendingImage);
+  const setTool = useUI((s) => s.setTool);
+  const thinking = useSettings((s) => s.thinking);
+  const updateSettings = useSettings((s) => s.update);
+  const dictationBase = useRef('');
+
+  const dictation = useDictation({
+    onPartial: (text) => setDraft(`${dictationBase.current}${dictationBase.current && text ? ' ' : ''}${text}`),
+    onFinal: (text) => {
+      const next = `${dictationBase.current}${dictationBase.current && text ? ' ' : ''}${text}`;
+      dictationBase.current = next;
+      setDraft(next);
+    },
+  });
+
+  const onMic = () => {
+    if (dictation.state === 'idle') {
+      // Dictation and lecture recording share one speech recognizer.
+      if (useUI.getState().lecture) return toast.info('Voice input is off while a lecture is recording.');
+      dictationBase.current = useUI.getState().draft.trim();
+    }
+    void dictation.toggle();
+  };
+
+  const send = () => {
+    const { draft, pendingImages, tool, subject } = useUI.getState();
+    if (dictation.state !== 'idle') void dictation.stop();
+    useUI.getState().clearComposer();
+    void sendMessage({ text: draft, images: pendingImages, tool, subject });
+  };
+
+  const onSubjectChange = (next: SubjectId) => {
+    useUI.getState().setSubject(next);
+    if (chatId) useChats.getState().setChatSubject(chatId, next);
+  };
+
+  return (
+    <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+      <SubjectTabs value={subject} onChange={onSubjectChange} />
+      <View style={styles.composerSpacing} />
+      <Composer
+        subject={subject}
+        draft={draft}
+        onDraftChange={setDraft}
+        images={pendingImages}
+        onRemoveImage={removePendingImage}
+        tool={tool}
+        onClearTool={() => setTool(null)}
+        thinking={thinking}
+        onToggleThinking={() => updateSettings({ thinking: !thinking })}
+        busy={busy || isGenerating(chatId)}
+        listening={dictation.state !== 'idle'}
+        onSend={send}
+        onStop={() => stopGeneration(chatId)}
+        onPlus={onPlus}
+        onTools={onTools}
+        onMic={onMic}
+      />
+      <AppText size={12.5} align="center" color={colors.textFaint} style={styles.disclaimer} numberOfLines={1}>
+        {DISCLAIMER}
+      </AppText>
+    </View>
+  );
+}
+
 export function ChatView() {
-  const { scheme, colors } = useTheme();
+  const { scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const transcriptRef = useRef<TranscriptHandle>(null);
   const chatId = useChats((s) => s.activeChatId);
   const messages = useStructuralMessages(chatId);
-  const ui = useUI();
-  const thinking = useSettings((s) => s.thinking);
-  const updateSettings = useSettings((s) => s.update);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [attachOpen, setAttachOpen] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
-  const dictationBase = useRef('');
 
   // Streamed text is patched straight into the WebView instead of re-sending every message.
   useEffect(
@@ -115,36 +196,6 @@ export function ChatView() {
   const busy =
     messages[messages.length - 1]?.role === 'assistant' &&
     (messages[messages.length - 1] as { status: string }).status === 'streaming';
-
-  const dictation = useDictation({
-    onPartial: (text) => ui.setDraft(`${dictationBase.current}${dictationBase.current && text ? ' ' : ''}${text}`),
-    onFinal: (text) => {
-      const next = `${dictationBase.current}${dictationBase.current && text ? ' ' : ''}${text}`;
-      dictationBase.current = next;
-      useUI.getState().setDraft(next);
-    },
-  });
-
-  const onMic = () => {
-    if (dictation.state === 'idle') {
-      // Dictation and lecture recording share one speech recognizer.
-      if (useUI.getState().lecture) return toast.info('Voice input is off while a lecture is recording.');
-      dictationBase.current = useUI.getState().draft.trim();
-    }
-    void dictation.toggle();
-  };
-
-  const send = () => {
-    const { draft, pendingImages, tool, subject } = useUI.getState();
-    if (dictation.state !== 'idle') void dictation.stop();
-    useUI.getState().clearComposer();
-    void sendMessage({ text: draft, images: pendingImages, tool, subject });
-  };
-
-  const onSubjectChange = (subject: typeof ui.subject) => {
-    ui.setSubject(subject);
-    if (chatId) useChats.getState().setChatSubject(chatId, subject);
-  };
 
   const findMessage = (id: string) => getChat(chatId)?.messages.find((m) => m.id === id);
 
@@ -185,9 +236,10 @@ export function ChatView() {
         if (!chatId) break;
         const message = editFrom(chatId, action.messageId);
         if (message) {
-          ui.setDraft(message.tool ? message.tool.topic : message.text);
-          ui.setTool(message.tool ? { kind: message.tool.kind, diagram: message.tool.diagram } : null);
-          message.images?.forEach((img) => useUI.getState().addPendingImage(img));
+          const { setDraft, setTool, addPendingImage } = useUI.getState();
+          setDraft(message.tool ? message.tool.topic : message.text);
+          setTool(message.tool ? { kind: message.tool.kind, diagram: message.tool.diagram } : null);
+          message.images?.forEach(addPendingImage);
         }
         break;
       }
@@ -248,37 +300,17 @@ export function ChatView() {
         />
       </View>
 
-      <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-        <SubjectTabs value={ui.subject} onChange={onSubjectChange} />
-        <View style={styles.composerSpacing} />
-        <Composer
-          subject={ui.subject}
-          draft={ui.draft}
-          onDraftChange={ui.setDraft}
-          images={ui.pendingImages}
-          onRemoveImage={ui.removePendingImage}
-          tool={ui.tool}
-          onClearTool={() => ui.setTool(null)}
-          thinking={thinking}
-          onToggleThinking={() => updateSettings({ thinking: !thinking })}
-          busy={busy || isGenerating(chatId)}
-          listening={dictation.state !== 'idle'}
-          onSend={send}
-          onStop={() => stopGeneration(chatId)}
-          onPlus={() => setAttachOpen(true)}
-          onTools={() => setToolsOpen(true)}
-          onMic={onMic}
-        />
-        <AppText size={12.5} align="center" color={colors.textFaint} style={styles.disclaimer} numberOfLines={1}>
-          {DISCLAIMER}
-        </AppText>
-      </View>
+      <ComposerArea chatId={chatId} busy={busy} onPlus={() => setAttachOpen(true)} onTools={() => setToolsOpen(true)} />
 
-      <ToolsSheet visible={toolsOpen} onClose={() => setToolsOpen(false)} onSelect={(tool) => ui.setTool(tool)} />
+      <ToolsSheet
+        visible={toolsOpen}
+        onClose={() => setToolsOpen(false)}
+        onSelect={(tool) => useUI.getState().setTool(tool)}
+      />
       <AttachSheet
         visible={attachOpen}
         onClose={() => setAttachOpen(false)}
-        onCamera={() => ui.setMode('camera')}
+        onCamera={() => useUI.getState().setMode('camera')}
         onLibrary={() => void pickImageFromLibrary()}
         onModel={() => router.push('/upgrade')}
       />
