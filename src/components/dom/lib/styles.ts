@@ -18,6 +18,8 @@ export const BASE_CSS = `
   --success-soft: #e7f6ee;
   --danger: #e5484d;
   --danger-soft: #fdecec;
+  --warning: #f59e0b;
+  --warning-soft: #fff4db;
   --code-bg: #f6f7f9;
   --shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 18px rgba(0,0,0,.06);
   color: var(--text);
@@ -42,6 +44,7 @@ export const BASE_CSS = `
   --primary-text: #7cb8ee;
   --success-soft: #12301f;
   --danger-soft: #3a1d1f;
+  --warning-soft: #3a2c10;
   --code-bg: #16171a;
   --shadow: 0 1px 2px rgba(0,0,0,.3);
 }

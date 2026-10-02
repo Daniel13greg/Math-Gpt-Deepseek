@@ -44,8 +44,8 @@ function FlowShape({ node }: { node: LaidOutNode }) {
       return (
         <polygon
           points={`${x},${top} ${left + w},${y} ${x},${top + h} ${left},${y}`}
-          fill="#FFF4DB"
-          stroke="#F59E0B"
+          fill="var(--warning-soft)"
+          stroke="var(--warning)"
           strokeWidth={2}
         />
       );
