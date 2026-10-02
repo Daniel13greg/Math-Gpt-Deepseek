@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
-import { DIAGRAM_KINDS, TOOLS, type ToolSelection } from '@/constants/tools';
+import { DIAGRAM_KINDS, TOOL_KINDS, type ToolSelection } from '@/constants/tools';
 import { ChevronDownIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
 
 import { ToolIcon } from './ToolIcon';
 
@@ -28,6 +29,7 @@ function Chevron({ open, color }: { open: boolean; color: string }) {
 /** "Tools" bottom sheet: video, practice test/question, graph, diagram (expandable), study guide, flashcards. */
 export function ToolsSheet({ visible, onClose, onSelect }: ToolsSheetProps) {
   const { colors } = useTheme();
+  const { t } = useT();
   const [diagramOpen, setDiagramOpen] = useState(false);
 
   const choose = (tool: ToolSelection) => {
@@ -37,20 +39,20 @@ export function ToolsSheet({ visible, onClose, onSelect }: ToolsSheetProps) {
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Tools">
+    <BottomSheet visible={visible} onClose={onClose} title={t('tools.title')}>
       <View style={styles.list}>
-        {TOOLS.map((tool) => {
-          const isDiagram = tool.kind === 'diagram';
+        {TOOL_KINDS.map((kind) => {
+          const isDiagram = kind === 'diagram';
           return (
-            <View key={tool.kind}>
+            <View key={kind}>
               <Pressable
-                onPress={() => (isDiagram ? setDiagramOpen((o) => !o) : choose({ kind: tool.kind }))}
+                onPress={() => (isDiagram ? setDiagramOpen((o) => !o) : choose({ kind }))}
                 style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}
                 accessibilityRole="button"
                 accessibilityState={isDiagram ? { expanded: diagramOpen } : undefined}>
-                <ToolIcon kind={tool.kind} size={24} color={colors.icon} />
+                <ToolIcon kind={kind} size={24} color={colors.icon} />
                 <AppText size={18} color={colors.icon} style={styles.label}>
-                  {tool.title}
+                  {t(`tool.${kind}.title`)}
                 </AppText>
                 {isDiagram ? <Chevron open={diagramOpen} color={colors.icon} /> : null}
               </Pressable>
@@ -58,12 +60,13 @@ export function ToolsSheet({ visible, onClose, onSelect }: ToolsSheetProps) {
                 <Animated.View entering={FadeIn.duration(160)} style={styles.subList}>
                   {DIAGRAM_KINDS.map((d) => (
                     <Pressable
-                      key={d.kind}
-                      onPress={() => choose({ kind: 'diagram', diagram: d.kind })}
+                      accessibilityRole="button"
+                      key={d}
+                      onPress={() => choose({ kind: 'diagram', diagram: d })}
                       style={({ pressed }) => [styles.subRow, pressed && { backgroundColor: colors.surface }]}>
                       <View style={[styles.dot, { backgroundColor: colors.textMuted }]} />
                       <AppText size={16} color={colors.icon}>
-                        {d.title}
+                        {t(`diagram.${d}.title`)}
                       </AppText>
                     </Pressable>
                   ))}

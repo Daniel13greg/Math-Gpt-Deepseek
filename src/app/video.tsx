@@ -10,6 +10,7 @@ import VideoScene from '@/components/dom/VideoScene';
 import { PauseIcon, PlayIcon, RotateCcwIcon, SkipBackIcon, SkipForwardIcon, Volume2Icon, XIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { useArtifact } from '@/hooks/useArtifact';
+import { useT } from '@/i18n';
 import { useSettings } from '@/store/settings';
 
 /** Rough speaking time: ~2.6 words per second at 1× rate. */
@@ -45,6 +46,7 @@ function SceneBar({ state, durationMs, playing }: { state: 'done' | 'current' | 
 export default function VideoScreen() {
   const { artifact } = useArtifact('video');
   const insets = useSafeAreaInsets();
+  const { t, lang } = useT();
   const rate = useSettings((s) => s.ttsRate);
   const language = useSettings((s) => s.speechLang);
   const [index, setIndex] = useState(0);
@@ -96,7 +98,7 @@ export default function VideoScreen() {
   if (!artifact || !scene) {
     return (
       <View style={[styles.screen, styles.center]}>
-        <AppText color="#fff">This video lesson is no longer available.</AppText>
+        <AppText color="#fff">{t('video.missing')}</AppText>
       </View>
     );
   }
@@ -121,17 +123,23 @@ export default function VideoScreen() {
     <View style={styles.screen}>
       <StatusBar style="light" />
       <View style={[styles.top, { paddingTop: insets.top + 6 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.roundButton} accessibilityLabel="Close video">
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.back()}
+          hitSlop={12}
+          style={styles.roundButton}
+          accessibilityLabel={t('video.close')}>
           <XIcon size={22} color="#fff" />
         </Pressable>
         <AppText weight="semibold" size={16} color="#fff" numberOfLines={1} style={styles.title}>
           {artifact.data.title}
         </AppText>
         <Pressable
+          accessibilityRole="button"
           onPress={() => setMuted((m) => !m)}
           hitSlop={12}
           style={[styles.roundButton, muted && styles.mutedButton]}
-          accessibilityLabel={muted ? 'Unmute narration' : 'Mute narration'}>
+          accessibilityLabel={muted ? t('video.unmute') : t('video.mute')}>
           <Volume2Icon size={20} color="#fff" />
         </Pressable>
       </View>
@@ -147,8 +155,13 @@ export default function VideoScreen() {
         ))}
       </View>
 
-      <Pressable style={styles.stage} onPress={togglePlay} accessibilityLabel={playing ? 'Pause' : 'Play'}>
+      <Pressable
+        accessibilityRole="button"
+        style={styles.stage}
+        onPress={togglePlay}
+        accessibilityLabel={playing ? t('video.pause') : t('video.play')}>
         <VideoScene
+          lang={lang}
           heading={scene.heading}
           body={scene.body}
           index={index}
@@ -166,14 +179,19 @@ export default function VideoScreen() {
 
       <View style={[styles.controls, { paddingBottom: Math.max(insets.bottom, 14) + 6 }]}>
         <Pressable
+          accessibilityRole="button"
           onPress={() => goTo(index - 1)}
           disabled={index === 0}
           hitSlop={10}
           style={[styles.control, index === 0 && styles.disabled]}
-          accessibilityLabel="Previous scene">
+          accessibilityLabel={t('video.previous')}>
           <SkipBackIcon size={26} color="#fff" />
         </Pressable>
-        <Pressable onPress={togglePlay} style={styles.play} accessibilityLabel={ended ? 'Replay' : playing ? 'Pause' : 'Play'}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={togglePlay}
+          style={styles.play}
+          accessibilityLabel={ended ? t('video.replay') : playing ? t('video.pause') : t('video.play')}>
           {ended ? (
             <RotateCcwIcon size={28} color="#0F2236" />
           ) : playing ? (
@@ -183,11 +201,12 @@ export default function VideoScreen() {
           )}
         </Pressable>
         <Pressable
+          accessibilityRole="button"
           onPress={() => goTo(index + 1)}
           disabled={index >= scenes.length - 1}
           hitSlop={10}
           style={[styles.control, index >= scenes.length - 1 && styles.disabled]}
-          accessibilityLabel="Next scene">
+          accessibilityLabel={t('video.next')}>
           <SkipForwardIcon size={26} color="#fff" />
         </Pressable>
       </View>

@@ -1,0 +1,14 @@
+# Ask a question: Deep Think streams its reasoning, the answer renders and the chat gets a title.
+appId: com.mathgpt.app
+name: Ask a question
+---
+- runFlow: subflows/connect-mock.yaml
+- tapOn: Question
+- inputText: Solve x^2 - 5x + 6 = 0
+- tapOn: Send
+- extendedWaitUntil:
+    visible: '.*Final answer.*'
+    timeout: 30000
+- assertVisible: 'Thought for \d+s'
+- tapOn: Open menu
+- assertVisible: 'Solving x² − 5x \+ 6 = 0'

@@ -8,12 +8,14 @@ import { AppText } from '@/components/ui/AppText';
 import { APP_NAME } from '@/constants/app';
 import { MaxContentWidth } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
 import { MODELS } from '@/lib/ai/models';
 import { useHasApiKey, useSettings } from '@/store/settings';
 
 /** Picks the model and Deep Think. Opened from the model button in the header. */
 export default function ModelsScreen() {
   const { colors } = useTheme();
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const model = useSettings((s) => s.model);
   const thinking = useSettings((s) => s.thinking);
@@ -23,17 +25,22 @@ export default function ModelsScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 12, paddingBottom: 24 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.close} accessibilityLabel="Close">
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.back()}
+          hitSlop={12}
+          style={styles.close}
+          accessibilityLabel={t('common.close')}>
           <XIcon size={24} color={colors.icon} />
         </Pressable>
 
         <View style={styles.hero}>
           <AppLogo size={48} />
-          <AppText weight="bold" size={26} align="center" style={styles.title}>
-            Choose a model
+          <AppText weight="bold" size={26} align="center" style={styles.title} accessibilityRole="header">
+            {t('models.title')}
           </AppText>
           <AppText size={16} secondary align="center" style={styles.subtitle}>
-            Flash and Pro are {APP_NAME}&apos;s own math models. Switch any time.
+            {t('models.subtitle', { app: APP_NAME })}
           </AppText>
         </View>
 
@@ -63,13 +70,13 @@ export default function ModelsScreen() {
                   {m.recommended ? (
                     <View style={[styles.badge, { backgroundColor: colors.primary }]}>
                       <AppText weight="semibold" size={11} color={colors.onPrimary}>
-                        Recommended
+                        {t('models.recommended')}
                       </AppText>
                     </View>
                   ) : null}
                 </View>
                 <AppText size={14} secondary>
-                  {m.description}
+                  {t(`model.${m.key}.description`)}
                 </AppText>
               </View>
             </Pressable>
@@ -79,10 +86,10 @@ export default function ModelsScreen() {
         <View style={[styles.card, styles.toggle, { borderColor: colors.cardBorder, backgroundColor: colors.card }]}>
           <View style={styles.flex}>
             <AppText weight="semibold" size={16}>
-              Deep Think
+              {t('deepThink.title')}
             </AppText>
             <AppText size={14} secondary>
-              Thinks before answering. Slower, but more accurate on multi-step problems.
+              {t('models.deepThink')}
             </AppText>
           </View>
           <Switch
@@ -90,20 +97,21 @@ export default function ModelsScreen() {
             onValueChange={(v) => update({ thinking: v })}
             trackColor={{ true: colors.primary, false: colors.border }}
             thumbColor="#fff"
-            accessibilityLabel="Deep Think"
+            accessibilityLabel={t('deepThink.title')}
           />
         </View>
       </ScrollView>
 
       <View style={[styles.cta, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <Pressable
+          accessibilityRole="button"
           style={({ pressed }) => [styles.ctaButton, { backgroundColor: pressed ? colors.primaryPressed : colors.primary }]}
           onPress={() => {
             router.back();
             if (!hasKey) router.push('/settings');
           }}>
           <AppText weight="semibold" size={17} color={colors.onPrimary}>
-            {hasKey ? 'Done' : 'Add your API key'}
+            {hasKey ? t('models.done') : t('models.addKey')}
           </AppText>
         </Pressable>
       </View>

@@ -90,7 +90,8 @@ export async function toApiMessages(
     const content = m.artifact ? artifactSummary(m.artifact) : m.content.trim();
     if (!content) continue;
     const assistant: ApiMessage = { role: 'assistant', content };
-    if (opts.thinking && m.reasoning) assistant.reasoning_content = m.reasoning;
+    // A tool's reasoning was about writing JSON, which the summary above replaces.
+    if (opts.thinking && m.reasoning && !m.artifact) assistant.reasoning_content = m.reasoning;
     out.push(assistant);
   }
 
@@ -118,4 +119,40 @@ export function mergeConsecutive(messages: ApiMessage[]): ApiMessage[] {
     }
   }
   return out;
+}
+
+/** Rough token estimate: LaTeX-heavy text averages about 3 characters per token; images cost a fixed amount. */
+export function estimateTokens(m: ApiMessage): number {
+  const parts: ContentPart[] = typeof m.content === 'string' ? [{ type: 'text', text: m.content }] : m.content;
+  let tokens = 4;
+  for (const p of parts) tokens += p.type === 'text' ? Math.ceil(p.text.length / 3) : 1000;
+  if (m.role === 'assistant' && m.reasoning_content) tokens += Math.ceil(m.reasoning_content.length / 3);
+  return tokens;
+}
+
+const OMITTED_NOTE = '[Earlier messages in this chat were left out to save space.]';
+
+/**
+ * Keeps a conversation under `maxTokens` by dropping the oldest turns. The opening message
+ * (usually the problem itself) and the latest message are kept whenever they fit.
+ */
+export function fitToBudget(messages: ApiMessage[], maxTokens: number): ApiMessage[] {
+  const costs = messages.map(estimateTokens);
+  if (messages.length <= 1 || costs.reduce((a, b) => a + b, 0) <= maxTokens) return messages;
+
+  const last = messages.length - 1;
+  const keepFirst = messages[0].role === 'user' && costs[0] <= maxTokens / 3;
+  const floor = keepFirst ? 1 : 0;
+  let budget = maxTokens - costs[last] - (keepFirst ? costs[0] : 0);
+  let start = last;
+  while (start > floor && budget >= costs[start - 1]) {
+    budget -= costs[start - 1];
+    start--;
+  }
+
+  let tail = messages.slice(start);
+  // The API expects the conversation to open with a user turn.
+  while (!keepFirst && tail.length > 1 && tail[0].role !== 'user') tail = tail.slice(1);
+  const note: ApiMessage = { role: 'user', content: OMITTED_NOTE };
+  return mergeConsecutive(keepFirst ? [messages[0], note, ...tail] : [note, ...tail]);
 }

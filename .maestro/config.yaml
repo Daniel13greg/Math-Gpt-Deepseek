@@ -1,0 +1,4 @@
+# Maestro flows for the native app (iOS simulator / Android emulator), against the mock model server.
+# See "Native flows (Maestro)" in README.md for how to run them.
+flows:
+  - '*.yaml'

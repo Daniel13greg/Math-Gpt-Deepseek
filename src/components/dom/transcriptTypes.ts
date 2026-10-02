@@ -6,6 +6,7 @@ export type TranscriptAction =
   | { type: 'copy'; messageId: string }
   | { type: 'copy-text'; text: string }
   | { type: 'share'; messageId: string }
+  | { type: 'export-pdf'; messageId: string }
   | { type: 'speak'; messageId: string }
   | { type: 'regenerate'; messageId: string }
   | { type: 'edit'; messageId: string }
@@ -14,7 +15,8 @@ export type TranscriptAction =
   | { type: 'open-image'; messageId: string; index: number }
   | { type: 'open-settings' }
   | { type: 'another-question'; messageId: string }
-  | { type: 'answered'; correct: boolean };
+  | { type: 'practice-mistakes'; messageId: string }
+  | { type: 'answered'; messageId: string; choice: number; correct: boolean };
 
 export interface TranscriptHandle extends DOMImperativeFactory {
   /**

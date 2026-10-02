@@ -1,4 +1,5 @@
 import { APP_NAME } from '@/constants/app';
+import { t } from '@/i18n';
 
 import { MODELS } from './models';
 
@@ -47,20 +48,24 @@ export function errorFromResponse(status: number, apiMessage: string | undefined
   switch (status) {
     case 400:
     case 422:
-      return new ApiError('bad_request', shown ? `The request was rejected: ${shown}` : 'The request was rejected.', opts);
+      return new ApiError('bad_request', shown ? t('error.badRequestDetail', { detail: shown }) : t('error.badRequest'), opts);
     case 401:
-      return new ApiError('auth', 'Your API key was rejected. Check it in Settings.', opts);
+      return new ApiError('auth', t('error.auth'), opts);
     case 402:
-      return new ApiError('balance', 'Your account is out of credit. Add credit, then try again.', opts);
+      return new ApiError('balance', t('error.balance'), opts);
     case 429:
-      return new ApiError('rate_limit', 'You are sending requests too quickly. Wait a moment and try again.', opts);
+      return new ApiError('rate_limit', t('error.rateLimit'), opts);
     case 503:
-      return new ApiError('overloaded', `${APP_NAME} is busy right now. Please try again shortly.`, opts);
+      return new ApiError('overloaded', t('error.overloaded', { app: APP_NAME }), opts);
     default:
       if (status >= 500) {
-        return new ApiError('server', `${APP_NAME} had a server error. Please try again.`, opts);
+        return new ApiError('server', t('error.server', { app: APP_NAME }), opts);
       }
-      return new ApiError('unknown', shown ? `Request failed (${status}): ${shown}` : `Request failed (${status}).`, opts);
+      return new ApiError(
+        'unknown',
+        shown ? t('error.unknownDetail', { status, detail: shown }) : t('error.unknown', { status }),
+        opts,
+      );
   }
 }
 
@@ -76,7 +81,7 @@ export function isAbortError(error: unknown): boolean {
 
 export function toApiError(error: unknown): ApiError {
   if (error instanceof ApiError) return error;
-  if (isAbortError(error)) return new ApiError('aborted', 'Stopped.');
+  if (isAbortError(error)) return new ApiError('aborted', t('transcript.stopped'));
   const message = error instanceof Error ? error.message : String(error);
-  return new ApiError('network', `Couldn't reach ${APP_NAME}. Check your connection and try again. (${message})`);
+  return new ApiError('network', t('error.network', { app: APP_NAME, message }));
 }

@@ -1,6 +1,6 @@
 import type { Message } from '@/lib/types';
 
-import { artifactSummary, mergeConsecutive, toApiMessages } from '../history';
+import { artifactSummary, estimateTokens, fitToBudget, mergeConsecutive, toApiMessages } from '../history';
 
 const image = (id: string) => ({ id, uri: `file:///${id}.jpg`, thumb: 'data:thumb', width: 10, height: 10 });
 const loadImage = async (img: { id: string }) => `data:image/jpeg;base64,${img.id}`;
@@ -100,5 +100,40 @@ describe('artifactSummary', () => {
       },
     });
     expect(text).toContain('Start → End');
+  });
+});
+
+describe('fitToBudget', () => {
+  const user = (text: string) => ({ role: 'user' as const, content: text });
+  const assistant = (text: string) => ({ role: 'assistant' as const, content: text });
+  const long = (n: number) => 'x'.repeat(n * 3);
+
+  it('leaves conversations under budget untouched', () => {
+    const messages = [user('a'), assistant('b'), user('c')];
+    expect(fitToBudget(messages, 1000)).toBe(messages);
+  });
+
+  it('keeps the opening problem and the latest turns, noting the gap', () => {
+    const messages = [user('the problem'), assistant(long(500)), user(long(500)), assistant('recent answer'), user('follow-up')];
+    const out = fitToBudget(messages, 300);
+    expect(out).toEqual([
+      { role: 'user', content: 'the problem\n\n[Earlier messages in this chat were left out to save space.]' },
+      assistant('recent answer'),
+      user('follow-up'),
+    ]);
+  });
+
+  it('drops a huge opening message and starts on a user turn', () => {
+    const messages = [user(long(2000)), assistant('a1'), user('q2'), assistant(long(400)), user('q3')];
+    const out = fitToBudget(messages, 300);
+    expect(out[0]).toEqual(user('[Earlier messages in this chat were left out to save space.]\n\nq3'));
+    expect(out).toHaveLength(1);
+  });
+
+  it('counts echoed reasoning and images', () => {
+    expect(estimateTokens({ role: 'assistant', content: 'abc', reasoning_content: long(100) })).toBeGreaterThan(100);
+    expect(
+      estimateTokens({ role: 'user', content: [{ type: 'image_url', image_url: { url: 'data:' } }] }),
+    ).toBeGreaterThanOrEqual(1000);
   });
 });

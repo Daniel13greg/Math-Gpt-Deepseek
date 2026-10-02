@@ -25,6 +25,12 @@ function imagesDir(): Directory {
   return dir;
 }
 
+/** Pixel size of an image file (e.g. one shared from another app, whose size we aren't told). */
+export async function imageSize(uri: string): Promise<{ width: number; height: number }> {
+  const ref = await ImageManipulator.manipulate(uri).renderAsync();
+  return { width: ref.width, height: ref.height };
+}
+
 /** Crops (optionally), downsizes and stores an image, returning an attachment ready to send. */
 export async function prepareImage(
   sourceUri: string,
@@ -96,4 +102,22 @@ export function deleteImageFiles(images: ImageAttachment[] | undefined) {
       // Best effort.
     }
   }
+}
+
+/** Full-size photo as base64 (for backups), or null if the file is gone. */
+export async function imageBase64(image: ImageAttachment): Promise<string | null> {
+  if (image.uri.startsWith('data:')) return image.uri.slice(image.uri.indexOf(',') + 1);
+  try {
+    return await new File(image.uri).base64();
+  } catch {
+    return null;
+  }
+}
+
+/** Stores a restored photo and returns its new URI (a data URI on web). */
+export function saveImageBase64(id: string, base64: string): string {
+  if (Platform.OS === 'web') return `data:image/jpeg;base64,${base64}`;
+  const file = new File(imagesDir(), `${id}.jpg`);
+  if (!file.exists) file.write(base64, { encoding: 'base64' });
+  return file.uri;
 }

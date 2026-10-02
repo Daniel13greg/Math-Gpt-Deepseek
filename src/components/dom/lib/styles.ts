@@ -18,8 +18,8 @@ export const BASE_CSS = `
   --success-soft: #e7f6ee;
   --danger: #e5484d;
   --danger-soft: #fdecec;
-  --warning: #f59e0b;
-  --warning-soft: #fff4db;
+  --warning: #b45309;
+  --warning-soft: #fef3e2;
   --code-bg: #f6f7f9;
   --shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 18px rgba(0,0,0,.06);
   color: var(--text);
@@ -45,11 +45,15 @@ export const BASE_CSS = `
   --primary-text: #7cb8ee;
   --success-soft: #12301f;
   --danger-soft: #3a1d1f;
-  --warning-soft: #3a2c10;
+  --warning: #f2b45a;
+  --warning-soft: #3a2a12;
   --code-bg: #16171a;
   --shadow: 0 1px 2px rgba(0,0,0,.3);
 }
 .mg *, .mg *::before, .mg *::after { box-sizing: border-box; }
+@media (prefers-reduced-motion: reduce) {
+  .mg *, .mg *::before, .mg *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
 .mg button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 .mg button:disabled { cursor: default; }
 
@@ -144,6 +148,7 @@ export const TRANSCRIPT_CSS = `
 .mg .icon-btn:active { background: var(--surface); }
 .mg .icon-btn.small { width: 30px; height: 30px; }
 .mg .notice { font-size: 13px; color: var(--text-3); margin-top: 6px; }
+.mg .step-progress { font-size: 15px; color: var(--text-2); padding: 4px 0; }
 
 .mg .thinking { margin: 0 0 12px; }
 .mg .thinking-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-2); font-weight: 500; }
@@ -197,6 +202,8 @@ export const TRANSCRIPT_CSS = `
 .mg .feedback { margin-top: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .mg .feedback.ok { color: var(--success); }
 .mg .feedback.bad { color: var(--danger); }
+.mg .unverified { margin-top: 10px; display: flex; gap: 8px; align-items: flex-start; background: var(--warning-soft); color: var(--warning); border-radius: 12px; padding: 9px 12px; font-size: 14px; line-height: 1.45; }
+.mg .unverified svg { flex: none; margin-top: 2px; }
 .mg .hint { margin-top: 12px; background: var(--surface); border-radius: 12px; padding: 10px 12px; font-size: 15px; }
 .mg .solution { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
 

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronDownIcon, MenuIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
 import { modelLabel, modelName } from '@/lib/ai/models';
 import { formatClock } from '@/lib/dates';
 import { useSettings } from '@/store/settings';
@@ -33,16 +34,17 @@ interface MainHeaderProps {
 /** The current model ("Flash ▾"); opens the model picker. */
 function ModelButton({ onPress }: { onPress: () => void }) {
   const { colors } = useTheme();
+  const { t } = useT();
   const model = useSettings((s) => s.model);
   return (
     <Pressable
       onPress={onPress}
       hitSlop={8}
       accessibilityRole="button"
-      accessibilityLabel={`Model: ${modelLabel(model)}. Change model`}
+      accessibilityLabel={t('header.model.a11y', { model: modelLabel(model) })}
       style={({ pressed }) => [styles.model, { backgroundColor: pressed ? colors.surfacePressed : colors.segmentBg }]}>
       <AppText weight="semibold" size={14.5} color={colors.text} numberOfLines={1} style={styles.modelName}>
-        {modelName(model)}
+        {modelName(model, t('header.model.custom'))}
       </AppText>
       <ChevronDownIcon size={15} color={colors.textSecondary} strokeWidth={2.2} />
     </Pressable>
@@ -52,6 +54,7 @@ function ModelButton({ onPress }: { onPress: () => void }) {
 /** "● 12:34" while a lecture records in the background (a spinner while it transcribes); tap to go back to it. */
 function LectureBadge({ lecture, onPress }: { lecture: LectureActivity; onPress: () => void }) {
   const { colors } = useTheme();
+  const { t } = useT();
   const [now, setNow] = useState(Date.now);
   const recording = lecture.status === 'recording';
 
@@ -68,7 +71,7 @@ function LectureBadge({ lecture, onPress }: { lecture: LectureActivity; onPress:
       onPress={onPress}
       hitSlop={8}
       accessibilityRole="button"
-      accessibilityLabel={recording ? `Recording lecture, ${elapsed}. Show recording` : 'Transcribing lecture. Show progress'}
+      accessibilityLabel={recording ? t('header.lecture.recording', { time: elapsed }) : t('header.lecture.processing')}
       style={({ pressed }) => [styles.badge, { backgroundColor: colors.dangerSoft, opacity: pressed ? 0.75 : 1 }]}>
       {recording ? (
         <>
@@ -86,12 +89,13 @@ function LectureBadge({ lecture, onPress }: { lecture: LectureActivity; onPress:
 
 export function MainHeader({ mode, lecture, onModeChange, onMenu, onModelPress }: MainHeaderProps) {
   const { colors } = useTheme();
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   return (
     <View
       style={[styles.header, { paddingTop: insets.top, backgroundColor: colors.background, borderBottomColor: colors.hairline }]}>
       <View style={styles.row}>
-        <Pressable onPress={onMenu} hitSlop={12} style={styles.menu} accessibilityRole="button" accessibilityLabel="Open menu">
+        <Pressable onPress={onMenu} hitSlop={12} style={styles.menu} accessibilityRole="button" accessibilityLabel={t('header.menu')}>
           <MenuIcon size={21} color={colors.icon} />
         </Pressable>
 

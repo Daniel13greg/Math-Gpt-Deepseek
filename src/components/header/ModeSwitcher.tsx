@@ -4,12 +4,13 @@ import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
 import { CameraIcon, KeyboardIcon, MicIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
 import type { AppMode } from '@/store/ui';
 
-const SEGMENTS: { mode: AppMode; label: string; Icon: typeof CameraIcon; a11y: string }[] = [
-  { mode: 'camera', label: 'Scan', Icon: CameraIcon, a11y: 'Scan a problem with the camera' },
-  { mode: 'chat', label: 'Chat', Icon: KeyboardIcon, a11y: 'Type a question' },
-  { mode: 'record', label: 'Record', Icon: MicIcon, a11y: 'Record lecture notes' },
+const SEGMENTS: { mode: AppMode; Icon: typeof CameraIcon }[] = [
+  { mode: 'camera', Icon: CameraIcon },
+  { mode: 'chat', Icon: KeyboardIcon },
+  { mode: 'record', Icon: MicIcon },
 ];
 
 const layout = LinearTransition.duration(220);
@@ -17,9 +18,10 @@ const layout = LinearTransition.duration(220);
 /** The Camera | Chat | Record pill in the header. The active segment expands to show its label. */
 export function ModeSwitcher({ mode, onChange }: { mode: AppMode; onChange: (mode: AppMode) => void }) {
   const { colors, dark } = useTheme();
+  const { t } = useT();
   return (
     <View style={[styles.container, { backgroundColor: colors.segmentBg }]} accessibilityRole="tablist">
-      {SEGMENTS.map(({ mode: m, label, Icon, a11y }) => {
+      {SEGMENTS.map(({ mode: m, Icon }) => {
         const selected = m === mode;
         return (
           <Animated.View key={m} layout={layout}>
@@ -27,7 +29,7 @@ export function ModeSwitcher({ mode, onChange }: { mode: AppMode; onChange: (mod
               onPress={() => onChange(m)}
               accessibilityRole="tab"
               accessibilityState={{ selected }}
-              accessibilityLabel={a11y}
+              accessibilityLabel={t(`mode.${m}.a11y`)}
               hitSlop={4}
               style={[
                 styles.segment,
@@ -37,7 +39,7 @@ export function ModeSwitcher({ mode, onChange }: { mode: AppMode; onChange: (mod
               {selected ? (
                 <Animated.View entering={FadeIn.duration(180)}>
                   <AppText size={15} color={colors.segmentText} style={styles.label}>
-                    {label}
+                    {t(`mode.${m}`)}
                   </AppText>
                 </Animated.View>
               ) : null}

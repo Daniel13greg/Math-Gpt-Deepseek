@@ -4,20 +4,28 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { XIcon } from '@/components/icons';
+import { useT } from '@/i18n';
 
 /** Full-screen view of an attached photo. */
 export default function ImageScreen() {
   const { uri } = useLocalSearchParams<{ uri: string }>();
   const insets = useSafeAreaInsets();
+  const { t } = useT();
   return (
     <View style={styles.screen}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={() => router.back()} accessibilityLabel="Close image" />
+      <Pressable
+        accessibilityRole="button"
+        style={StyleSheet.absoluteFill}
+        onPress={() => router.back()}
+        accessibilityLabel={t('image.close')}
+      />
       {uri ? <Image source={{ uri }} style={styles.image} contentFit="contain" /> : null}
       <Pressable
+        accessibilityRole="button"
         onPress={() => router.back()}
         hitSlop={12}
         style={[styles.close, { top: insets.top + 12 }]}
-        accessibilityLabel="Close">
+        accessibilityLabel={t('common.close')}>
         <XIcon size={24} color="#fff" />
       </Pressable>
     </View>

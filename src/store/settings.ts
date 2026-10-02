@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 
-import { DEFAULT_BASE_URL, DEFAULT_MODEL, type ReasoningEffort } from '@/lib/ai/models';
+import { DEFAULT_ANSWER_STYLE, type AnswerStyle } from '@/constants/answerStyles';
+import { applyLanguagePreference, type LanguagePreference } from '@/i18n';
+import { DEFAULT_MODEL, isBuiltInServer, type ReasoningEffort } from '@/lib/ai/models';
 import { kv } from '@/lib/storage/kv';
 import { secure } from '@/lib/storage/secure';
 
@@ -8,13 +10,19 @@ export type ThemePreference = 'system' | 'light' | 'dark';
 export type SttProvider = 'device' | 'cloud';
 
 export interface PersistedSettings {
+  /** Bumped when a stored setting needs migrating (see loadSettings). */
+  version: number;
   model: string;
-  /** "Deep Think": thinking mode for chat answers. */
+  /** "Deep Think": thinking mode for answers, study tools and notes, on every model. */
   thinking: boolean;
   reasoningEffort: ReasoningEffort;
+  /** How chat answers are written: full steps, Socratic tutor, just the answer, simple, exam-style. */
+  answerStyle: AnswerStyle;
   /** Server for chat requests; empty means the built-in one (its address is never shown). */
   baseUrl: string;
   theme: ThemePreference;
+  /** UI language; "system" follows the device. */
+  language: LanguagePreference;
   /** BCP-47 language for speech recognition, e.g. en-US. */
   speechLang: string;
   sttProvider: SttProvider;
@@ -36,12 +44,17 @@ const SETTINGS_KEY = 'settings:v1';
 const API_KEY = 'api_key';
 const STT_API_KEY = 'stt_api_key';
 
+const SETTINGS_VERSION = 2;
+
 export const DEFAULT_SETTINGS: PersistedSettings = {
+  version: SETTINGS_VERSION,
   model: DEFAULT_MODEL,
-  thinking: false,
+  thinking: true,
   reasoningEffort: 'high',
+  answerStyle: DEFAULT_ANSWER_STYLE,
   baseUrl: '',
   theme: 'system',
+  language: 'system',
   speechLang: 'en-US',
   sttProvider: 'device',
   sttBaseUrl: 'https://api.openai.com/v1',
@@ -49,26 +62,39 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
   ttsRate: 1,
 };
 
+/** Upgrades settings saved by older versions of the app. */
+export function migrateSettings(stored: Partial<PersistedSettings>): PersistedSettings {
+  const settings = { ...DEFAULT_SETTINGS, ...stored };
+  // v2: Deep Think is on by default for every model, so turn it on once for existing installs.
+  if ((stored.version ?? 1) < 2) settings.thinking = true;
+  // Older versions saved the built-in server's address; it stays hidden, so store it as empty.
+  if (isBuiltInServer(settings.baseUrl)) settings.baseUrl = '';
+  settings.version = SETTINGS_VERSION;
+  return settings;
+}
+
 function loadSettings(): PersistedSettings {
   try {
     const raw = kv.getItemSync(SETTINGS_KEY);
-    const settings: PersistedSettings = raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS;
-    // Older versions saved the built-in server's address; keep it hidden.
-    return settings.baseUrl.replace(/\/+$/, '') === DEFAULT_BASE_URL ? { ...settings, baseUrl: '' } : settings;
+    return raw ? migrateSettings(JSON.parse(raw)) : DEFAULT_SETTINGS;
   } catch {
     return DEFAULT_SETTINGS;
   }
 }
 
-/** A key baked in at build time via EXPO_PUBLIC_API_KEY (handy for development only). */
+/** A key baked in at build time via EXPO_PUBLIC_API_KEY: for development, or an app token for your proxy. */
 const ENV_API_KEY = process.env.EXPO_PUBLIC_API_KEY ?? '';
 
+const initialSettings = loadSettings();
+applyLanguagePreference(initialSettings.language);
+
 export const useSettings = create<SettingsState>()((set, get) => ({
-  ...loadSettings(),
+  ...initialSettings,
   apiKey: secure.getSync(API_KEY) ?? '',
   sttApiKey: secure.getSync(STT_API_KEY) ?? '',
   update: (patch) => {
     set(patch);
+    if (patch.language) applyLanguagePreference(patch.language);
     const { apiKey: _a, sttApiKey: _b, update: _u, setApiKey: _s, setSttApiKey: _t, ...persisted } = get();
     kv.setItem(SETTINGS_KEY, JSON.stringify(persisted));
   },

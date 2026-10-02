@@ -8,8 +8,10 @@ import Svg, { Rect } from 'react-native-svg';
 
 import { FileIcon, NotebookPenIcon, SettingsIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
+import { APP_NAME } from '@/constants/app';
 import { MaxContentWidth } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
 import { useLectureRecorder } from '@/hooks/useLectureRecorder';
 import { formatClock } from '@/lib/dates';
 import { generateLectureNotes } from '@/lib/notes/generate';
@@ -66,6 +68,7 @@ function LevelBars({ level }: { level: number }) {
 /** "Create lecture notes": record live or upload audio, then the model writes the notes. */
 export function RecordView() {
   const { colors, dark } = useTheme();
+  const { t, lang } = useT();
   const insets = useSafeAreaInsets();
   const hasKey = useHasApiKey();
   const lecture = useLectureRecorder();
@@ -80,13 +83,13 @@ export function RecordView() {
     extra: { durationSec?: number; fileName?: string },
   ) => {
     if (!transcript.trim()) {
-      lecture.setError('No speech was captured. Check the microphone and try again.');
+      lecture.setError(t('record.noSpeech'));
       return;
     }
     const id = createNote({ source, transcript, status: 'generating', ...extra });
     if (hasKey) void generateLectureNotes(id);
     else
-      useNotes.getState().updateNote(id, { status: 'error', error: 'Add your API key in Settings to generate notes.' });
+      useNotes.getState().updateNote(id, { status: 'error', error: t('record.needKey') });
     router.push({ pathname: '/notes/[id]', params: { id } });
   };
 
@@ -99,7 +102,7 @@ export function RecordView() {
       const { transcript, durationSec } = await lecture.stop();
       finishWithTranscript(transcript, 'recording', { durationSec });
     } catch (e) {
-      lecture.setError(e instanceof Error ? e.message : 'Recording failed.');
+      lecture.setError(e instanceof Error ? e.message : t('record.failed'));
     }
   };
 
@@ -113,7 +116,7 @@ export function RecordView() {
       const transcript = await transcribeAudioFile(asset.uri, asset.name, (partial) => setUpload({ name: asset.name, partial }));
       finishWithTranscript(transcript, 'upload', { fileName: asset.name });
     } catch (e) {
-      lecture.setError(e instanceof Error ? e.message : 'Transcription failed.');
+      lecture.setError(e instanceof Error ? e.message : t('speech.transcriptionFailed'));
     } finally {
       setUpload(null);
     }
@@ -134,10 +137,10 @@ export function RecordView() {
       contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
       keyboardShouldPersistTaps="handled">
       <AppText weight="bold" size={28} align="center" color={colors.textStrong} style={styles.title}>
-        Create lecture notes
+        {t('record.title')}
       </AppText>
       <AppText size={15.5} align="center" color={colors.textSecondary} style={styles.subtitle}>
-        Record or upload any STEM lecture and MathGPT will write comprehensive notes.
+        {t('record.subtitle', { app: APP_NAME })}
       </AppText>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }, !dark && styles.cardShadow]}>
@@ -157,10 +160,10 @@ export function RecordView() {
                 numberOfLines={7}
                 style={styles.liveText}>
                 {lecture.engine === 'cloud'
-                  ? 'Recording audio… the transcript will be created when you stop.'
+                  ? t('record.cloudRecording')
                   : lecture.transcript
                     ? `…${lecture.transcript.slice(-420)}`
-                    : 'Listening… start speaking and the transcript will appear here.'}
+                    : t('record.listening')}
               </AppText>
             </View>
             <Pressable
@@ -172,12 +175,12 @@ export function RecordView() {
               ]}>
               <View style={[styles.stopSquare, { backgroundColor: colors.recordDot }]} />
               <AppText weight="medium" size={17} color={colors.onRecordButton}>
-                Stop & create notes
+                {t('record.stop')}
               </AppText>
             </Pressable>
-            <Pressable onPress={lecture.cancel} hitSlop={8} style={styles.cancel}>
+            <Pressable accessibilityRole="button" onPress={lecture.cancel} hitSlop={8} style={styles.cancel}>
               <AppText size={15} color={colors.textSecondary}>
-                Discard recording
+                {t('record.discard')}
               </AppText>
             </Pressable>
           </View>
@@ -185,7 +188,7 @@ export function RecordView() {
           <View style={styles.busy}>
             <ActivityIndicator color={colors.primary} />
             <AppText weight="medium" size={16} align="center">
-              {upload ? `Transcribing ${upload.name}…` : 'Finishing transcript…'}
+              {upload ? t('record.transcribing', { name: upload.name }) : t('record.finishing')}
             </AppText>
             {upload?.partial ? (
               <AppText size={14} secondary numberOfLines={4} align="center">
@@ -204,7 +207,7 @@ export function RecordView() {
               ]}>
               <RecordDot pulsing={false} />
               <AppText weight="medium" size={17} color={colors.onRecordButton}>
-                Start recording
+                {t('record.start')}
               </AppText>
             </Pressable>
 
@@ -219,7 +222,7 @@ export function RecordView() {
             <Pressable
               onPress={onUpload}
               accessibilityRole="button"
-              accessibilityLabel="Upload an audio file"
+              accessibilityLabel={t('record.upload.a11y')}
               style={({ pressed }) => [
                 styles.dropzone,
                 { backgroundColor: pressed ? colors.surface : colors.dropzoneBg, borderColor: colors.dropzoneBorder },
@@ -228,10 +231,10 @@ export function RecordView() {
                 <FileIcon size={21} color={colors.fileIcon} strokeWidth={1.6} />
               </View>
               <AppText size={16} color={colors.uploadText} style={styles.uploadTitle}>
-                Tap to upload an audio file
+                {t('record.upload')}
               </AppText>
               <AppText size={15} color={colors.formatsText}>
-                MP3, AAC, WAV, OGG, or FLAC
+                {t('record.formats')}
               </AppText>
             </Pressable>
           </>
@@ -243,10 +246,10 @@ export function RecordView() {
           <AppText size={14} color={colors.text}>
             {lecture.error}
           </AppText>
-          <Pressable onPress={() => router.push('/settings')} hitSlop={6} style={styles.errorAction}>
+          <Pressable accessibilityRole="button" onPress={() => router.push('/settings')} hitSlop={6} style={styles.errorAction}>
             <SettingsIcon size={15} color={colors.primary} />
             <AppText size={14} weight="semibold" color={colors.primary}>
-              Speech settings
+              {t('record.speechSettings')}
             </AppText>
           </Pressable>
         </View>
@@ -255,10 +258,11 @@ export function RecordView() {
       {recentNotes.length > 0 && !recording ? (
         <View style={styles.recent}>
           <AppText weight="semibold" size={15} secondary style={styles.recentTitle}>
-            Recent notes
+            {t('record.recent')}
           </AppText>
           {recentNotes.map((note) => (
             <Pressable
+              accessibilityRole="button"
               key={note.id}
               onPress={() => router.push({ pathname: '/notes/[id]', params: { id: note.id } })}
               style={({ pressed }) => [
@@ -271,8 +275,12 @@ export function RecordView() {
                   {note.title}
                 </AppText>
                 <AppText size={13} secondary>
-                  {new Date(note.createdAt).toLocaleDateString()} ·{' '}
-                  {note.status === 'done' ? 'Ready' : note.status === 'error' ? 'Needs attention' : 'Generating…'}
+                  {new Date(note.createdAt).toLocaleDateString(lang)} ·{' '}
+                  {note.status === 'done'
+                    ? t('record.status.ready')
+                    : note.status === 'error'
+                      ? t('record.status.error')
+                      : t('record.status.generating')}
                 </AppText>
               </View>
             </Pressable>

@@ -1,0 +1,13 @@
+# Switching the app language in Settings translates the rest of the app.
+appId: com.mathgpt.app
+name: Switch language
+---
+- runFlow: subflows/connect-mock.yaml
+- openLink: mathgpt://settings
+- scrollUntilVisible:
+    element: Español
+    direction: DOWN
+- tapOn: Español
+- assertVisible: Ajustes
+- launchApp
+- assertVisible: Herramientas
