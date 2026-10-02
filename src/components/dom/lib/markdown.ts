@@ -22,6 +22,13 @@ const MACROS = {
 
 const mathCache = new Map<string, string>();
 
+/** UI words inside rendered Markdown; DOM components set them for the app language. */
+const labels = { copy: 'Copy' };
+
+export function setMarkdownLabels(next: Partial<typeof labels>) {
+  Object.assign(labels, next);
+}
+
 export function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
@@ -180,7 +187,7 @@ marked.use({
     },
     code({ text, lang }) {
       const language = (lang ?? '').split(/\s/)[0];
-      return `<div class="code-block"><div class="code-head"><span>${escapeHtml(language || 'code')}</span><button type="button" data-copy-code="1">Copy</button></div><pre><code>${escapeHtml(text)}</code></pre></div>`;
+      return `<div class="code-block"><div class="code-head"><span>${escapeHtml(language || 'code')}</span><button type="button" data-copy-code="1">${escapeHtml(labels.copy)}</button></div><pre><code>${escapeHtml(text)}</code></pre></div>`;
     },
   },
 });

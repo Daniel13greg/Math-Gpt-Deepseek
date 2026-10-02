@@ -3,5 +3,3 @@
  * to rebrand the app before publishing it anywhere.
  */
 export const APP_NAME = 'MathGPT';
-
-export const DISCLAIMER = `${APP_NAME} can make mistakes. Check important info.`;

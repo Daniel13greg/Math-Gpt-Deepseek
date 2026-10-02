@@ -17,6 +17,8 @@ export function AppText({ weight = 'regular', size = 16, color, secondary, align
   const { colors } = useTheme();
   return (
     <Text
+      // Follow the system text size, but cap it so fixed-height controls stay usable.
+      maxFontSizeMultiplier={1.6}
       {...rest}
       style={[
         styles.base,

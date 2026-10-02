@@ -7,12 +7,13 @@ import { isCloudTranscriptionConfigured, SPEECH_RECORDING, transcribeWithCloud }
 import {
   getSpeechLib,
   isDeviceRecognitionAvailable,
-  NEEDS_DEV_BUILD_MESSAGE,
+  needsDevBuildMessage,
   requestSpeechPermissions,
   speechErrorMessage,
   supportsOnDeviceRecognition,
 } from '@/lib/speech/recognition';
 import { useSettings } from '@/store/settings';
+import { t } from '@/i18n';
 
 export type LecturePhase = 'idle' | 'recording' | 'finishing';
 export type LectureEngine = 'device' | 'cloud';
@@ -174,7 +175,7 @@ export function useLectureRecorder() {
     const useDevice = useSettings.getState().sttProvider === 'device' && isDeviceRecognitionAvailable();
     const useCloud = !useDevice && isCloudTranscriptionConfigured();
     if (!useDevice && !useCloud) {
-      setError(getSpeechLib() ? speechErrorMessage('service-not-allowed') : NEEDS_DEV_BUILD_MESSAGE);
+      setError(getSpeechLib() ? speechErrorMessage('service-not-allowed') : needsDevBuildMessage());
       return false;
     }
 
@@ -213,7 +214,7 @@ export function useLectureRecorder() {
       }
       await recorder.stop();
       await setAudioModeAsync({ allowsRecording: false });
-      if (!recorder.uri) throw new Error('The recording could not be saved.');
+      if (!recorder.uri) throw new Error(t('record.saveFailed'));
       return { transcript: await transcribeWithCloud(recorder.uri, 'lecture.m4a'), durationSec };
     } finally {
       setPhase('idle');

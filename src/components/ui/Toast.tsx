@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,6 +16,8 @@ export function ToastHost() {
 
   useEffect(() => {
     if (!message) return;
+    // Screen readers don't notice a view appearing; read the message out.
+    AccessibilityInfo.announceForAccessibility(message);
     const timer = setTimeout(hide, action ? 6000 : 3500);
     return () => clearTimeout(timer);
   }, [id, message, action, hide]);
@@ -37,6 +39,7 @@ export function ToastHost() {
           </AppText>
           {action ? (
             <Pressable
+              accessibilityRole="button"
               hitSlop={8}
               onPress={() => {
                 hide();

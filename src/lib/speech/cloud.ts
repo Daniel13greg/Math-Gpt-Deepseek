@@ -3,6 +3,7 @@ import { AudioQuality, IOSOutputFormat, type RecordingOptions } from 'expo-audio
 import { Platform } from 'react-native';
 
 import { useSettings } from '@/store/settings';
+import { t } from '@/i18n';
 
 /** Mono 16 kHz AAC at 32 kbps: ~14 MB per hour, under Whisper's 25 MB upload cap for long lectures. */
 export const SPEECH_RECORDING: RecordingOptions = {
@@ -33,7 +34,7 @@ export function isCloudTranscriptionConfigured(): boolean {
  */
 export async function transcribeWithCloud(uri: string, fileName = 'audio.m4a', signal?: AbortSignal): Promise<string> {
   const { sttBaseUrl, sttApiKey, sttModel, speechLang } = useSettings.getState();
-  if (!sttApiKey) throw new Error('Add a transcription API key in Settings → Speech to text.');
+  if (!sttApiKey) throw new Error(t('speech.cloud.noKey'));
 
   const form = new FormData();
   if (Platform.OS === 'web') {
@@ -63,7 +64,7 @@ export async function transcribeWithCloud(uri: string, fileName = 'audio.m4a', s
     } catch {
       // keep raw text
     }
-    throw new Error(`Transcription failed (${response.status}): ${message}`);
+    throw new Error(t('speech.cloud.failed', { status: response.status, message }));
   }
   try {
     return String(JSON.parse(text).text ?? '').trim();

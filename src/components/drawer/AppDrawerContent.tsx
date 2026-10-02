@@ -5,6 +5,7 @@ import { Alert, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } f
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
+  FlashcardsIcon,
   NotebookPenIcon,
   PencilIcon,
   SearchIcon,
@@ -17,15 +18,19 @@ import { AppText } from '@/components/ui/AppText';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { PromptModal } from '@/components/ui/PromptModal';
 import { APP_NAME } from '@/constants/app';
-import { getSubject } from '@/constants/subjects';
 import { FontFamily } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
+import { t, useT } from '@/i18n';
 import { deleteChatWithFiles } from '@/lib/chat/controller';
 import { groupByDate } from '@/lib/dates';
+import { isDue } from '@/lib/srs';
 import type { Chat } from '@/lib/types';
+import { describeUsage } from '@/lib/usage';
 import { sortChats, useChats } from '@/store/chats';
 import { sortNotes, useNotes } from '@/store/notes';
+import { useReviews } from '@/store/reviews';
 import { useUI } from '@/store/ui';
+import { useUsage } from '@/store/usage';
 
 export function AppLogo({ size = 30 }: { size?: number }) {
   const { colors } = useTheme();
@@ -40,17 +45,18 @@ export function AppLogo({ size = 30 }: { size?: number }) {
 
 function confirmDelete(title: string, onConfirm: () => void) {
   if (Platform.OS === 'web') {
-    if (globalThis.confirm?.(`Delete "${title}"?`)) onConfirm();
+    if (globalThis.confirm?.(t('drawer.deleteConfirm', { title }))) onConfirm();
     return;
   }
-  Alert.alert('Delete chat?', `"${title}" will be permanently deleted.`, [
-    { text: 'Cancel', style: 'cancel' },
-    { text: 'Delete', style: 'destructive', onPress: onConfirm },
+  Alert.alert(t('drawer.deleteTitle'), t('drawer.deleteMessage', { title }), [
+    { text: t('common.cancel'), style: 'cancel' },
+    { text: t('common.delete'), style: 'destructive', onPress: onConfirm },
   ]);
 }
 
 export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
   const { colors } = useTheme();
+  const { tp, lang } = useT();
   const insets = useSafeAreaInsets();
   const chats = useChats((s) => s.chats);
   const activeChatId = useChats((s) => s.activeChatId);
@@ -67,10 +73,25 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
           c.title.toLowerCase().includes(q) ||
           c.messages.some((m) => (m.role === 'user' ? m.text : m.content).toLowerCase().includes(q))),
     );
-    return groupByDate(list, (c) => c.updatedAt);
-  }, [chats, query]);
+    return groupByDate(list, (c) => c.updatedAt, lang);
+  }, [chats, query, lang]);
 
   const recentNotes = useMemo(() => sortNotes(notes).slice(0, 4), [notes]);
+
+  // Flashcard decks with cards due today (decks whose message was deleted are skipped).
+  const reviewDecks = useReviews((s) => s.decks);
+  const dueDecks = useMemo(() => {
+    const out: { chatId: string; messageId: string; title: string; due: number }[] = [];
+    for (const [key, cards] of Object.entries(reviewDecks)) {
+      const [chatId, messageId] = key.split(':');
+      const message = chats[chatId]?.messages.find((m) => m.id === messageId);
+      if (message?.role !== 'assistant' || message.artifact?.kind !== 'flashcards') continue;
+      const deckSize = message.artifact.data.cards.length;
+      const due = Object.entries(cards).filter(([i, card]) => Number(i) < deckSize && isDue(card)).length;
+      if (due > 0) out.push({ chatId, messageId, title: message.artifact.data.title, due });
+    }
+    return out.sort((a, b) => b.due - a.due).slice(0, 5);
+  }, [reviewDecks, chats]);
 
   const close = () => navigation.closeDrawer();
 
@@ -88,6 +109,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
   };
 
   const [menuFor, setMenuFor] = useState<Chat | null>(null);
+  const prices = useUsage((s) => s.prices);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 8, backgroundColor: colors.background }]}>
@@ -96,7 +118,12 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
         <AppText weight="bold" size={20} style={styles.brand}>
           {APP_NAME}
         </AppText>
-        <Pressable onPress={newChat} hitSlop={10} accessibilityLabel="New chat" style={styles.headerButton}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={newChat}
+          hitSlop={10}
+          accessibilityLabel={t('drawer.newChat')}
+          style={styles.headerButton}>
           <SquarePenIcon size={22} color={colors.icon} strokeWidth={1.8} />
         </Pressable>
       </View>
@@ -106,7 +133,8 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Search chats"
+          placeholder={t('drawer.search')}
+          accessibilityLabel={t('drawer.search')}
           placeholderTextColor={colors.textMuted}
           style={[styles.searchInput, { color: colors.text }]}
           returnKeyType="search"
@@ -114,20 +142,56 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
       </View>
 
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent} keyboardShouldPersistTaps="handled">
-        <Pressable onPress={newChat} style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={newChat}
+          style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}>
           <SquarePenIcon size={19} color={colors.primary} />
           <AppText weight="medium" size={15} color={colors.primary}>
-            New chat
+            {t('drawer.newChat')}
           </AppText>
         </Pressable>
 
+        {dueDecks.length > 0 && !query ? (
+          <>
+            <AppText weight="semibold" size={12.5} color={colors.textMuted} style={styles.section} accessibilityRole="header">
+              {t('drawer.reviewToday').toUpperCase()}
+            </AppText>
+            {dueDecks.map((deck) => (
+              <Pressable
+                key={`${deck.chatId}:${deck.messageId}`}
+                accessibilityRole="button"
+                accessibilityLabel={tp('drawer.reviewDeck', deck.due, { title: deck.title })}
+                onPress={() => {
+                  close();
+                  router.push({
+                    pathname: '/flashcards',
+                    params: { chatId: deck.chatId, messageId: deck.messageId, review: '1' },
+                  });
+                }}
+                style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}>
+                <FlashcardsIcon size={18} color={colors.primary} />
+                <AppText size={15} numberOfLines={1} style={styles.flex}>
+                  {deck.title}
+                </AppText>
+                <View style={[styles.badge, { backgroundColor: colors.primarySoft }]}>
+                  <AppText size={12} weight="semibold" color={colors.primary}>
+                    {deck.due}
+                  </AppText>
+                </View>
+              </Pressable>
+            ))}
+          </>
+        ) : null}
+
         {recentNotes.length > 0 && !query ? (
           <>
-            <AppText weight="semibold" size={12.5} color={colors.textMuted} style={styles.section}>
-              LECTURE NOTES
+            <AppText weight="semibold" size={12.5} color={colors.textMuted} style={styles.section} accessibilityRole="header">
+              {t('drawer.lectureNotes').toUpperCase()}
             </AppText>
             {recentNotes.map((note) => (
               <Pressable
+                accessibilityRole="button"
                 key={note.id}
                 onPress={() => {
                   close();
@@ -145,23 +209,34 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
 
         {groups.map((group) => (
           <View key={group.label}>
-            <AppText weight="semibold" size={12.5} color={colors.textMuted} style={styles.section}>
+            <AppText weight="semibold" size={12.5} color={colors.textMuted} style={styles.section} accessibilityRole="header">
               {group.label.toUpperCase()}
             </AppText>
             {group.items.map((chat) => {
               const active = chat.id === activeChatId;
               return (
                 <Pressable
+                  accessibilityRole="button"
                   key={chat.id}
                   onPress={() => openChat(chat)}
                   onLongPress={() => setMenuFor(chat)}
                   delayLongPress={350}
+                  accessibilityState={{ selected: active }}
+                  accessibilityHint={t('drawer.chatHint')}
+                  accessibilityActions={[
+                    { name: 'rename', label: t('common.rename') },
+                    { name: 'delete', label: t('common.delete') },
+                  ]}
+                  onAccessibilityAction={(e) => {
+                    if (e.nativeEvent.actionName === 'rename') setRenaming(chat);
+                    if (e.nativeEvent.actionName === 'delete') confirmDelete(chat.title, () => deleteChatWithFiles(chat.id));
+                  }}
                   style={({ pressed }) => [styles.chatRow, (active || pressed) && { backgroundColor: colors.surface }]}>
                   <AppText size={15} numberOfLines={1} weight={active ? 'medium' : 'regular'}>
                     {chat.title}
                   </AppText>
                   <AppText size={12} color={colors.textMuted}>
-                    {getSubject(chat.subject).label}
+                    {t(`subject.${chat.subject}`)}
                   </AppText>
                 </Pressable>
               );
@@ -171,13 +246,14 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
 
         {groups.length === 0 ? (
           <AppText size={14} color={colors.textMuted} style={styles.empty}>
-            {query ? 'No chats match your search.' : 'Your chats will appear here.'}
+            {query ? t('drawer.noMatches') : t('drawer.empty')}
           </AppText>
         ) : null}
       </ScrollView>
 
       <View style={[styles.footer, { borderTopColor: colors.hairline, paddingBottom: insets.bottom + 8 }]}>
         <Pressable
+          accessibilityRole="button"
           onPress={() => {
             close();
             router.push('/models');
@@ -185,10 +261,11 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
           style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}>
           <SparklesIcon size={19} color={colors.primary} />
           <AppText weight="medium" size={15}>
-            Models
+            {t('drawer.models')}
           </AppText>
         </Pressable>
         <Pressable
+          accessibilityRole="button"
           onPress={() => {
             close();
             router.push('/settings');
@@ -196,14 +273,20 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
           style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}>
           <SettingsIcon size={19} color={colors.icon} />
           <AppText weight="medium" size={15}>
-            Settings
+            {t('settings.title')}
           </AppText>
         </Pressable>
       </View>
 
       <BottomSheet visible={menuFor !== null} onClose={() => setMenuFor(null)} title={menuFor?.title}>
         <View style={styles.menu}>
+          {menuFor?.usage ? (
+            <AppText size={13} color={colors.textMuted} style={styles.menuMeta}>
+              {describeUsage(menuFor.usage, prices)}
+            </AppText>
+          ) : null}
           <Pressable
+            accessibilityRole="button"
             style={({ pressed }) => [styles.menuRow, pressed && { backgroundColor: colors.surface }]}
             onPress={() => {
               const chat = menuFor;
@@ -211,9 +294,10 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
               setRenaming(chat);
             }}>
             <PencilIcon size={20} color={colors.icon} />
-            <AppText size={17}>Rename</AppText>
+            <AppText size={17}>{t('common.rename')}</AppText>
           </Pressable>
           <Pressable
+            accessibilityRole="button"
             style={({ pressed }) => [styles.menuRow, pressed && { backgroundColor: colors.surface }]}
             onPress={() => {
               const chat = menuFor;
@@ -222,7 +306,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
             }}>
             <Trash2Icon size={20} color={colors.danger} />
             <AppText size={17} color={colors.danger}>
-              Delete
+              {t('common.delete')}
             </AppText>
           </Pressable>
         </View>
@@ -230,7 +314,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
 
       <PromptModal
         visible={renaming !== null}
-        title="Rename chat"
+        title={t('drawer.renameTitle')}
         initialValue={renaming?.title ?? ''}
         onCancel={() => setRenaming(null)}
         onConfirm={(value) => {
@@ -268,6 +352,8 @@ const styles = StyleSheet.create({
   chatRow: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
   empty: { textAlign: 'center', marginTop: 28, paddingHorizontal: 20 },
   footer: { borderTopWidth: 1, paddingTop: 6, paddingHorizontal: 8 },
+  badge: { minWidth: 24, height: 20, borderRadius: 10, paddingHorizontal: 7, alignItems: 'center', justifyContent: 'center' },
+  menuMeta: { paddingHorizontal: 24, paddingBottom: 6 },
   menu: { paddingTop: 8 },
   menuRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 24, height: 52 },
 });

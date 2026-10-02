@@ -1,0 +1,24 @@
+# Fresh install pointed at the mock model server (`npm run mock`), then back to an empty chat.
+appId: com.mathgpt.app
+env:
+  # Android emulators reach the host machine at 10.0.2.2; use http://localhost:8787 on the iOS simulator.
+  MOCK_URL: http://10.0.2.2:8787
+---
+- launchApp:
+    clearState: true
+- openLink: mathgpt://settings
+- tapOn:
+    id: settings-api-key
+- inputText: sk-e2e
+- tapOn: Save key
+- assertVisible: API key saved
+- tapOn:
+    id: settings-base-url
+- eraseText: 80
+- inputText: ${MOCK_URL}
+- hideKeyboard
+# Relaunch (state is kept) to land on a new chat.
+- launchApp
+- extendedWaitUntil:
+    visible: Question
+    timeout: 10000

@@ -2,21 +2,36 @@ import { useState } from 'react';
 
 import type { PracticeQuestion } from '@/lib/types';
 
+import { useDomT } from './i18n';
 import { Icon } from './Icon';
 import { InlineMarkdown, Markdown } from './Markdown';
+
+/** Shown when an independent re-solve disagreed with the answer key. */
+export function UnverifiedNote() {
+  const { t } = useDomT();
+  return (
+    <div className="unverified" role="note">
+      <Icon name="circleAlert" size={16} />
+      <span>{t('question.unverified')}</span>
+    </div>
+  );
+}
 
 const LETTERS = 'ABCDEFGH';
 
 interface Props {
   question: PracticeQuestion;
-  onAnswered?: (correct: boolean) => void;
+  /** A saved answer: the card opens already checked. */
+  lastAnswer?: { choice: number };
+  onAnswered?: (choice: number, correct: boolean) => void;
   onAnother?: () => void;
 }
 
 /** Interactive multiple-choice question: pick, check, hint, worked solution. */
-export function PracticeQuestionCard({ question, onAnswered, onAnother }: Props) {
-  const [selected, setSelected] = useState<number | null>(null);
-  const [checked, setChecked] = useState(false);
+export function PracticeQuestionCard({ question, lastAnswer, onAnswered, onAnother }: Props) {
+  const { t } = useDomT();
+  const [selected, setSelected] = useState<number | null>(lastAnswer?.choice ?? null);
+  const [checked, setChecked] = useState(lastAnswer !== undefined);
   const [showHint, setShowHint] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const correct = selected === question.answerIndex;
@@ -24,17 +39,17 @@ export function PracticeQuestionCard({ question, onAnswered, onAnother }: Props)
   const check = () => {
     if (selected === null) return;
     setChecked(true);
-    onAnswered?.(selected === question.answerIndex);
+    onAnswered?.(selected, selected === question.answerIndex);
   };
 
   return (
     <div className="card artifact-card fade-in">
       <div className="artifact-head">
         <span className="tag">
-          <Icon name="circleQuestionMark" size={14} /> Practice question
+          <Icon name="circleQuestionMark" size={14} /> {t('question.tag')}
         </span>
         <span className="muted" style={{ fontSize: 13 }}>
-          {question.difficulty[0].toUpperCase() + question.difficulty.slice(1)} · {question.topic}
+          {t(`question.difficulty.${question.difficulty}`)} · {question.topic}
         </span>
       </div>
       <div className="artifact-body">
@@ -68,16 +83,18 @@ export function PracticeQuestionCard({ question, onAnswered, onAnother }: Props)
           })}
         </div>
 
+        {checked && question.unverified ? <UnverifiedNote /> : null}
+
         {checked ? (
           <div className={`feedback ${correct ? 'ok' : 'bad'}`}>
             <Icon name={correct ? 'check' : 'x'} size={18} stroke={3} />
-            {correct ? 'Correct! Nice work.' : `Not quite — the answer is ${LETTERS[question.answerIndex]}.`}
+            {correct ? t('question.correct') : t('question.wrong', { letter: LETTERS[question.answerIndex] })}
           </div>
         ) : null}
 
         {showHint && question.hint && !checked ? (
           <div className="hint">
-            <strong>Hint: </strong>
+            <strong>{t('question.hintLabel')} </strong>
             <InlineMarkdown text={question.hint} />
           </div>
         ) : null}
@@ -92,11 +109,11 @@ export function PracticeQuestionCard({ question, onAnswered, onAnother }: Props)
           {!checked ? (
             <>
               <button className="btn" disabled={selected === null} onClick={check}>
-                Check answer
+                {t('question.check')}
               </button>
               {question.hint && !showHint ? (
                 <button className="btn ghost" onClick={() => setShowHint(true)}>
-                  <Icon name="lightbulb" size={16} /> Hint
+                  <Icon name="lightbulb" size={16} /> {t('question.hint')}
                 </button>
               ) : null}
             </>
@@ -104,12 +121,12 @@ export function PracticeQuestionCard({ question, onAnswered, onAnother }: Props)
             <>
               {!showSolution ? (
                 <button className="btn" onClick={() => setShowSolution(true)}>
-                  Show solution
+                  {t('question.showSolution')}
                 </button>
               ) : null}
               {onAnother ? (
                 <button className="btn secondary" onClick={onAnother}>
-                  <Icon name="refreshCw" size={15} /> Another question
+                  <Icon name="refreshCw" size={15} /> {t('question.another')}
                 </button>
               ) : null}
             </>

@@ -5,10 +5,12 @@ import './katex-inline.css';
 import { IS_DOM, type DOMProps } from 'expo/dom';
 import { useRef, useState } from 'react';
 
+import { translator, type LanguageCode } from '@/i18n/strings';
 import type { PracticeTest as PracticeTestData } from '@/lib/types';
 
 import { Icon } from './lib/Icon';
 import { InlineMarkdown, Markdown } from './lib/Markdown';
+import { UnverifiedNote } from './lib/PracticeQuestionCard';
 import { BASE_CSS, TRANSCRIPT_CSS } from './lib/styles';
 
 const LETTERS = 'ABCDEFGH';
@@ -42,12 +44,16 @@ const TEST_CSS = `
 interface Props {
   test: PracticeTestData;
   scheme: 'light' | 'dark';
-  onFinish: (correct: number, total: number) => Promise<void>;
+  lang: LanguageCode;
+  onFinish: (correct: number, total: number, answers: (number | null)[]) => Promise<void>;
   onAnswerPick: () => Promise<void>;
+  /** Generates a new test aimed at the questions missed in this attempt. */
+  onPracticeMistakes?: () => Promise<void>;
   dom?: DOMProps;
 }
 
-export default function PracticeTest({ test, scheme, onFinish, onAnswerPick }: Props) {
+export default function PracticeTest({ test, scheme, lang, onFinish, onAnswerPick, onPracticeMistakes }: Props) {
+  const { t, tp } = translator(lang);
   const total = test.questions.length;
   const [answers, setAnswers] = useState<(number | null)[]>(() => test.questions.map(() => null));
   const [index, setIndex] = useState(0);
@@ -75,7 +81,7 @@ export default function PracticeTest({ test, scheme, onFinish, onAnswerPick }: P
     setConfirming(false);
     setSubmitted(true);
     body.current?.scrollTo({ top: 0 });
-    onFinish(correct, total).catch(() => {});
+    onFinish(correct, total, answers).catch(() => {});
   };
 
   const retake = () => {
@@ -88,12 +94,12 @@ export default function PracticeTest({ test, scheme, onFinish, onAnswerPick }: P
   const pct = Math.round((correct / total) * 100);
   const message =
     pct >= 90
-      ? 'Outstanding! 🎉'
+      ? t('test.msg.outstanding')
       : pct >= 70
-        ? 'Great work!'
+        ? t('test.msg.great')
         : pct >= 50
-          ? 'Good effort, review the misses.'
-          : 'Keep practicing — you’ve got this.';
+          ? t('test.msg.good')
+          : t('test.msg.keepGoing');
 
   return (
     <div
@@ -132,7 +138,7 @@ export default function PracticeTest({ test, scheme, onFinish, onAnswerPick }: P
           {!submitted ? (
             <div className="fade-in" key={index}>
               <div className="q-label">
-                Question {index + 1} of {total}
+                {t('test.questionOf', { n: index + 1, total })}
               </div>
               <Markdown className="quiz-q" text={q.question} />
               <div className="choices" role="radiogroup">
@@ -179,8 +185,8 @@ export default function PracticeTest({ test, scheme, onFinish, onAnswerPick }: P
                 <label
                   className="muted"
                   style={{ display: 'inline-flex', gap: 8, alignItems: 'center', marginTop: 12, fontSize: 14 }}>
-                  <input type="checkbox" checked={onlyMistakes} onChange={(e) => setOnlyMistakes(e.target.checked)} /> Show only
-                  mistakes
+                  <input type="checkbox" checked={onlyMistakes} onChange={(e) => setOnlyMistakes(e.target.checked)} />{' '}
+                  {t('test.onlyMistakes')}
                 </label>
               </div>
               {test.questions.map((question, i) => {
@@ -192,13 +198,13 @@ export default function PracticeTest({ test, scheme, onFinish, onAnswerPick }: P
                       <span className={ok ? 'ok' : 'bad'}>
                         <Icon name={ok ? 'check' : 'x'} size={18} stroke={3} />
                       </span>
-                      Question {i + 1}
+                      {t('test.question', { n: i + 1 })}
                     </div>
                     <Markdown text={question.question} />
                     <div className="answer-line">
-                      Your answer:{' '}
+                      {t('test.yourAnswer')}{' '}
                       {answers[i] === null ? (
-                        <em className="muted">skipped</em>
+                        <em className="muted">{t('test.skipped')}</em>
                       ) : (
                         <>
                           <strong>{LETTERS[answers[i]!]}.</strong> <InlineMarkdown text={question.choices[answers[i]!]} />
@@ -207,10 +213,11 @@ export default function PracticeTest({ test, scheme, onFinish, onAnswerPick }: P
                     </div>
                     {!ok ? (
                       <div className="answer-line">
-                        Correct: <strong>{LETTERS[question.answerIndex]}.</strong>{' '}
+                        {t('test.correctAnswer')} <strong>{LETTERS[question.answerIndex]}.</strong>{' '}
                         <InlineMarkdown text={question.choices[question.answerIndex]} />
                       </div>
                     ) : null}
+                    {question.unverified ? <UnverifiedNote /> : null}
                     <div className="solution">
                       <Markdown text={question.explanation} />
                     </div>
@@ -225,14 +232,14 @@ export default function PracticeTest({ test, scheme, onFinish, onAnswerPick }: P
       {confirming && !submitted ? (
         <div className="test-foot" style={{ flexDirection: 'column', gap: 8 }}>
           <div style={{ fontWeight: 600 }}>
-            {unanswered} question{unanswered > 1 ? 's are' : ' is'} unanswered. Submit anyway?
+            {tp('test.unanswered', unanswered)}
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
             <button className="btn secondary" style={{ flex: 1 }} onClick={() => setConfirming(false)}>
-              Keep working
+              {t('test.keepWorking')}
             </button>
             <button className="btn" style={{ flex: 1 }} onClick={() => submit(true)}>
-              Submit
+              {t('test.submit')}
             </button>
           </div>
         </div>
@@ -242,22 +249,29 @@ export default function PracticeTest({ test, scheme, onFinish, onAnswerPick }: P
         {!submitted ? (
           <>
             <button className="btn secondary" disabled={index === 0} onClick={() => go(index - 1)}>
-              <Icon name="chevronLeft" size={18} /> Back
+              <Icon name="chevronLeft" size={18} /> {t('common.back')}
             </button>
             {index < total - 1 ? (
               <button className="btn" onClick={() => go(index + 1)}>
-                Next <Icon name="chevronRight" size={18} />
+                {t('common.next')} <Icon name="chevronRight" size={18} />
               </button>
             ) : (
               <button className="btn" onClick={() => submit()}>
-                Submit test
+                {t('test.submitTest')}
               </button>
             )}
           </>
         ) : (
-          <button className="btn" onClick={retake}>
-            <Icon name="rotateCcw" size={17} /> Retake test
-          </button>
+          <>
+            <button className={correct < total && onPracticeMistakes ? 'btn secondary' : 'btn'} onClick={retake}>
+              <Icon name="rotateCcw" size={17} /> {t('test.retake')}
+            </button>
+            {correct < total && onPracticeMistakes ? (
+              <button className="btn" onClick={() => onPracticeMistakes().catch(() => {})}>
+                <Icon name="refreshCw" size={16} /> {t('test.practiceMistakes')}
+              </button>
+            ) : null}
+          </>
         )}
       </div>
     </div>

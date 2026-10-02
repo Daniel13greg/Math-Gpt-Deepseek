@@ -22,6 +22,7 @@
     "expo-image-picker": "~57.0.20",
     "expo-keep-awake": "~57.0.2",
     "expo-linking": "~57.0.11",
+    "expo-localization": "~57.0.2",
     "expo-print": "~57.0.2",
     "expo-router": "~57.0.24",
     "expo-secure-store": "~57.0.4",
@@ -37,6 +38,7 @@
     "katex": "^0.18.10",
     "lucide-react-native": "^1.49.0",
     "marked": "^18.0.14",
+    "mathlive": "^0.111.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
@@ -50,6 +52,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@playwright/test": "1.56.1",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.2.2",
     "eslint": "^9.39.5",
@@ -65,18 +68,23 @@
     "web": "expo start --web",
     "android:dev-build": "expo run:android",
     "ios:dev-build": "expo run:ios",
-    "lint": "expo lint",
+    "lint": "expo lint && eslint server scripts",
     "typecheck": "tsc --noEmit",
     "test": "jest",
+    "test:server": "node --test server/proxy.test.mjs",
     "mock": "node scripts/mock-api.mjs",
-    "katex:css": "node scripts/build-katex-css.mjs"
+    "proxy": "node server/proxy.mjs",
+    "katex:css": "node scripts/build-katex-css.mjs",
+    "e2e": "expo export -p web && playwright test"
   },
   "private": true,
   "jest": {
     "preset": "jest-expo",
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/dist/"
+      "/dist/",
+      "/e2e/",
+      "/server/"
     ],
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|react-native-svg|lucide-react-native|marked|zustand|@dagrejs/.*)"

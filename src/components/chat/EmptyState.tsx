@@ -9,6 +9,7 @@ import { AppText } from '@/components/ui/AppText';
 import { APP_NAME } from '@/constants/app';
 import { getSubject } from '@/constants/subjects';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
 import { sendMessage } from '@/lib/chat/controller';
 import { toUnicodeMath } from '@/lib/math';
 import { useHasApiKey } from '@/store/settings';
@@ -30,11 +31,16 @@ function Shortcut({ icon, label, onPress }: { icon: ReactNode; label: string; on
   );
 }
 
+const EXAMPLE_NUMBERS = [1, 2, 3] as const;
+
 /** A new chat before its first message: starter questions for the subject, shortcuts and key setup. */
 export function EmptyState({ onTools }: { onTools: () => void }) {
   const { colors } = useTheme();
+  const { t } = useT();
   const hasKey = useHasApiKey();
   const subject = getSubject(useUI((s) => s.subject));
+  // Plain-text math ("x^2"), typeset when shown and when sent, in the app's language so the answer is too.
+  const examples = EXAMPLE_NUMBERS.map((n) => t(`example.${subject.id}.${n}`));
 
   return (
     <ScrollView
@@ -46,10 +52,10 @@ export function EmptyState({ onTools }: { onTools: () => void }) {
         <View style={styles.hero}>
           <AppLogo size={44} />
           <AppText weight="bold" size={22} align="center" color={colors.textStrong} style={styles.title}>
-            What are we solving today?
+            {t('empty.title')}
           </AppText>
           <AppText size={15} align="center" secondary>
-            Ask any {subject.noun} question, snap a photo, or make a study tool.
+            {t('empty.subtitle')}
           </AppText>
         </View>
 
@@ -58,33 +64,33 @@ export function EmptyState({ onTools }: { onTools: () => void }) {
             <View style={styles.keyHead}>
               <KeyRoundIcon size={18} color={colors.primary} />
               <AppText weight="semibold" size={15.5}>
-                Add your API key
+                {t('empty.key.title')}
               </AppText>
             </View>
-            <AppText size={14}>{APP_NAME} needs an API key to answer. You only have to add it once.</AppText>
+            <AppText size={14}>{t('empty.key.body', { app: APP_NAME })}</AppText>
             <Pressable
               onPress={() => router.push('/settings')}
               accessibilityRole="button"
               style={({ pressed }) => [styles.keyButton, { backgroundColor: pressed ? colors.primaryPressed : colors.primary }]}>
               <AppText weight="semibold" size={15} color={colors.onPrimary}>
-                Open Settings
+                {t('empty.key.open')}
               </AppText>
             </Pressable>
           </View>
         ) : null}
 
         <AppText weight="semibold" size={12.5} secondary style={styles.section}>
-          TRY ASKING
+          {t('empty.tryAsking')}
         </AppText>
         <Animated.View key={subject.id} entering={FadeIn.duration(200)} style={styles.examples}>
-          {subject.examples.map((example) => {
+          {examples.map((example) => {
             const label = toUnicodeMath(example);
             return (
               <Pressable
                 key={example}
                 onPress={() => void sendMessage({ text: example, images: [], tool: null, subject: subject.id })}
                 accessibilityRole="button"
-                accessibilityLabel={`Ask: ${label}`}
+                accessibilityLabel={t('empty.ask.a11y', { question: label })}
                 style={({ pressed }) => [
                   styles.example,
                   { borderColor: colors.cardBorder, backgroundColor: pressed ? colors.surface : colors.card },
@@ -101,13 +107,17 @@ export function EmptyState({ onTools }: { onTools: () => void }) {
         <View style={styles.shortcuts}>
           <Shortcut
             icon={<CameraIcon size={22} color={colors.icon} strokeWidth={1.8} />}
-            label="Scan a problem"
+            label={t('scan.title')}
             onPress={() => useUI.getState().setMode('camera')}
           />
-          <Shortcut icon={<ToolCaseIcon size={22} color={colors.icon} strokeWidth={1.8} />} label="Study tools" onPress={onTools} />
+          <Shortcut
+            icon={<ToolCaseIcon size={22} color={colors.icon} strokeWidth={1.8} />}
+            label={t('empty.tools')}
+            onPress={onTools}
+          />
           <Shortcut
             icon={<NotebookPenIcon size={22} color={colors.icon} strokeWidth={1.8} />}
-            label="Lecture notes"
+            label={t('drawer.lectureNotes')}
             onPress={() => useUI.getState().setMode('record')}
           />
         </View>
@@ -124,7 +134,7 @@ const styles = StyleSheet.create({
   keyCard: { marginTop: 22, borderRadius: 16, padding: 16, gap: 8 },
   keyHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   keyButton: { alignSelf: 'flex-start', height: 38, paddingHorizontal: 16, borderRadius: 19, justifyContent: 'center', marginTop: 4 },
-  section: { marginTop: 26, marginBottom: 8, marginLeft: 4, letterSpacing: 0.4 },
+  section: { marginTop: 26, marginBottom: 8, marginLeft: 4, letterSpacing: 0.4, textTransform: 'uppercase' },
   examples: { gap: 8 },
   example: {
     flexDirection: 'row',

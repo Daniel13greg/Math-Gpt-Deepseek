@@ -1,6 +1,7 @@
 import { ApiError, errorFromResponse, toApiError, withModelNames } from './errors';
 import { DEFAULT_BASE_URL, type ReasoningEffort } from './models';
 import { SSEParser } from './sse';
+import { t } from '@/i18n';
 
 export type ContentPart = { type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } };
 
@@ -47,7 +48,13 @@ export interface ClientConfig {
   baseUrl?: string;
   /** Injected in tests; defaults to the global fetch (expo/fetch on native, which streams). */
   fetch?: typeof fetch;
+  /** Waits before each automatic retry of a rate-limit, overload, server or network error. */
+  retryDelaysMs?: number[];
+  /** Called with the billed usage of every completed request, keyed by the requested model. */
+  onUsage?: (usage: Usage, model: string) => void;
 }
+
+const DEFAULT_RETRY_DELAYS_MS = [1000, 3000];
 
 export function chatCompletionsUrl(baseUrl: string | undefined): string {
   const base = (baseUrl?.trim() || DEFAULT_BASE_URL).replace(/\/+$/, '');
@@ -130,7 +137,7 @@ class ResultBuilder {
     }
     if (json.error) {
       const message = json.error.message ?? 'Unknown error';
-      throw new ApiError('server', `The model reported an error: ${withModelNames(message)}`, { apiMessage: message });
+      throw new ApiError('server', t('error.reported', { message: withModelNames(message) }), { apiMessage: message });
     }
     if (json.model) this.model = json.model;
     const choice = json.choices?.[0];
@@ -167,7 +174,7 @@ async function attempt(
   signal: AbortSignal | undefined,
 ): Promise<ChatResult> {
   if (!config.apiKey) {
-    throw new ApiError('missing_key', 'Add your API key in Settings to start solving.');
+    throw new ApiError('missing_key', t('error.missingKey'));
   }
   const fetchImpl = config.fetch ?? fetch;
   let response: Response;
@@ -198,7 +205,7 @@ async function attempt(
     if (contentType.includes('application/json')) {
       // Server ignored `stream: true`; treat the whole body as one message.
       builder.handleData(await response.text());
-      return builder.result();
+      return reportUsage(config, req, builder.result());
     }
 
     const parser = new SSEParser();
@@ -208,7 +215,7 @@ async function attempt(
       for (const message of [...parser.feed(await response.text()), ...parser.end()]) {
         builder.handleData(message.data);
       }
-      return builder.result();
+      return reportUsage(config, req, builder.result());
     }
 
     const reader = body.getReader();
@@ -229,7 +236,61 @@ async function attempt(
     throw toApiError(error);
   }
 
-  return builder.result();
+  return reportUsage(config, req, builder.result());
+}
+
+function reportUsage(config: ClientConfig, req: ChatRequest, result: ChatResult): ChatResult {
+  if (result.usage) config.onUsage?.(result.usage, req.model);
+  return result;
+}
+
+function sleep(ms: number, signal: AbortSignal | undefined): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(new ApiError('aborted', t('transcript.stopped')));
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new ApiError('aborted', t('transcript.stopped')));
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+/**
+ * Retries rate-limit, overload, server and network errors with backoff, but only while
+ * nothing has been streamed yet: a retry after partial output would duplicate text.
+ */
+async function attemptWithRetry(
+  config: ClientConfig,
+  req: ChatRequest,
+  handlers: StreamHandlers,
+  signal: AbortSignal | undefined,
+): Promise<ChatResult> {
+  const delays = config.retryDelaysMs ?? DEFAULT_RETRY_DELAYS_MS;
+  let streamed = false;
+  const tracked: StreamHandlers = {
+    onContent: (delta) => {
+      streamed = true;
+      handlers.onContent?.(delta);
+    },
+    onReasoning: (delta) => {
+      streamed = true;
+      handlers.onReasoning?.(delta);
+    },
+  };
+  for (let i = 0; ; i++) {
+    try {
+      return await attempt(config, req, tracked, signal);
+    } catch (error) {
+      if (signal?.aborted) throw new ApiError('aborted', t('transcript.stopped'));
+      const retryable = error instanceof ApiError && error.retryable;
+      if (!retryable || streamed || i >= delays.length) throw error;
+      await sleep(delays[i], signal);
+    }
+  }
 }
 
 /**
@@ -243,12 +304,17 @@ export async function streamChat(
   signal?: AbortSignal,
 ): Promise<ChatResult> {
   try {
-    return await attempt(config, req, handlers, signal);
+    return await attemptWithRetry(config, req, handlers, signal);
   } catch (error) {
     const apiMessage = error instanceof ApiError ? error.apiMessage : undefined;
-    if (error instanceof ApiError && error.kind === 'bad_request' && apiMessage && /reasoning_content/i.test(apiMessage)) {
+    if (!(error instanceof ApiError) || error.kind !== 'bad_request' || !apiMessage) throw error;
+    if (/reasoning_content/i.test(apiMessage)) {
       const mode = /must be passed|missing|required/i.test(apiMessage) ? 'add' : 'strip';
-      return attempt(config, { ...req, messages: patchReasoningContent(req.messages, mode) }, handlers, signal);
+      return attemptWithRetry(config, { ...req, messages: patchReasoningContent(req.messages, mode) }, handlers, signal);
+    }
+    // Some deployments refuse JSON mode together with thinking; the prompt still asks for JSON.
+    if (req.json && /response_format|json/i.test(apiMessage)) {
+      return attemptWithRetry(config, { ...req, json: false }, handlers, signal);
     }
     throw error;
   }

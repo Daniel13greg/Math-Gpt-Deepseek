@@ -1,0 +1,27 @@
+# Study a flashcard deck; the cards marked "Still learning" come back under Review today.
+appId: com.mathgpt.app
+name: Flashcards with spaced repetition
+---
+- runFlow: subflows/connect-mock.yaml
+- tapOn: Tools
+- tapOn: Create Flashcards
+- tapOn: Question
+- inputText: trig identities
+- tapOn: Send
+- extendedWaitUntil:
+    visible: 'Study cards.*'
+    timeout: 30000
+- tapOn: 'Study cards.*'
+- tapOn: Got it
+- tapOn: Still learning
+- tapOn: Got it
+- tapOn: Got it
+- tapOn: Still learning
+- tapOn: Got it
+- assertVisible: You know 4 of 6
+- assertVisible: Next review today
+# Relaunch rather than `back`, which only exists on Android.
+- launchApp
+- tapOn: Open menu
+- tapOn: 'Review Trigonometric Identities, 2 cards due'
+- assertVisible: 1 / 2

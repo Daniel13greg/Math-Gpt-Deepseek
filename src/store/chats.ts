@@ -4,12 +4,14 @@ import { DEFAULT_SUBJECT, type SubjectId } from '@/constants/subjects';
 import { makeId } from '@/lib/id';
 import { toUnicodeMath } from '@/lib/math';
 import { createCollectionSaver, loadCollection } from '@/lib/storage/collection';
-import type { AssistantMessage, Chat, Message } from '@/lib/types';
+import type { AssistantMessage, Chat, Message, TokenUsage, UserMessage } from '@/lib/types';
+import { addToModel } from '@/lib/usage';
+import { t } from '@/i18n';
 
 interface ChatsState {
   chats: Record<string, Chat>;
   activeChatId: string | null;
-  createChat: (subject: SubjectId, title?: string) => string;
+  createChat: (subject: SubjectId, title?: string, extra?: Pick<Chat, 'noteId'>) => string;
   setActiveChat: (id: string | null) => void;
   addMessage: (chatId: string, message: Message) => void;
   updateAssistant: (
@@ -17,13 +19,17 @@ interface ChatsState {
     messageId: string,
     patch: Partial<AssistantMessage> | ((m: AssistantMessage) => Partial<AssistantMessage>),
   ) => void;
+  updateUser: (chatId: string, messageId: string, patch: Partial<Omit<UserMessage, 'id' | 'role'>>) => void;
   /** Removes `messageId` and everything after it (used by regenerate / edit). */
   truncateFrom: (chatId: string, messageId: string) => void;
   /** `lock` (default true) marks the title as final so it won't be auto-replaced. */
   renameChat: (chatId: string, title: string, lock?: boolean) => void;
   setChatSubject: (chatId: string, subject: SubjectId) => void;
+  addChatUsage: (chatId: string, model: string, usage: TokenUsage) => void;
   deleteChat: (chatId: string) => void;
   deleteAllChats: () => void;
+  /** Replaces all chats (backup restore merges before calling this). */
+  importChats: (chats: Record<string, Chat>) => void;
 }
 
 const PREFIX = 'chat';
@@ -58,13 +64,13 @@ export const useChats = create<ChatsState>()((set, get) => {
     chats: recoverInterrupted(initialChats),
     activeChatId: null,
 
-    createChat: (subject, title = 'New chat') => {
+    createChat: (subject, title = t('drawer.newChat'), extra) => {
       const id = makeId('c');
       const now = Date.now();
       set({
         chats: {
           ...get().chats,
-          [id]: { id, title, subject: subject ?? DEFAULT_SUBJECT, createdAt: now, updatedAt: now, messages: [] },
+          [id]: { id, title, subject: subject ?? DEFAULT_SUBJECT, createdAt: now, updatedAt: now, messages: [], ...extra },
         },
         activeChatId: id,
       });
@@ -85,6 +91,12 @@ export const useChats = create<ChatsState>()((set, get) => {
         }),
       })),
 
+    updateUser: (chatId, messageId, patch) =>
+      updateChat(chatId, (chat) => ({
+        ...chat,
+        messages: chat.messages.map((m) => (m.id === messageId && m.role === 'user' ? { ...m, ...patch } : m)),
+      })),
+
     truncateFrom: (chatId, messageId) =>
       updateChat(chatId, (chat) => {
         const index = chat.messages.findIndex((m) => m.id === messageId);
@@ -101,12 +113,17 @@ export const useChats = create<ChatsState>()((set, get) => {
 
     setChatSubject: (chatId, subject) => updateChat(chatId, (chat) => ({ ...chat, subject })),
 
+    addChatUsage: (chatId, model, usage) =>
+      updateChat(chatId, (chat) => ({ ...chat, usage: addToModel(chat.usage, model, usage) })),
+
     deleteChat: (chatId) => {
       const { [chatId]: _removed, ...rest } = get().chats;
       set({ chats: rest, activeChatId: get().activeChatId === chatId ? null : get().activeChatId });
     },
 
     deleteAllChats: () => set({ chats: {}, activeChatId: null }),
+
+    importChats: (chats) => set({ chats: recoverInterrupted(chats) }),
   };
 });
 

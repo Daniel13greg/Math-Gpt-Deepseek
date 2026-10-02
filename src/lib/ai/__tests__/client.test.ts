@@ -78,7 +78,11 @@ describe('chatCompletionsUrl', () => {
 });
 
 describe('streamChat', () => {
-  const config = (fetchImpl: jest.Mock) => ({ apiKey: 'sk-test', fetch: fetchImpl as unknown as typeof fetch });
+  const config = (fetchImpl: jest.Mock, retryDelaysMs: number[] = []) => ({
+    apiKey: 'sk-test',
+    fetch: fetchImpl as unknown as typeof fetch,
+    retryDelaysMs,
+  });
 
   it('streams reasoning and content deltas, tolerating keep-alives and split UTF-8', async () => {
     const body =
@@ -116,6 +120,21 @@ describe('streamChat', () => {
     expect(url).toBe(`${DEFAULT_BASE_URL}/chat/completions`);
     expect(init.headers.Authorization).toBe('Bearer sk-test');
     expect(JSON.parse(init.body).thinking).toEqual({ type: 'enabled' });
+  });
+
+  it('reports usage for the requested model', async () => {
+    const body = sse([
+      { model: 'test-model-0901', choices: [{ delta: { content: 'hi' }, finish_reason: 'stop' }] },
+      { choices: [], usage: { prompt_tokens: 10, completion_tokens: 3, prompt_cache_hit_tokens: 4 } },
+      '[DONE]',
+    ]);
+    const fetchImpl = jest.fn().mockResolvedValue(fakeResponse(200, chunked(body, 50)));
+    const onUsage = jest.fn();
+    await streamChat({ ...config(fetchImpl), onUsage }, baseRequest);
+    expect(onUsage).toHaveBeenCalledWith(
+      { promptTokens: 10, completionTokens: 3, cacheHitTokens: 4, reasoningTokens: undefined },
+      'test-model',
+    );
   });
 
   it('accepts a non-streamed JSON body', async () => {
@@ -183,6 +202,58 @@ describe('streamChat', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(2);
     const retried = JSON.parse(fetchImpl.mock.calls[1][1].body);
     expect(retried.messages[1]).toEqual({ role: 'assistant', content: 'b', reasoning_content: '' });
+  });
+  it('retries rate limits and network errors with backoff before anything streams', async () => {
+    const limited = JSON.stringify({ error: { message: 'Rate limit reached' } });
+    const ok = sse([{ choices: [{ delta: { content: 'ok' }, finish_reason: 'stop' }] }, '[DONE]']);
+    const fetchImpl = jest
+      .fn()
+      .mockResolvedValueOnce(fakeResponse(429, chunked(limited, 100), 'application/json'))
+      .mockRejectedValueOnce(new TypeError('Network request failed'))
+      .mockResolvedValueOnce(fakeResponse(200, chunked(ok, 100)));
+    const result = await streamChat(config(fetchImpl, [0, 0]), baseRequest);
+    expect(result.content).toBe('ok');
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+  });
+
+  it('gives up after the last retry and never retries auth errors', async () => {
+    const overloaded = () => fakeResponse(503, chunked('{}', 100), 'application/json');
+    const busy = jest.fn().mockImplementation(async () => overloaded());
+    await expect(streamChat(config(busy, [0, 0]), baseRequest)).rejects.toMatchObject({ kind: 'overloaded' });
+    expect(busy).toHaveBeenCalledTimes(3);
+
+    const denied = jest.fn().mockResolvedValue(fakeResponse(401, chunked('{}', 100), 'application/json'));
+    await expect(streamChat(config(denied, [0, 0]), baseRequest)).rejects.toMatchObject({ kind: 'auth' });
+    expect(denied).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry once text has streamed, so output is never duplicated', async () => {
+    const body = sse([{ choices: [{ delta: { content: 'partial' } }] }, { error: { message: 'Server busy' } }]);
+    const fetchImpl = jest.fn().mockImplementation(async () => fakeResponse(200, chunked(body, 64)));
+    await expect(streamChat(config(fetchImpl, [0, 0]), baseRequest)).rejects.toMatchObject({ kind: 'server' });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops waiting to retry when aborted', async () => {
+    const fetchImpl = jest.fn().mockRejectedValue(new TypeError('Network request failed'));
+    const controller = new AbortController();
+    const pending = streamChat(config(fetchImpl, [60_000]), baseRequest, {}, controller.signal);
+    await Promise.resolve();
+    controller.abort();
+    await expect(pending).rejects.toMatchObject({ kind: 'aborted' });
+  });
+
+  it('drops JSON mode when the API refuses it alongside thinking', async () => {
+    const error = JSON.stringify({ error: { message: 'response_format json_object is not supported in thinking mode' } });
+    const ok = sse([{ choices: [{ delta: { content: '{"a":1}' }, finish_reason: 'stop' }] }, '[DONE]']);
+    const fetchImpl = jest
+      .fn()
+      .mockResolvedValueOnce(fakeResponse(400, chunked(error, 100), 'application/json'))
+      .mockResolvedValueOnce(fakeResponse(200, chunked(ok, 100)));
+    const result = await streamChat(config(fetchImpl), { ...baseRequest, thinking: true, json: true });
+    expect(result.content).toBe('{"a":1}');
+    expect(JSON.parse(fetchImpl.mock.calls[0][1].body).response_format).toEqual({ type: 'json_object' });
+    expect(JSON.parse(fetchImpl.mock.calls[1][1].body).response_format).toBeUndefined();
   });
 });
 

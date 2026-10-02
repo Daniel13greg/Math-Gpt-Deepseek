@@ -1,6 +1,7 @@
 import { APP_NAME } from '@/constants/app';
 import { getSubject, type SubjectId } from '@/constants/subjects';
-import type { DiagramKind, ToolKind } from '@/constants/tools';
+import type { AnswerStyle } from '@/constants/answerStyles';
+import type { ArtifactToolKind, DiagramKind, ToolKind } from '@/constants/tools';
 
 /** How math must be written so the app can typeset it (stacked fractions, real symbols). */
 const MATH_RULES = [
@@ -16,7 +17,41 @@ function mathFormatting(subject: SubjectId): string {
     : MATH_RULES;
 }
 
-export function tutorSystemPrompt(subject: SubjectId): string {
+const PHOTO_RULE =
+  'If the user sends a photo, first quote the problem you read from it in a blockquote. If the photo is unreadable, describe what you can see and ask for a clearer picture.';
+
+/** How each answer style shapes a reply (see constants/answerStyles). */
+const STYLE_RULES: Record<AnswerStyle, string[]> = {
+  steps: [
+    '- Start with one short sentence restating what is being asked.',
+    '- Solve step by step with numbered steps. Each step: a brief explanation, then the math.',
+    '- Finish with a line "**Final answer:**" followed by the result; box key results with \\boxed{} inside math.',
+    '- For conceptual questions, explain intuitively first, then formally, and finish with a quick example.',
+  ],
+  tutor: [
+    '- Act as a Socratic tutor: help the student solve the problem themselves instead of solving it for them.',
+    '- On a new problem, restate it in one sentence, then give only the first hint or the first small step, and ask the student to try the next step.',
+    '- When the student replies with an attempt, check it: confirm what is right, point out the first mistake gently and specifically, and give the next hint.',
+    '- Reveal the full worked solution only when the student asks for it, or after two genuine attempts at the same step. Then finish with "**Final answer:**".',
+    '- Keep each reply short (under 120 words, not counting math) and end with a question for the student.',
+  ],
+  answer: [
+    '- Give the result first, on a line starting with "**Answer:**", with key results boxed with \\boxed{} inside math.',
+    '- Then justify it in at most three short lines. Do not write a full step-by-step solution unless asked.',
+  ],
+  simple: [
+    '- Explain as simply as possible, as if to a student meeting the topic for the first time: plain words, short sentences, and define any technical term you must use.',
+    '- Use an everyday analogy or picture where it helps, then solve in small numbered steps.',
+    '- Finish with a line "**Final answer:**" followed by the result.',
+  ],
+  exam: [
+    '- Write the solution as a top student would on an exam: concise, formal working that earns full marks, without conversational filler.',
+    '- List the given values with units, state each formula or theorem before using it, justify each step with a short phrase (e.g. "by the chain rule"), and keep units and significant figures.',
+    '- End with "**Final answer:**" followed by the boxed result.',
+  ],
+};
+
+export function tutorSystemPrompt(subject: SubjectId, style: AnswerStyle = 'steps'): string {
   const s = getSubject(subject);
   return [
     `You are ${APP_NAME}, a patient, expert ${s.label} tutor for high-school and university students.`,
@@ -24,14 +59,31 @@ export function tutorSystemPrompt(subject: SubjectId): string {
     s.guidance,
     '',
     'How to answer:',
-    '- Start with one short sentence restating what is being asked.',
-    '- Solve step by step with numbered steps. Each step: a brief explanation, then the math.',
-    '- Finish with a line "**Final answer:**" followed by the result; box key results with \\boxed{} inside math.',
+    ...STYLE_RULES[style],
     '- Use Markdown: short paragraphs, lists and tables. Use ### headings only for long answers; never use # or ##.',
     `- ${mathFormatting(subject)}`,
     '- If a problem is ambiguous or missing data, state the assumption you make and continue.',
-    '- If the user sends a photo, first quote the problem you read from it in a blockquote, then solve it. If the photo is unreadable, describe what you can see and ask for a clearer picture.',
-    '- For conceptual questions, explain intuitively first, then formally, and finish with a quick example.',
+    `- ${PHOTO_RULE}${style === 'steps' || style === 'simple' || style === 'exam' ? ' Then solve it.' : ''}`,
+    '- Reply in the language the student writes in.',
+  ].join('\n');
+}
+
+/** "Check My Work": the student sends their own working (usually a photo) and wants the first mistake found. */
+export function checkWorkSystemPrompt(subject: SubjectId): string {
+  const s = getSubject(subject);
+  return [
+    `You are ${APP_NAME}, a careful, encouraging ${s.label} teacher checking a student's own working.`,
+    s.guidance,
+    '',
+    'How to check:',
+    '- Work out the correct solution yourself first, independently of the student.',
+    "- Then reply with these sections (### headings): Verdict; Step by step; Corrected solution.",
+    '- Verdict: one line, either "✅ All correct" or "❌ First mistake in step N", then one sentence of encouragement.',
+    "- Step by step: go through the student's steps in order, quoting each briefly. Mark correct steps with ✓. At the first wrong step, quote it, explain exactly what went wrong and why, and show the corrected step. Say whether later steps were otherwise done correctly.",
+    '- Corrected solution: the right working from the first mistake onwards, ending with "**Final answer:**". If everything was correct, instead suggest anything that would make the presentation clearer.',
+    "- Judge the method as well as the final answer: a right answer reached by a wrong method is still a mistake, and a different valid method is fine.",
+    `- ${mathFormatting(subject)}`,
+    '- If the photo is unreadable or no working is shown, say so and ask for a clearer picture of the full working.',
     '- Reply in the language the student writes in.',
   ].join('\n');
 }
@@ -54,7 +106,7 @@ function jsonRules(subject: SubjectId): string {
   ].join(' ');
 }
 
-const EXAMPLES: Record<Exclude<ToolKind, 'study-guide' | 'diagram'>, string> = {
+const EXAMPLES: Record<Exclude<ArtifactToolKind, 'diagram'>, string> = {
   'practice-question': `{"topic":"Derivatives","difficulty":"medium","question":"Find \\\\(\\\\frac{d}{dx}\\\\left(x^3 \\\\sin x\\\\right)\\\\).","choices":["\\\\(3x^2 \\\\cos x\\\\)","\\\\(3x^2 \\\\sin x + x^3 \\\\cos x\\\\)","\\\\(x^3 \\\\cos x\\\\)","\\\\(3x^2 \\\\sin x - x^3 \\\\cos x\\\\)"],"answerIndex":1,"hint":"Use the product rule.","explanation":"By the product rule ..."}`,
   'practice-test': `{"title":"Derivatives Practice Test","topic":"Derivatives","questions":[{"question":"...","choices":["...","...","...","..."],"answerIndex":2,"explanation":"..."}]}`,
   flashcards: `{"title":"Cell Biology Basics","cards":[{"front":"Mitochondria","back":"Organelle that produces ATP through cellular respiration."}]}`,
@@ -94,6 +146,7 @@ const SVG_RULES =
   'SVG rules: root element <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"> with no width/height; white or transparent background; stroke="#1f2937", stroke-width 2; accent color #3490DD; text in font-family="Inter, Arial, sans-serif" font-size 14-18 with text-anchor set; write labels with Unicode symbols (θ, °, ², √, π), never LaTeX or $ signs, and put subscripts in <tspan baseline-shift=\'sub\' font-size=\'75%\'>…</tspan>; no scripts, no external images, no <style> or <foreignObject>; use single quotes for attributes so the JSON stays valid. Keep every label inside the viewBox and avoid overlaps.';
 
 export function toolSystemPrompt(kind: ToolKind, subject: SubjectId, diagram?: DiagramKind): string {
+  if (kind === 'check-work') return checkWorkSystemPrompt(subject);
   const s = getSubject(subject);
   const intro = `You are ${APP_NAME}, an expert ${s.label} teacher who creates study materials.`;
 
@@ -166,13 +219,42 @@ export function toolSystemPrompt(kind: ToolKind, subject: SubjectId, diagram?: D
   }
 }
 
-export function toolUserPrompt(kind: ToolKind, topic: string, diagram?: DiagramKind): string {
+export function toolUserPrompt(kind: ToolKind, topic: string, diagram?: DiagramKind, context?: string): string {
   const subjectLine = topic.trim() || 'a core topic of this subject';
-  if (kind === 'diagram') return `Diagram type: ${diagram ?? 'flowchart'}. Topic: ${subjectLine}`;
-  return `Topic: ${subjectLine}`;
+  const request = kind === 'diagram' ? `Diagram type: ${diagram ?? 'flowchart'}. Topic: ${subjectLine}` : `Topic: ${subjectLine}`;
+  return context?.trim() ? `${request}\n\n${context.trim()}` : request;
 }
 
 /* ---------- Lecture notes ---------- */
+
+/** Long notes are cut to keep requests fast; ~60K characters is a two-hour lecture's notes. */
+const MAX_NOTES_CHARS = 60_000;
+
+function lectureMaterial(notes: string, transcript: string): string {
+  const source = notes.trim() || transcript.trim();
+  return source.length > MAX_NOTES_CHARS ? `${source.slice(0, MAX_NOTES_CHARS)}\n[…]` : source;
+}
+
+/** Source material for a study tool made from a lecture note. */
+export function lectureToolContext(title: string, notes: string, transcript: string): string {
+  return [
+    `Base this entirely on the student's notes from the lecture "${title}" below: cover what the lecture covered, use its notation and examples, and don't add topics it didn't cover.`,
+    '',
+    lectureMaterial(notes, transcript),
+  ].join('\n');
+}
+
+/** Appended to the tutor prompt in an "Ask about this lecture" chat. */
+export function lectureChatContext(title: string, notes: string, transcript: string): string {
+  return [
+    '',
+    `The student is asking about a lecture they recorded, "${title}". Its notes are below. Answer in the context of this lecture, use its notation, and say so when a question goes beyond what the lecture covered.`,
+    '',
+    '<lecture-notes>',
+    lectureMaterial(notes, transcript),
+    '</lecture-notes>',
+  ].join('\n');
+}
 
 export function lectureNotesPrompt(): string {
   return [

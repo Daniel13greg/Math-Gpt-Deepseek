@@ -4,6 +4,8 @@ import './katex-inline.css';
 
 import { IS_DOM, type DOMProps } from 'expo/dom';
 
+import { translator, type LanguageCode } from '@/i18n/strings';
+
 import { Markdown } from './lib/Markdown';
 import { BASE_CSS } from './lib/styles';
 
@@ -32,6 +34,7 @@ const SCENE_CSS = `
 `;
 
 interface Props {
+  lang: LanguageCode;
   heading: string;
   body: string;
   index: number;
@@ -41,7 +44,8 @@ interface Props {
 }
 
 /** One animated slide of a video lesson; re-keyed per scene so the entrance animation replays. */
-export default function VideoScene({ heading, body, index, total, playing }: Props) {
+export default function VideoScene({ lang, heading, body, index, total, playing }: Props) {
+  const { t } = translator(lang);
   return (
     <div
       className={`mg scene${playing ? '' : ' paused'}`}
@@ -50,7 +54,7 @@ export default function VideoScene({ heading, body, index, total, playing }: Pro
       <style>{(IS_DOM ? PAGE_CSS : '') + BASE_CSS + SCENE_CSS}</style>
       <div className="slide" key={index}>
         <div className="slide-index">
-          Scene {index + 1} / {total}
+          {t('video.sceneOf', { n: index + 1, total })}
         </div>
         <h1>{heading}</h1>
         <Markdown text={body} />

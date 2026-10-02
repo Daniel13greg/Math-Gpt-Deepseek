@@ -2,6 +2,7 @@ import { useId, useMemo, useRef, useState, type PointerEvent as ReactPointerEven
 
 import type { GraphSpec } from '@/lib/types';
 
+import { useDomT } from './i18n';
 import { Icon } from './Icon';
 import { InlineMarkdown } from './Markdown';
 import {
@@ -36,6 +37,7 @@ export function exprToTex(label: string): string {
  * `touch-action: pan-y` keeps vertical swipes scrolling the chat.
  */
 export function GraphPlot({ spec, fullscreen = false }: { spec: GraphSpec; fullscreen?: boolean }) {
+  const { t } = useDomT();
   const fns = useMemo(() => compileAll(spec), [spec]);
   const initial = useMemo(() => initialViewport(spec, fns), [spec, fns]);
   const [vp, setVp] = useState<Viewport>(initial);
@@ -178,13 +180,13 @@ export function GraphPlot({ spec, fullscreen = false }: { spec: GraphSpec; fulls
         </g>
       </svg>
       <div className="plot-tools">
-        <button className="icon-btn small" aria-label="Zoom in" onClick={() => setVp((v) => zoomViewport(v, 0.7))}>
+        <button className="icon-btn small" aria-label={t('graph.zoomIn')} onClick={() => setVp((v) => zoomViewport(v, 0.7))}>
           <Icon name="zoomIn" size={17} />
         </button>
-        <button className="icon-btn small" aria-label="Zoom out" onClick={() => setVp((v) => zoomViewport(v, 1.4))}>
+        <button className="icon-btn small" aria-label={t('graph.zoomOut')} onClick={() => setVp((v) => zoomViewport(v, 1.4))}>
           <Icon name="zoomOut" size={17} />
         </button>
-        <button className="icon-btn small" aria-label="Reset view" onClick={() => setVp(initial)}>
+        <button className="icon-btn small" aria-label={t('graph.reset')} onClick={() => setVp(initial)}>
           <Icon name="rotateCcw" size={17} />
         </button>
       </div>

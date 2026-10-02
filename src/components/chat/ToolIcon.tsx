@@ -4,6 +4,7 @@ import {
   BookIcon,
   ChartScatterIcon,
   CircleHelpIcon,
+  ClipboardCheckIcon,
   FlashcardsIcon,
   PencilRulerIcon,
   PlayIcon,
@@ -22,6 +23,8 @@ export function ToolIcon({
 }) {
   const props = { size, color, strokeWidth };
   switch (kind) {
+    case 'check-work':
+      return <ClipboardCheckIcon {...props} />;
     case 'video':
       return <PlayIcon {...props} />;
     case 'practice-test':

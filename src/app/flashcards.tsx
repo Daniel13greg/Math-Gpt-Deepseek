@@ -1,32 +1,76 @@
 import * as Haptics from 'expo-haptics';
-import { Stack } from 'expo-router';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Flashcards from '@/components/dom/Flashcards';
+import { FileDownIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { useArtifact } from '@/hooks/useArtifact';
+import { usePdfExport } from '@/hooks/usePdfExport';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
+import { describeDue, isDue } from '@/lib/srs';
+import { flashcardsMarkdown } from '@/lib/tools/printable';
+import { deckKey, useReviews } from '@/store/reviews';
 
 export default function FlashcardsScreen() {
-  const { artifact } = useArtifact('flashcards');
+  const { artifact, chatId, messageId } = useArtifact('flashcards');
+  const { review } = useLocalSearchParams<{ review?: string }>();
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
+  const pdf = usePdfExport();
+  const { t, lang } = useT();
+  const key = deckKey(chatId, messageId);
+  const schedules = useReviews((s) => s.decks[key]);
+  // Review mode studies only the cards due today, most overdue first (fixed when the screen opens).
+  const [dueOrder] = useState(() =>
+    review
+      ? Object.entries(useReviews.getState().decks[key] ?? {})
+          .filter(([, card]) => isDue(card))
+          .sort(([, a], [, b]) => a.due - b.due)
+          .map(([index]) => Number(index))
+      : undefined,
+  );
+  const studied = Object.values(schedules ?? {});
+  const nextDue = studied.length ? Math.min(...studied.map((c) => c.due)) : null;
 
   if (!artifact) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <AppText secondary>These flashcards are no longer available.</AppText>
+        <AppText secondary>{t('cards.missing')}</AppText>
       </View>
     );
   }
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background, paddingBottom: insets.bottom }]}>
-      <Stack.Screen options={{ title: artifact.data.title }} />
+      <Stack.Screen
+        options={{
+          title: review ? t('cards.reviewTitle', { title: artifact.data.title }) : artifact.data.title,
+          headerRight: () => (
+            <Pressable
+              onPress={() => pdf.exportPdf({ title: artifact.data.title, sections: [flashcardsMarkdown(artifact.data, t)] })}
+              hitSlop={10}
+              style={styles.headerButton}
+              accessibilityRole="button"
+              accessibilityLabel={t('cards.savePdf')}>
+              <FileDownIcon size={22} color={colors.icon} />
+            </Pressable>
+          ),
+        }}
+      />
+      {pdf.exporter}
       <Flashcards
         deck={artifact.data}
         scheme={scheme}
+        lang={lang}
+        initialOrder={dueOrder}
+        nextReview={nextDue === null ? null : describeDue(nextDue, lang)}
+        onGrade={async (card, gotIt) => {
+          useReviews.getState().grade(key, card, gotIt ? 'good' : 'again');
+        }}
         onFlip={async () => {
           if (Platform.OS !== 'web') await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }}
@@ -38,5 +82,6 @@ export default function FlashcardsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  headerButton: { paddingHorizontal: 6 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
 });

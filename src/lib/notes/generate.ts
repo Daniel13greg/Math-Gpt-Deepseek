@@ -1,9 +1,12 @@
+import { apiConfig } from '@/lib/api';
 import { streamChat } from '@/lib/ai/client';
 import { toApiError } from '@/lib/ai/errors';
 import { toUnicodeMath } from '@/lib/math';
 import { lectureNotesPrompt } from '@/lib/prompts';
 import { useNotes } from '@/store/notes';
-import { getApiKey, useSettings } from '@/store/settings';
+import { addToModel } from '@/lib/usage';
+import { useSettings } from '@/store/settings';
+import { t } from '@/i18n';
 
 const inflight = new Map<string, AbortController>();
 
@@ -27,7 +30,7 @@ export async function generateLectureNotes(noteId: string): Promise<void> {
   const update = useNotes.getState().updateNote;
 
   if (!note.transcript.trim()) {
-    update(noteId, { status: 'error', error: 'No speech was captured, so there is nothing to summarize.' });
+    update(noteId, { status: 'error', error: t('notes.noSpeech') });
     return;
   }
 
@@ -48,11 +51,13 @@ export async function generateLectureNotes(noteId: string): Promise<void> {
   try {
     const minutes = note.durationSec ? ` (${Math.max(1, Math.round(note.durationSec / 60))} minutes)` : '';
     const result = await streamChat(
-      { apiKey: getApiKey(), baseUrl: settings.baseUrl },
+      apiConfig((usage, model) => update(noteId, (n) => ({ usage: addToModel(n.usage, model, usage) }))),
       {
         model: settings.model,
-        thinking: false,
-        maxTokens: 16384,
+        // Deep Think helps untangle misheard terms and reconstruct skipped steps.
+        thinking: settings.thinking,
+        reasoningEffort: settings.reasoningEffort,
+        maxTokens: settings.thinking ? 32768 : 16384,
         temperature: 0.3,
         messages: [
           { role: 'system', content: lectureNotesPrompt() },
@@ -77,13 +82,13 @@ export async function generateLectureNotes(noteId: string): Promise<void> {
       update(noteId, {
         notes: previous,
         status: aborted ? 'done' : 'error',
-        error: aborted ? undefined : `${error.message} Your previous notes were kept.`,
+        error: aborted ? undefined : t('notes.keptPrevious', { message: error.message }),
       });
     } else {
       update(noteId, {
         notes,
         status: aborted && notes ? 'done' : 'error',
-        error: aborted ? 'Stopped before finishing.' : error.message,
+        error: aborted ? t('notes.stopped') : error.message,
       });
     }
   } finally {

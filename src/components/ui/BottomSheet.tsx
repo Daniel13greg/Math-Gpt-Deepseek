@@ -7,6 +7,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { MaxContentWidth } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
 
 import { AppText } from './AppText';
 
@@ -23,6 +24,7 @@ const CLOSE = { duration: 200, easing: Easing.in(Easing.cubic) };
 /** Modal sheet with a grabber and drag-to-dismiss, styled like the MathGPT Tools sheet. */
 export function BottomSheet({ visible, onClose, title, children }: BottomSheetProps) {
   const { colors } = useTheme();
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const [mounted, setMounted] = useState(visible);
   // Mount as soon as we become visible (adjusting state during render, not in an effect).
@@ -68,7 +70,7 @@ export function BottomSheet({ visible, onClose, title, children }: BottomSheetPr
     <Modal transparent visible animationType="none" statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
       <GestureHandlerRootView style={styles.fill}>
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.backdrop }, backdropStyle]}>
-          <Pressable style={styles.fill} onPress={onClose} accessibilityLabel="Close" />
+          <Pressable accessibilityRole="button" style={styles.fill} onPress={onClose} accessibilityLabel={t('common.close')} />
         </Animated.View>
         <View style={styles.anchor} pointerEvents="box-none">
           <Animated.View
