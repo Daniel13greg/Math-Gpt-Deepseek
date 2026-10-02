@@ -22,9 +22,9 @@ import { APP_NAME } from '@/constants/app';
 import { FontFamily, MaxContentWidth } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { deleteAllChatsWithFiles } from '@/lib/chat/controller';
-import { streamChat } from '@/lib/deepseek/client';
-import { toDeepSeekError } from '@/lib/deepseek/errors';
-import { DEFAULT_BASE_URL, MODELS } from '@/lib/deepseek/models';
+import { streamChat } from '@/lib/ai/client';
+import { toApiError } from '@/lib/ai/errors';
+import { DEFAULT_BASE_URL, MODELS } from '@/lib/ai/models';
 import { getSpeechLib } from '@/lib/speech/recognition';
 import { useNotes } from '@/store/notes';
 import { getApiKey, useSettings } from '@/store/settings';
@@ -115,7 +115,7 @@ export default function SettingsScreen() {
   const [sttKeyDraft, setSttKeyDraft] = useState(settings.sttApiKey);
   const [customModel, setCustomModel] = useState(MODELS.some((m) => m.id === settings.model) ? '' : settings.model);
   const [testing, setTesting] = useState(false);
-  const envKey = !settings.apiKey && Boolean(process.env.EXPO_PUBLIC_DEEPSEEK_API_KEY);
+  const envKey = !settings.apiKey && Boolean(process.env.EXPO_PUBLIC_API_KEY);
   const deviceSpeech = getSpeechLib() !== null;
 
   const saveKey = async () => {
@@ -138,7 +138,7 @@ export default function SettingsScreen() {
       );
       toast.success(`Connected to ${result.model ?? 'DeepSeek'} ✓`);
     } catch (e) {
-      toast.error(toDeepSeekError(e).message);
+      toast.error(toApiError(e).message);
     } finally {
       setTesting(false);
     }
@@ -154,7 +154,7 @@ export default function SettingsScreen() {
           title="DeepSeek API"
           footer={
             envKey
-              ? 'Using the key from EXPO_PUBLIC_DEEPSEEK_API_KEY. Saving a key here overrides it.'
+              ? 'Using the key from EXPO_PUBLIC_API_KEY. Saving a key here overrides it.'
               : 'Your key is stored in the device keychain and only sent to the API base URL below.'
           }>
           <View style={styles.block}>

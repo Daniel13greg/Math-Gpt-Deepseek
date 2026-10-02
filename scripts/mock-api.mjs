@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * A tiny stand-in for the DeepSeek API so the app can be demoed without an API key.
+ * A tiny stand-in for the model API so the app can be demoed without an API key.
  *
  *   npm run mock            # listens on http://0.0.0.0:8787
  *
@@ -302,7 +302,7 @@ const server = createServer(async (req, res) => {
       ? lastUser.content
       : (lastUser?.content ?? []).map((p) => p.text ?? '[image]').join(' ');
   const thinking = body.thinking?.type === 'enabled';
-  const model = body.model ?? 'deepseek-flash';
+  const model = body.model ?? 'mock-model';
   console.log(
     `[mock] ${model} thinking=${thinking} json=${!!body.response_format} :: ${userText.slice(0, 70).replace(/\n/g, ' ')}`,
   );
@@ -317,4 +317,4 @@ const server = createServer(async (req, res) => {
   return stream(res, { reasoning: thinking ? REASONING : '', content: ANSWER, model });
 });
 
-server.listen(PORT, '0.0.0.0', () => console.log(`Mock DeepSeek API on http://localhost:${PORT}`));
+server.listen(PORT, '0.0.0.0', () => console.log(`Mock model API on http://localhost:${PORT}`));

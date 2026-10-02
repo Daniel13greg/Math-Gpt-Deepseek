@@ -1,5 +1,6 @@
 import { buildRequestBody, chatCompletionsUrl, patchReasoningContent, streamChat, type ChatRequest } from '../client';
-import { DeepSeekError } from '../errors';
+import { ApiError } from '../errors';
+import { DEFAULT_BASE_URL } from '../models';
 
 /** Minimal Response stand-in whose body yields the given byte chunks. */
 function fakeResponse(status: number, chunks: Uint8Array[], contentType = 'text/event-stream') {
@@ -39,7 +40,7 @@ function chunked(text: string, size: number) {
 const sse = (payloads: unknown[]) => payloads.map((p) => `data: ${typeof p === 'string' ? p : JSON.stringify(p)}\n\n`).join('');
 
 const baseRequest: ChatRequest = {
-  model: 'deepseek-flash',
+  model: 'test-model',
   thinking: false,
   messages: [{ role: 'user', content: 'Solve x^2 = 4' }],
 };
@@ -47,7 +48,7 @@ const baseRequest: ChatRequest = {
 describe('buildRequestBody', () => {
   it('always sends the thinking toggle and stream options', () => {
     expect(buildRequestBody(baseRequest, true)).toEqual({
-      model: 'deepseek-flash',
+      model: 'test-model',
       messages: baseRequest.messages,
       stream: true,
       stream_options: { include_usage: true },
@@ -70,8 +71,8 @@ describe('buildRequestBody', () => {
 });
 
 describe('chatCompletionsUrl', () => {
-  it('normalizes trailing slashes and defaults to the DeepSeek API', () => {
-    expect(chatCompletionsUrl(undefined)).toBe('https://api.deepseek.com/chat/completions');
+  it('normalizes trailing slashes and defaults to the built-in server', () => {
+    expect(chatCompletionsUrl(undefined)).toBe(`${DEFAULT_BASE_URL}/chat/completions`);
     expect(chatCompletionsUrl('https://proxy.example.com/v1///')).toBe('https://proxy.example.com/v1/chat/completions');
   });
 });
@@ -83,7 +84,7 @@ describe('streamChat', () => {
     const body =
       ': keep-alive\n\n' +
       sse([
-        { model: 'deepseek-flash', choices: [{ delta: { reasoning_content: 'Think: √4 ' } }] },
+        { model: 'test-model', choices: [{ delta: { reasoning_content: 'Think: √4 ' } }] },
         { choices: [{ delta: { reasoning_content: '= ±2' } }] },
         { choices: [{ delta: { content: 'The roots are ' } }] },
         { choices: [{ delta: { content: '$x = \\pm 2$ ✓' }, finish_reason: 'stop' }] },
@@ -106,13 +107,13 @@ describe('streamChat', () => {
     expect(result.reasoning).toBe('Think: √4 = ±2');
     expect(result.content).toBe('The roots are $x = \\pm 2$ ✓');
     expect(result.finishReason).toBe('stop');
-    expect(result.model).toBe('deepseek-flash');
+    expect(result.model).toBe('test-model');
     expect(result.usage).toEqual({ promptTokens: 12, completionTokens: 30, reasoningTokens: 8, cacheHitTokens: undefined });
     expect(reasoning.join('')).toBe(result.reasoning);
     expect(content.join('')).toBe(result.content);
 
     const [url, init] = fetchImpl.mock.calls[0];
-    expect(url).toBe('https://api.deepseek.com/chat/completions');
+    expect(url).toBe(`${DEFAULT_BASE_URL}/chat/completions`);
     expect(init.headers.Authorization).toBe('Bearer sk-test');
     expect(JSON.parse(init.body).thinking).toEqual({ type: 'enabled' });
   });
@@ -155,7 +156,7 @@ describe('streamChat', () => {
   it('surfaces errors sent inside the stream', async () => {
     const body = sse([{ choices: [{ delta: { content: 'partial' } }] }, { error: { message: 'Content risk' } }]);
     const fetchImpl = jest.fn().mockResolvedValue(fakeResponse(200, chunked(body, 64)));
-    await expect(streamChat(config(fetchImpl), baseRequest)).rejects.toBeInstanceOf(DeepSeekError);
+    await expect(streamChat(config(fetchImpl), baseRequest)).rejects.toBeInstanceOf(ApiError);
   });
 
   it('retries once with reasoning_content echoed back when the API asks for it', async () => {

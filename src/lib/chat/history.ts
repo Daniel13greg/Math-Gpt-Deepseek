@@ -1,4 +1,4 @@
-import type { ApiMessage, ContentPart } from '@/lib/deepseek/client';
+import type { ApiMessage, ContentPart } from '@/lib/ai/client';
 import type { Artifact, ImageAttachment, Message } from '@/lib/types';
 
 const LETTERS = 'ABCDEFGH';
@@ -49,14 +49,14 @@ export function artifactSummary(artifact: Artifact): string {
 }
 
 export interface BuildOptions {
-  /** Echo `reasoning_content` of earlier turns (DeepSeek thinking mode wants it back). */
+  /** Echo `reasoning_content` of earlier turns (thinking mode wants it back). */
   thinking: boolean;
   /** Only the most recent N image-bearing user messages keep their images. */
   maxImageMessages?: number;
   loadImage: (image: ImageAttachment) => Promise<string>;
 }
 
-/** Converts stored chat messages into DeepSeek API messages (after the system prompt). */
+/** Converts stored chat messages into API messages (after the system prompt). */
 export async function toApiMessages(
   messages: Message[],
   opts: BuildOptions,
@@ -97,7 +97,7 @@ export async function toApiMessages(
   return { messages: mergeConsecutive(out), hasImages };
 }
 
-/** DeepSeek rejects some successive same-role turns; merge them. */
+/** The API rejects some successive same-role turns; merge them. */
 export function mergeConsecutive(messages: ApiMessage[]): ApiMessage[] {
   const out: ApiMessage[] = [];
   for (const m of messages) {

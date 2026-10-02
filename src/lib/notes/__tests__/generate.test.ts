@@ -1,12 +1,12 @@
-import { streamChat } from '@/lib/deepseek/client';
-import { DeepSeekError } from '@/lib/deepseek/errors';
+import { streamChat } from '@/lib/ai/client';
+import { ApiError } from '@/lib/ai/errors';
 import { useNotes } from '@/store/notes';
 
 import { generateLectureNotes } from '../generate';
 
 jest.mock('@/lib/storage/kv', () => ({ kv: { getItemSync: () => null, setItem: () => {}, removeItem: () => {} } }));
 jest.mock('@/lib/storage/secure', () => ({ secure: { getSync: () => 'sk-test', set: async () => {} } }));
-jest.mock('@/lib/deepseek/client', () => ({ streamChat: jest.fn() }));
+jest.mock('@/lib/ai/client', () => ({ streamChat: jest.fn() }));
 
 const stream = streamChat as jest.MockedFunction<typeof streamChat>;
 
@@ -44,19 +44,19 @@ describe('generateLectureNotes', () => {
     const id = noteWith('# Old');
     stream.mockImplementation(async (_config, _req, handlers) => {
       handlers?.onContent?.('# Half');
-      throw new DeepSeekError('balance', 'Your DeepSeek account is out of credit.');
+      throw new ApiError('balance', 'Your account is out of credit.');
     });
     await generateLectureNotes(id);
     expect(get(id)).toMatchObject({
       notes: '# Old',
       status: 'error',
-      error: 'Your DeepSeek account is out of credit. Your previous notes were kept.',
+      error: 'Your account is out of credit. Your previous notes were kept.',
     });
   });
 
   it('restores the previous notes when regenerating is stopped', async () => {
     const id = noteWith('# Old');
-    stream.mockRejectedValue(new DeepSeekError('aborted', 'Stopped.'));
+    stream.mockRejectedValue(new ApiError('aborted', 'Stopped.'));
     await generateLectureNotes(id);
     expect(get(id)).toMatchObject({ notes: '# Old', status: 'done', error: undefined });
   });
@@ -65,7 +65,7 @@ describe('generateLectureNotes', () => {
     const id = noteWith('');
     stream.mockImplementation(async (_config, _req, handlers) => {
       handlers?.onContent?.('# Partial');
-      throw new DeepSeekError('network', 'Network down');
+      throw new ApiError('network', 'Network down');
     });
     await generateLectureNotes(id);
     expect(get(id)).toMatchObject({ notes: '# Partial', status: 'error', error: 'Network down' });

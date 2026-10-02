@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "MathGPT",
-    "slug": "math-gpt-deepseek",
+    "slug": "math-gpt",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,13 +9,13 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mathgpt.deepseek",
+      "bundleIdentifier": "com.mathgpt.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.mathgpt.deepseek",
+      "package": "com.mathgpt.app",
       "adaptiveIcon": {
         "backgroundColor": "#3490DD",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

@@ -29,7 +29,7 @@ export function isCloudTranscriptionConfigured(): boolean {
 
 /**
  * Transcribes an audio file with an OpenAI-compatible `/audio/transcriptions` endpoint
- * (OpenAI Whisper, Groq, a self-hosted whisper server, ...). DeepSeek has no audio API.
+ * (OpenAI Whisper, Groq, a self-hosted whisper server, ...).
  */
 export async function transcribeWithCloud(uri: string, fileName = 'audio.m4a', signal?: AbortSignal): Promise<string> {
   const { sttBaseUrl, sttApiKey, sttModel, speechLang } = useSettings.getState();

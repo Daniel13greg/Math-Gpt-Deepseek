@@ -1,5 +1,5 @@
 {
-  "name": "math-gpt-deepseek",
+  "name": "math-gpt",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
@@ -68,7 +68,7 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "mock": "node scripts/mock-deepseek.mjs",
+    "mock": "node scripts/mock-api.mjs",
     "katex:css": "node scripts/build-katex-css.mjs"
   },
   "private": true,

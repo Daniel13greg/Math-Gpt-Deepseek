@@ -7,7 +7,7 @@ export interface SSEMessage {
  * Incremental Server-Sent Events parser (https://html.spec.whatwg.org/#event-stream-interpretation).
  *
  * Feed it decoded text in arbitrary chunks; it returns every complete message.
- * Comment lines (`: keep-alive`, which DeepSeek sends while a request is queued)
+ * Comment lines (`: keep-alive`, which the server sends while a request is queued)
  * are ignored.
  */
 export class SSEParser {

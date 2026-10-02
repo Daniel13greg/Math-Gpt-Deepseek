@@ -1,5 +1,5 @@
-import { streamChat } from '@/lib/deepseek/client';
-import { toDeepSeekError } from '@/lib/deepseek/errors';
+import { streamChat } from '@/lib/ai/client';
+import { toApiError } from '@/lib/ai/errors';
 import { toUnicodeMath } from '@/lib/math';
 import { lectureNotesPrompt } from '@/lib/prompts';
 import { useNotes } from '@/store/notes';
@@ -71,7 +71,7 @@ export async function generateLectureNotes(noteId: string): Promise<void> {
     update(noteId, { notes: result.content, status: 'done', title: titleFrom(result.content) ?? note.title });
   } catch (e) {
     if (timer) clearTimeout(timer);
-    const error = toDeepSeekError(e);
+    const error = toApiError(e);
     const aborted = error.kind === 'aborted';
     if (previous) {
       update(noteId, {

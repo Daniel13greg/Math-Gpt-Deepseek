@@ -1,8 +1,8 @@
 import type { SubjectId } from '@/constants/subjects';
 import { getDiagramKind, getTool, type ToolSelection } from '@/constants/tools';
-import { streamChat, type ClientConfig } from '@/lib/deepseek/client';
-import { toDeepSeekError } from '@/lib/deepseek/errors';
-import { DEFAULT_VISION_MODEL, isKnownVisionModel } from '@/lib/deepseek/models';
+import { streamChat, type ClientConfig } from '@/lib/ai/client';
+import { toApiError } from '@/lib/ai/errors';
+import { DEFAULT_VISION_MODEL, isKnownVisionModel } from '@/lib/ai/models';
 import { makeId } from '@/lib/id';
 import { deleteImageFiles, imageToDataUrl } from '@/lib/images';
 import { toUnicodeMath } from '@/lib/math';
@@ -201,7 +201,7 @@ async function runAssistant(chatId: string): Promise<void> {
       });
     }
   } catch (e) {
-    const error = e instanceof ArtifactError ? e : toDeepSeekError(e);
+    const error = e instanceof ArtifactError ? e : toApiError(e);
     if ('kind' in error && error.kind === 'aborted') {
       update({ status: 'stopped', progress: undefined });
     } else {

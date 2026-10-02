@@ -5,6 +5,6 @@
 declare namespace NodeJS {
   interface ProcessEnv {
     /** Optional development key baked into the bundle. Prefer entering it in Settings. */
-    EXPO_PUBLIC_DEEPSEEK_API_KEY?: string;
+    EXPO_PUBLIC_API_KEY?: string;
   }
 }

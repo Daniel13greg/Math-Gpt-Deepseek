@@ -1,4 +1,4 @@
-import { DeepSeekError, errorFromResponse, toDeepSeekError } from './errors';
+import { ApiError, errorFromResponse, toApiError } from './errors';
 import { DEFAULT_BASE_URL, type ReasoningEffort } from './models';
 import { SSEParser } from './sse';
 
@@ -12,7 +12,7 @@ export type ApiMessage =
 export interface ChatRequest {
   model: string;
   messages: ApiMessage[];
-  /** DeepSeek V4 thinking mode (`thinking.type`). The API defaults to enabled, so we always send it. */
+  /** Thinking mode (`thinking.type`). The API defaults to enabled, so we always send it. */
   thinking: boolean;
   reasoningEffort?: ReasoningEffort;
   maxTokens?: number;
@@ -70,7 +70,7 @@ export function buildRequestBody(req: ChatRequest, stream: boolean): Record<stri
 }
 
 /**
- * Thinking mode in DeepSeek V4 wants prior turns' `reasoning_content` echoed back,
+ * Thinking mode wants prior turns' `reasoning_content` echoed back,
  * while older deployments rejected the field. When the API complains about it we
  * retry once with the field added (empty where unknown) or stripped.
  */
@@ -130,7 +130,7 @@ class ResultBuilder {
     }
     if (json.error) {
       const message = json.error.message ?? 'Unknown error';
-      throw new DeepSeekError('server', `DeepSeek reported an error: ${message}`, { apiMessage: message });
+      throw new ApiError('server', `DeepSeek reported an error: ${message}`, { apiMessage: message });
     }
     if (json.model) this.model = json.model;
     const choice = json.choices?.[0];
@@ -167,7 +167,7 @@ async function attempt(
   signal: AbortSignal | undefined,
 ): Promise<ChatResult> {
   if (!config.apiKey) {
-    throw new DeepSeekError('missing_key', 'Add your DeepSeek API key in Settings to start solving.');
+    throw new ApiError('missing_key', 'Add your DeepSeek API key in Settings to start solving.');
   }
   const fetchImpl = config.fetch ?? fetch;
   let response: Response;
@@ -183,7 +183,7 @@ async function attempt(
       signal,
     });
   } catch (error) {
-    throw toDeepSeekError(error);
+    throw toApiError(error);
   }
 
   if (!response.ok) {
@@ -226,7 +226,7 @@ async function attempt(
     }
     if (builder.done) reader.cancel().catch(() => {});
   } catch (error) {
-    throw toDeepSeekError(error);
+    throw toApiError(error);
   }
 
   return builder.result();
@@ -234,7 +234,7 @@ async function attempt(
 
 /**
  * Sends a chat completion request and streams the reply.
- * Resolves with the full content once the stream completes; rejects with a DeepSeekError.
+ * Resolves with the full content once the stream completes; rejects with a ApiError.
  */
 export async function streamChat(
   config: ClientConfig,
@@ -245,8 +245,8 @@ export async function streamChat(
   try {
     return await attempt(config, req, handlers, signal);
   } catch (error) {
-    const apiMessage = error instanceof DeepSeekError ? error.apiMessage : undefined;
-    if (error instanceof DeepSeekError && error.kind === 'bad_request' && apiMessage && /reasoning_content/i.test(apiMessage)) {
+    const apiMessage = error instanceof ApiError ? error.apiMessage : undefined;
+    if (error instanceof ApiError && error.kind === 'bad_request' && apiMessage && /reasoning_content/i.test(apiMessage)) {
       const mode = /must be passed|missing|required/i.test(apiMessage) ? 'add' : 'strip';
       return attempt(config, { ...req, messages: patchReasoningContent(req.messages, mode) }, handlers, signal);
     }

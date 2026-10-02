@@ -8,7 +8,7 @@ import { AppText } from '@/components/ui/AppText';
 import { APP_NAME } from '@/constants/app';
 import { MaxContentWidth } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
-import { MODELS } from '@/lib/deepseek/models';
+import { MODELS } from '@/lib/ai/models';
 import { useHasApiKey, useSettings } from '@/store/settings';
 
 const FEATURES = [
