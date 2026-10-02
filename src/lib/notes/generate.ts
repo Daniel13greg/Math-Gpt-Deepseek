@@ -33,7 +33,9 @@ export async function generateLectureNotes(noteId: string): Promise<void> {
 
   const controller = new AbortController();
   inflight.set(noteId, controller);
-  update(noteId, { status: 'generating', notes: '', error: undefined });
+  // On a regenerate, the old notes stay until new text arrives, and come back if this run fails or is stopped.
+  const previous = note.notes;
+  update(noteId, { status: 'generating', error: undefined });
 
   let notes = '';
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -70,11 +72,20 @@ export async function generateLectureNotes(noteId: string): Promise<void> {
   } catch (e) {
     if (timer) clearTimeout(timer);
     const error = toDeepSeekError(e);
-    update(noteId, {
-      notes,
-      status: error.kind === 'aborted' && notes ? 'done' : 'error',
-      error: error.kind === 'aborted' ? 'Stopped before finishing.' : error.message,
-    });
+    const aborted = error.kind === 'aborted';
+    if (previous) {
+      update(noteId, {
+        notes: previous,
+        status: aborted ? 'done' : 'error',
+        error: aborted ? undefined : `${error.message} Your previous notes were kept.`,
+      });
+    } else {
+      update(noteId, {
+        notes,
+        status: aborted && notes ? 'done' : 'error',
+        error: aborted ? 'Stopped before finishing.' : error.message,
+      });
+    }
   } finally {
     inflight.delete(noteId);
   }
