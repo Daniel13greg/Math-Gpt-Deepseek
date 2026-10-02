@@ -6,7 +6,7 @@ test('switching the language translates the app', async ({ app }) => {
   await expect(app.getByText('Ajustes').first()).toBeVisible();
   await app.goto('/');
   await expect(app.getByPlaceholder('Escribe tu pregunta de matemáticas')).toBeVisible();
-  await expect(app.getByRole('button', { name: 'Herramientas' })).toBeVisible();
+  await expect(app.getByRole('button', { name: 'Herramientas', exact: true })).toBeVisible();
 });
 
 test('a backup restores chats on a fresh device', async ({ app, browser }) => {
