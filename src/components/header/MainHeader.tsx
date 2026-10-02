@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { MenuIcon } from '@/components/icons';
+import { ChevronDownIcon, MenuIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { useTheme } from '@/hooks/useTheme';
+import { modelLabel, modelName } from '@/lib/ai/models';
 import { formatClock } from '@/lib/dates';
+import { useSettings } from '@/store/settings';
 import type { AppMode, LectureActivity } from '@/store/ui';
 
 import { ModeSwitcher } from './ModeSwitcher';
@@ -25,7 +27,26 @@ interface MainHeaderProps {
   lecture: LectureActivity | null;
   onModeChange: (mode: AppMode) => void;
   onMenu: () => void;
-  onUpgrade: () => void;
+  onModelPress: () => void;
+}
+
+/** The current model ("Flash ▾"); opens the model picker. */
+function ModelButton({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
+  const model = useSettings((s) => s.model);
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={`Model: ${modelLabel(model)}. Change model`}
+      style={({ pressed }) => [styles.model, { backgroundColor: pressed ? colors.surfacePressed : colors.segmentBg }]}>
+      <AppText weight="semibold" size={14.5} color={colors.text} numberOfLines={1} style={styles.modelName}>
+        {modelName(model)}
+      </AppText>
+      <ChevronDownIcon size={15} color={colors.textSecondary} strokeWidth={2.2} />
+    </Pressable>
+  );
 }
 
 /** "● 12:34" while a lecture records in the background (a spinner while it transcribes); tap to go back to it. */
@@ -63,7 +84,7 @@ function LectureBadge({ lecture, onPress }: { lecture: LectureActivity; onPress:
   );
 }
 
-export function MainHeader({ mode, lecture, onModeChange, onMenu, onUpgrade }: MainHeaderProps) {
+export function MainHeader({ mode, lecture, onModeChange, onMenu, onModelPress }: MainHeaderProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   return (
@@ -80,17 +101,7 @@ export function MainHeader({ mode, lecture, onModeChange, onMenu, onUpgrade }: M
 
         {mode !== 'record' && lecture ? <LectureBadge lecture={lecture} onPress={() => onModeChange('record')} /> : null}
 
-        {mode !== 'record' && !lecture ? (
-          <Pressable
-            onPress={onUpgrade}
-            accessibilityRole="button"
-            accessibilityLabel="Upgrade"
-            style={({ pressed }) => [styles.upgrade, { backgroundColor: pressed ? colors.primaryPressed : colors.primary }]}>
-            <AppText weight="medium" size={15} color={colors.onPrimary}>
-              Upgrade
-            </AppText>
-          </Pressable>
-        ) : null}
+        {mode !== 'record' && !lecture ? <ModelButton onPress={onModelPress} /> : null}
       </View>
     </View>
   );
@@ -101,13 +112,18 @@ const styles = StyleSheet.create({
   row: { height: HEADER_ROW_HEIGHT, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 },
   menu: { width: 40, height: 40, justifyContent: 'center' },
   center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
-  upgrade: {
+  model: {
     marginLeft: 'auto',
-    height: 30,
-    paddingHorizontal: 7.5,
-    borderRadius: 7,
-    justifyContent: 'center',
+    height: 32,
+    maxWidth: 104,
+    paddingLeft: 12,
+    paddingRight: 9,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
   },
+  modelName: { flexShrink: 1 },
   badge: {
     marginLeft: 'auto',
     height: 30,

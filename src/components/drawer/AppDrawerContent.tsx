@@ -180,12 +180,12 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
         <Pressable
           onPress={() => {
             close();
-            router.push('/upgrade');
+            router.push('/models');
           }}
           style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}>
           <SparklesIcon size={19} color={colors.primary} />
           <AppText weight="medium" size={15}>
-            Upgrade · Models
+            Models
           </AppText>
         </Pressable>
         <Pressable

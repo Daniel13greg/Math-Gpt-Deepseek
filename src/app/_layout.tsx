@@ -55,7 +55,7 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
           <Stack.Screen name="(main)" />
           <Stack.Screen name="settings" options={{ ...header, title: 'Settings' }} />
-          <Stack.Screen name="upgrade" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="models" options={{ presentation: 'modal' }} />
           <Stack.Screen name="practice-test" options={{ ...header, title: 'Practice Test' }} />
           <Stack.Screen name="flashcards" options={{ ...header, title: 'Flashcards' }} />
           <Stack.Screen name="video" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />

@@ -32,7 +32,7 @@ export default function MainScreen() {
         lecture={lecture}
         onModeChange={setMode}
         onMenu={() => navigation.openDrawer()}
-        onUpgrade={() => router.push('/upgrade')}
+        onModelPress={() => router.push('/models')}
       />
       <View style={styles.body}>
         {mode === 'chat' ? <ChatView /> : null}

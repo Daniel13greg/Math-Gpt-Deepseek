@@ -315,7 +315,7 @@ export function ChatView() {
         onClose={() => setAttachOpen(false)}
         onCamera={() => useUI.getState().setMode('camera')}
         onLibrary={() => void pickImageFromLibrary()}
-        onModel={() => router.push('/upgrade')}
+        onModel={() => router.push('/models')}
       />
     </KeyboardAvoidingView>
   );
