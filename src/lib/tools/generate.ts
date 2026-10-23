@@ -14,7 +14,6 @@ import {
   normalizeGraph,
   normalizePracticeQuestion,
   normalizePracticeTest,
-  normalizeVideo,
 } from './normalize';
 import { applyKeyChecks, checkAnswerKeys } from './verify';
 import { t } from '@/i18n';
@@ -33,8 +32,6 @@ export function buildArtifact(kind: ArtifactToolKind, raw: unknown, topic: strin
       return { kind, data: normalizeGraph(raw, topic) };
     case 'diagram':
       return { kind, data: normalizeDiagram(raw, diagram ?? 'flowchart', topic) };
-    case 'video':
-      return { kind, data: normalizeVideo(raw, topic) };
   }
 }
 
@@ -49,10 +46,6 @@ export function progressLabel(kind: ArtifactToolKind, partial: string): string {
     case 'flashcards': {
       const n = count('front');
       return n > 0 ? t('progress.card', { n }) : t('progress.planCards');
-    }
-    case 'video': {
-      const n = count('heading');
-      return n > 0 ? t('progress.scene', { n }) : t('progress.planVideo');
     }
     case 'practice-question':
       return partial.includes('"explanation"') ? t('progress.solution') : t('progress.writeQuestion');
@@ -74,7 +67,7 @@ export interface GenerateArtifactOptions {
   context?: string;
   /** Re-solve multiple-choice questions to confirm the answer key (default true). */
   verify?: boolean;
-  /** Deep Think: reason before writing the JSON. */
+  /** Reason before writing the JSON. */
   thinking: boolean;
   reasoningEffort?: ReasoningEffort;
   signal?: AbortSignal;

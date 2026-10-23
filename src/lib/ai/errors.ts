@@ -1,7 +1,7 @@
 import { APP_NAME } from '@/constants/app';
 import { t } from '@/i18n';
 
-import { MODELS } from './models';
+import { MODEL } from './models';
 
 export type ApiErrorKind =
   | 'missing_key'
@@ -35,9 +35,9 @@ export class ApiError extends Error {
   }
 }
 
-/** Server messages can quote model IDs; people see the app's model names instead. */
+/** Server messages can quote the model ID; people see the app's model name instead. */
 export function withModelNames(text: string): string {
-  return MODELS.reduce((out, m) => out.split(m.id).join(m.label), text);
+  return text.split(MODEL.id).join(MODEL.label);
 }
 
 /** Maps an HTTP error from the model API to a friendly error. */

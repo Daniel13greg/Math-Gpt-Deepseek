@@ -41,10 +41,6 @@ export function artifactSummary(artifact: Artifact): string {
       else if (d.type === 'venn') detail = `Sets: ${d.sets.join(', ')}`;
       return `[I drew a diagram "${d.title}". ${detail}]\n${d.caption}`;
     }
-    case 'video':
-      return `[I created a video lesson "${artifact.data.title}".]\n${artifact.data.scenes
-        .map((s, i) => `Scene ${i + 1} – ${s.heading}: ${s.narration}`)
-        .join('\n')}`;
   }
 }
 

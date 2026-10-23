@@ -1,23 +1,13 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
-import {
-  BrainIcon,
-  CameraIcon,
-  CheckIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  GraduationCapIcon,
-  ImageIcon,
-  SparklesIcon,
-} from '@/components/icons';
+import { CameraIcon, CheckIcon, ChevronDownIcon, GraduationCapIcon, ImageIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { ANSWER_STYLES } from '@/constants/answerStyles';
 import { useTheme } from '@/hooks/useTheme';
 import { useT } from '@/i18n';
-import { modelLabel } from '@/lib/ai/models';
 import { useSettings } from '@/store/settings';
 
 interface AttachSheetProps {
@@ -25,7 +15,6 @@ interface AttachSheetProps {
   onClose: () => void;
   onCamera: () => void;
   onLibrary: () => void;
-  onModel: () => void;
 }
 
 interface RowProps {
@@ -60,11 +49,9 @@ function Row({ icon, title, subtitle, onPress, right, expanded }: RowProps & { e
   );
 }
 
-/** The composer "+" menu: photo sources, answer style, the Deep Think toggle and a model shortcut. */
-export function AttachSheet({ visible, onClose, onCamera, onLibrary, onModel }: AttachSheetProps) {
+/** The composer "+" menu: photo sources and the answer style. */
+export function AttachSheet({ visible, onClose, onCamera, onLibrary }: AttachSheetProps) {
   const { colors } = useTheme();
-  const thinking = useSettings((s) => s.thinking);
-  const model = useSettings((s) => s.model);
   const answerStyle = useSettings((s) => s.answerStyle);
   const update = useSettings((s) => s.update);
   const [stylesOpen, setStylesOpen] = useState(false);
@@ -133,30 +120,6 @@ export function AttachSheet({ visible, onClose, onCamera, onLibrary, onModel }: 
             })}
           </Animated.View>
         ) : null}
-        <Row
-          icon={<BrainIcon size={24} color={colors.icon} strokeWidth={1.8} />}
-          title={t('deepThink.title')}
-          subtitle={t('attach.deepThink.detail')}
-          onPress={() => update({ thinking: !thinking })}
-          right={
-            <Switch
-              value={thinking}
-              onValueChange={(v) => update({ thinking: v })}
-              trackColor={{ true: colors.primary, false: colors.border }}
-              thumbColor="#FFFFFF"
-            />
-          }
-        />
-        <Row
-          icon={<SparklesIcon size={24} color={colors.icon} strokeWidth={1.8} />}
-          title={t('attach.model')}
-          subtitle={modelLabel(model)}
-          onPress={() => {
-            onClose();
-            onModel();
-          }}
-          right={<ChevronRightIcon size={20} color={colors.textMuted} />}
-        />
       </View>
     </BottomSheet>
   );

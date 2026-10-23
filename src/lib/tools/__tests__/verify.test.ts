@@ -1,5 +1,5 @@
 import type { ClientConfig } from '@/lib/ai/client';
-import { DEFAULT_MODEL } from '@/lib/ai/models';
+import { MODEL } from '@/lib/ai/models';
 import type { MultipleChoiceQuestion } from '@/lib/types';
 
 import { generateArtifact } from '../generate';
@@ -82,7 +82,7 @@ const rawQuestion = (answerIndex: number) => ({
   explanation: '2 + 2 = 4',
 });
 
-const base = { model: DEFAULT_MODEL, subject: 'math' as const, topic: 'arithmetic', thinking: false };
+const base = { model: MODEL.id, subject: 'math' as const, topic: 'arithmetic', thinking: false };
 
 describe('generateArtifact answer checks', () => {
   it('returns a practice question whose key is confirmed', async () => {

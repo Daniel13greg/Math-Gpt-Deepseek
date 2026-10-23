@@ -12,7 +12,6 @@ import type {
   PracticeQuestion,
   PracticeTest,
   VennRegion,
-  VideoLesson,
 } from '@/lib/types';
 import { t } from '@/i18n';
 
@@ -318,7 +317,7 @@ export function normalizeDiagram(raw: unknown, kind: DiagramKind, topic: string)
   }
 }
 
-/* ---------- Video ---------- */
+/* ---------- Read aloud ---------- */
 
 const SPOKEN: Record<string, string> = {
   times: 'times',
@@ -389,7 +388,7 @@ function speakTeX(tex: string): string {
     .replace(/[{}&]/g, ' ');
 }
 
-/** Plain spoken version of markdown + LaTeX, for "Read aloud" and narration fallbacks. */
+/** Plain spoken version of markdown + LaTeX, for "Read aloud". */
 export function speakable(markdown: string): string {
   return splitMath(prettifyMarkdown(markdown))
     .map((piece) => (piece.type === 'math' ? ` ${speakTeX(piece.tex)} ` : piece.text))
@@ -398,20 +397,4 @@ export function speakable(markdown: string): string {
     .replace(/\s+/g, ' ')
     .replace(/\s+([.,;:!?])/g, '$1')
     .trim();
-}
-
-export function normalizeVideo(raw: unknown, topic: string): VideoLesson {
-  if (!isObj(raw)) throw new ArtifactError(t('artifactError.videoFormat'));
-  const scenes = pickArray(raw, ['scenes', 'slides', 'steps'])
-    .map((s) => {
-      if (!isObj(s)) return null;
-      const heading = label(s.heading ?? s.title);
-      const body = str(s.body ?? s.content ?? s.text);
-      const narration = str(s.narration ?? s.voiceover ?? s.script) || speakable(`${heading}. ${body}`);
-      return heading || body ? { heading, body, narration } : null;
-    })
-    .filter((s): s is { heading: string; body: string; narration: string } => s !== null)
-    .slice(0, 14);
-  if (scenes.length === 0) throw new ArtifactError(t('artifactError.videoEmpty'));
-  return { title: label(raw.title, topic), scenes };
 }

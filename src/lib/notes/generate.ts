@@ -1,11 +1,11 @@
 import { apiConfig } from '@/lib/api';
 import { streamChat } from '@/lib/ai/client';
 import { toApiError } from '@/lib/ai/errors';
+import { MODEL } from '@/lib/ai/models';
 import { toUnicodeMath } from '@/lib/math';
 import { lectureNotesPrompt } from '@/lib/prompts';
 import { useNotes } from '@/store/notes';
 import { addToModel } from '@/lib/usage';
-import { useSettings } from '@/store/settings';
 import { t } from '@/i18n';
 
 const inflight = new Map<string, AbortController>();
@@ -47,17 +47,14 @@ export async function generateLectureNotes(noteId: string): Promise<void> {
     update(noteId, { notes });
   };
 
-  const settings = useSettings.getState();
   try {
     const minutes = note.durationSec ? ` (${Math.max(1, Math.round(note.durationSec / 60))} minutes)` : '';
     const result = await streamChat(
       apiConfig((usage, model) => update(noteId, (n) => ({ usage: addToModel(n.usage, model, usage) }))),
       {
-        model: settings.model,
-        // Deep Think helps untangle misheard terms and reconstruct skipped steps.
-        thinking: settings.thinking,
-        reasoningEffort: settings.reasoningEffort,
-        maxTokens: settings.thinking ? 32768 : 16384,
+        model: MODEL.id,
+        thinking: false,
+        maxTokens: 16384,
         temperature: 0.3,
         messages: [
           { role: 'system', content: lectureNotesPrompt() },

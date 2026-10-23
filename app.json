@@ -2,7 +2,7 @@
   "expo": {
     "name": "MathGPT",
     "slug": "math-gpt",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mathgpt",
@@ -55,7 +55,7 @@
         {
           "photosPermission": "Allow $(PRODUCT_NAME) to open photos of problems you want solved.",
           "cameraPermission": "Allow $(PRODUCT_NAME) to use the camera to scan homework problems.",
-          "microphonePermission": false
+          "microphonePermission": "Allow $(PRODUCT_NAME) to record lectures and voice questions."
         }
       ],
       [

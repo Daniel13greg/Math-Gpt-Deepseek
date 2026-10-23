@@ -30,6 +30,22 @@ describe('renderMarkdown math', () => {
     expect(html).toContain('<p>Done.</p>');
   });
 
+  it('does not read a lone "=" or "-" line inside display math as a heading underline', () => {
+    const afterText = renderMarkdown('Thus,\n\\[\n2\\left(e+\\frac{1}{e}-2\\right)\n=\n2e+\\frac{2}{e}-4.\n\\]\n\nFinal answer:');
+    expect(displayCount(afterText)).toBe(1);
+    expect(afterText).not.toMatch(/<h\d/);
+    expect(afterText).toContain('<p>Final answer:</p>');
+
+    const inList = renderMarkdown('5. **Evaluate:**\n   \\[\n   2\\int_0^1 x\\,dx\n   =\n   1\n   \\]\n6. **Step:**\n   \\[\n   a\n   -\n   b\n   \\]');
+    expect(displayCount(inList)).toBe(2);
+    expect(inList).not.toMatch(/<h\d/);
+  });
+
+  it('still renders setext headings outside math', () => {
+    expect(renderMarkdown('Title\n=====\n\nBody')).toContain('<h1>Title</h1>');
+    expect(renderMarkdown('Price is \\(x\\)\n---')).toMatch(/<h2>/);
+  });
+
   it('renders bare align environments and mhchem', () => {
     const html = renderMarkdown('\\begin{align*}\na &= b\n\\end{align*}\n\nWater: \\(\\ce{2H2 + O2 -> 2H2O}\\)');
     expect(displayCount(html)).toBe(1);

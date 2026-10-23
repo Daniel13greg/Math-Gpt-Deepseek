@@ -2,7 +2,6 @@ import type { Params, StringKey } from '@/i18n/strings';
 
 export type ToolKind =
   | 'check-work'
-  | 'video'
   | 'practice-test'
   | 'practice-question'
   | 'graph'
@@ -28,7 +27,6 @@ export interface ToolSelection {
 /** Order of the Tools sheet. Titles and placeholders live in the translations ("tool.<kind>.title"). */
 export const TOOL_KINDS: ToolKind[] = [
   'check-work',
-  'video',
   'practice-test',
   'practice-question',
   'graph',

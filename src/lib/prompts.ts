@@ -111,7 +111,6 @@ const EXAMPLES: Record<Exclude<ArtifactToolKind, 'diagram'>, string> = {
   'practice-test': `{"title":"Derivatives Practice Test","topic":"Derivatives","questions":[{"question":"...","choices":["...","...","...","..."],"answerIndex":2,"explanation":"..."}]}`,
   flashcards: `{"title":"Cell Biology Basics","cards":[{"front":"Mitochondria","back":"Organelle that produces ATP through cellular respiration."}]}`,
   graph: `{"title":"Parabola y = x² − 4","functions":[{"expr":"x^2 - 4","label":"y = x^2 - 4"}],"xMin":-6,"xMax":6,"yMin":-6,"yMax":10,"points":[{"x":-2,"y":0,"label":"(-2, 0)"},{"x":2,"y":0,"label":"(2, 0)"},{"x":0,"y":-4,"label":"vertex (0, -4)"}],"explanation":"The parabola opens upward ..."}`,
-  video: `{"title":"The Pythagorean Theorem","scenes":[{"heading":"The big idea","body":"In a right triangle:\\n\\\\[a^2 + b^2 = c^2\\\\]","narration":"In any right triangle, a squared plus b squared equals c squared, where c is the hypotenuse."}]}`,
 };
 
 const DIAGRAM_SPECS: Record<DiagramKind, { describe: string; example: string }> = {
@@ -198,16 +197,6 @@ export function toolSystemPrompt(kind: ToolKind, subject: SubjectId, diagram?: D
         .filter(Boolean)
         .join('\n');
     }
-    case 'video':
-      return [
-        intro,
-        'Write a short animated video lesson (about 2 minutes) explaining the requested topic, as 6-9 scenes.',
-        'Each scene has: "heading" (max 6 words), "body" (what appears on screen: 1-4 short bullet points and/or display equations in Markdown, max 50 words), and "narration" (2-3 friendly spoken sentences).',
-        'Narration is read aloud by text-to-speech, so write math in words (say "x squared over two", never LaTeX or symbols).',
-        'Structure: hook, intuition, key formula or rule, a fully worked example across 2-3 scenes, a common mistake, recap.',
-        jsonRules(subject),
-        `JSON format example: ${EXAMPLES.video}`,
-      ].join('\n');
     case 'study-guide':
       return [
         intro,

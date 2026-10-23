@@ -95,29 +95,6 @@ export function ArtifactView({ artifact, onOpen, onAnswered, onAnother, onPracti
       );
     }
 
-    case 'video': {
-      const scenes = artifact.data.scenes.length;
-      const words = artifact.data.scenes.reduce((n, s) => n + s.narration.split(/\s+/).length, 0);
-      const minutes = Math.max(1, Math.round(words / 150));
-      return (
-        <div className="card artifact-card fade-in">
-          <button
-            className="video-thumb"
-            style={{ width: '100%' }}
-            onClick={onOpen}
-            aria-label={t('artifact.play', { title: artifact.data.title })}>
-            <h3>{artifact.data.title}</h3>
-            <span className="play">
-              <Icon name="play" size={24} stroke={2.5} />
-            </span>
-          </button>
-          <div className="artifact-sub" style={{ marginTop: 10 }}>
-            {t('artifact.videoSub', { scenes: tp('artifact.scenes', scenes), minutes })}
-          </div>
-        </div>
-      );
-    }
-
     case 'graph':
       return (
         <div className="card artifact-card fade-in">

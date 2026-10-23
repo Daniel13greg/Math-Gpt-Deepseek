@@ -1,5 +1,5 @@
 import { streamChat, type ClientConfig } from '@/lib/ai/client';
-import { DEFAULT_VISION_MODEL } from '@/lib/ai/models';
+import { MODEL } from '@/lib/ai/models';
 import { extractJson } from '@/lib/json';
 import { toUnicodeMath } from '@/lib/math';
 import { t } from '@/i18n';
@@ -43,7 +43,7 @@ export async function detectProblems(imageDataUrl: string, config: ClientConfig,
   const result = await streamChat(
     config,
     {
-      model: DEFAULT_VISION_MODEL,
+      model: MODEL.id,
       thinking: false,
       json: true,
       maxTokens: 1500,

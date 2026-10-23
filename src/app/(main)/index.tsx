@@ -1,4 +1,4 @@
-import { router, useNavigation } from 'expo-router';
+import { useNavigation } from 'expo-router';
 import type { DrawerNavigationProp } from 'expo-router/drawer';
 import { StyleSheet, View } from 'react-native';
 
@@ -32,7 +32,6 @@ export default function MainScreen() {
         lecture={lecture}
         onModeChange={setMode}
         onMenu={() => navigation.openDrawer()}
-        onModelPress={() => router.push('/models')}
       />
       <View style={styles.body}>
         {mode === 'chat' ? <ChatView /> : null}

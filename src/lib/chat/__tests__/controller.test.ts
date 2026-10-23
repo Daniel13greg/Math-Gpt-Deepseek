@@ -2,7 +2,7 @@
  * Integration test of the chat flow: controller → API client (fake fetch) → stores.
  * Storage is in memory; everything else is the real code.
  */
-import { DEFAULT_MODEL } from '@/lib/ai/models';
+import { MODEL } from '@/lib/ai/models';
 import { deleteImageFiles } from '@/lib/images';
 import type { AssistantMessage, ImageAttachment } from '@/lib/types';
 import { useChats } from '@/store/chats';
@@ -38,7 +38,7 @@ type Reply = { reasoning?: string; content: string; usage?: { prompt_tokens: num
 function sseResponse({ reasoning = '', content, usage }: Reply): Response {
   const events = [
     ...(reasoning ? [{ choices: [{ delta: { reasoning_content: reasoning } }] }] : []),
-    ...content.match(/.{1,12}/gs)!.map((piece) => ({ model: DEFAULT_MODEL, choices: [{ delta: { content: piece } }] })),
+    ...content.match(/.{1,12}/gs)!.map((piece) => ({ model: MODEL.id, choices: [{ delta: { content: piece } }] })),
     { choices: [{ delta: {}, finish_reason: 'stop' }] },
     { choices: [], usage: usage ?? { prompt_tokens: 100, completion_tokens: 20 } },
   ];
@@ -83,7 +83,7 @@ beforeEach(() => {
 });
 
 describe('sendMessage', () => {
-  it('streams a reply with Deep Think into a new chat, then titles it and records usage', async () => {
+  it('streams a reply with thinking into a new chat, then titles it and records usage', async () => {
     const calls = installApi((system) =>
       system.includes('short title')
         ? { content: 'Solving a Quadratic', usage: { prompt_tokens: 30, completion_tokens: 4 } }
@@ -102,10 +102,10 @@ describe('sendMessage', () => {
 
     const chat = useChats.getState().chats[useChats.getState().activeChatId!];
     expect(chat.title).toBe('Solving a Quadratic');
-    expect(calls[1].model).toBe(DEFAULT_MODEL);
+    expect(calls[1].model).toBe(MODEL.id);
     expect(calls[1].thinking).toEqual({ type: 'disabled' });
-    expect(chat.usage?.[DEFAULT_MODEL]).toMatchObject({ requests: 2, promptTokens: 130 });
-    expect(Object.values(useUsage.getState().months)[0][DEFAULT_MODEL].requests).toBe(2);
+    expect(chat.usage?.[MODEL.id]).toMatchObject({ requests: 2, promptTokens: 130 });
+    expect(Object.values(useUsage.getState().months)[0][MODEL.id].requests).toBe(2);
   });
 
   it('uses the tutor prompt when tutor mode is on', async () => {
@@ -115,7 +115,7 @@ describe('sendMessage', () => {
     expect(calls[0].messages[0].content).toContain('Socratic tutor');
   });
 
-  it('generates a practice question with thinking and checks its key', async () => {
+  it('generates a practice question in JSON mode (no thinking) and checks its key', async () => {
     const question = {
       topic: 'Quadratics',
       difficulty: 'easy',
@@ -129,7 +129,7 @@ describe('sendMessage', () => {
         ? { content: JSON.stringify({ answers: [{ q: 1, answer: 'A' }] }) }
         : system.includes('short title')
           ? { content: 'Quadratics practice' }
-          : { reasoning: 'plan', content: JSON.stringify(question) },
+          : { content: JSON.stringify(question) },
     );
 
     await sendMessage({ text: 'quadratics', images: [], tool: { kind: 'practice-question' }, subject: 'math' });
@@ -137,8 +137,7 @@ describe('sendMessage', () => {
     const reply = lastAssistant();
     expect(reply.status).toBe('done');
     expect(reply.artifact?.kind).toBe('practice-question');
-    expect(reply.thinkingMs).toBeGreaterThanOrEqual(0);
-    expect(calls[0].thinking).toEqual({ type: 'enabled' });
+    expect(calls[0].thinking).toEqual({ type: 'disabled' });
     expect(calls[0].response_format).toEqual({ type: 'json_object' });
     expect(calls[1].messages[0].content).toContain('examiner');
   });

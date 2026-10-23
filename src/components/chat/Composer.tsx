@@ -6,7 +6,7 @@ import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanim
 import type { AnswerStyle } from '@/constants/answerStyles';
 import type { SubjectId } from '@/constants/subjects';
 import { toolChipLabel, toolPlaceholder, type ToolSelection } from '@/constants/tools';
-import { ArrowUpIcon, BrainIcon, MicIcon, PlusIcon, SigmaIcon, SquareIcon, ToolCaseIcon, XIcon } from '@/components/icons';
+import { ArrowUpIcon, MicIcon, PlusIcon, SigmaIcon, SquareIcon, ToolCaseIcon, XIcon } from '@/components/icons';
 import { AppText } from '@/components/ui/AppText';
 import { FontFamily } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
@@ -23,8 +23,6 @@ export interface ComposerProps {
   onRemoveImage: (id: string) => void;
   tool: ToolSelection | null;
   onClearTool: () => void;
-  thinking: boolean;
-  onToggleThinking: () => void;
   answerStyle: AnswerStyle;
   busy: boolean;
   listening: boolean;
@@ -34,13 +32,6 @@ export interface ComposerProps {
   onTools: () => void;
   onMic: () => void;
   onMathKeyboard: () => void;
-}
-
-/** Rough width of a label in Latin-letter units (CJK characters are about twice as wide). */
-function labelWidth(text: string): number {
-  let width = 0;
-  for (const ch of text) width += /[\u2e80-\u9fff\uac00-\ud7af\uff00-\uffef]/.test(ch) ? 2 : 1;
-  return width;
 }
 
 /** The rounded input card: text field, "+" attachments, Tools, mic and the blue send button. */
@@ -56,8 +47,6 @@ export function Composer(props: ComposerProps) {
       ? t(`composer.placeholder.${props.subject}`)
       : t(`answerStyle.${props.answerStyle}.placeholder`);
   const canSend = props.draft.trim().length > 0 || images.length > 0 || tool !== null;
-  // The row fits "Tools" plus a labelled Deep Think chip in short languages only; otherwise show just its icon.
-  const compactThink = tool !== null || labelWidth(t('tools.title')) + labelWidth(t('composer.deepThinkChip')) > 16;
 
   const send = () => {
     if (props.busy) return props.onStop();
@@ -144,22 +133,6 @@ export function Composer(props: ComposerProps) {
             </AppText>
           </Pressable>
         )}
-
-        {props.thinking ? (
-          <Pressable
-            onPress={props.onToggleThinking}
-            hitSlop={4}
-            style={[styles.chip, styles.thinkChip, compactThink && styles.thinkChipCompact, { backgroundColor: colors.primarySoft }]}
-            accessibilityRole="button"
-            accessibilityLabel={t('composer.deepThinkOn')}>
-            <BrainIcon size={15} color={colors.primary} />
-            {compactThink ? null : (
-              <AppText size={13} weight="medium" color={colors.primary} numberOfLines={1} style={styles.chipText}>
-                {t('composer.deepThinkChip')}
-              </AppText>
-            )}
-          </Pressable>
-        ) : null}
 
         <View style={styles.spacer} />
 
@@ -259,9 +232,6 @@ const styles = StyleSheet.create({
     maxWidth: 190,
   },
   chipText: { flexShrink: 1 },
-  thinkChip: { height: 28, paddingHorizontal: 9, gap: 4, flexShrink: 1 },
-  // Next to a tool chip there is only room for the icon.
-  thinkChipCompact: { width: 28, paddingHorizontal: 0, justifyContent: 'center' },
   spacer: { flex: 1 },
   send: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginLeft: 6 },
 });
