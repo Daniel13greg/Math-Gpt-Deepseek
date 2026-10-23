@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useHeaderHeight } from 'expo-router/react-navigation';
-import { ActivityIndicator, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CheckIcon, KeyRoundIcon } from '@/components/icons';
@@ -19,7 +19,7 @@ import { exportBackup, importBackup } from '@/lib/backupActions';
 import { deleteAllChatsWithFiles } from '@/lib/chat/controller';
 import { streamChat } from '@/lib/ai/client';
 import { toApiError } from '@/lib/ai/errors';
-import { DEFAULT_VISION_MODEL, MODELS, modelLabel } from '@/lib/ai/models';
+import { MODEL } from '@/lib/ai/models';
 import { getSpeechLib } from '@/lib/speech/recognition';
 import { useNotes } from '@/store/notes';
 import { useSettings } from '@/store/settings';
@@ -33,7 +33,6 @@ export default function SettingsScreen() {
   const settings = useSettings();
   const [keyDraft, setKeyDraft] = useState(settings.apiKey);
   const [sttKeyDraft, setSttKeyDraft] = useState(settings.sttApiKey);
-  const [customModel, setCustomModel] = useState(MODELS.some((m) => m.id === settings.model) ? '' : settings.model);
   const [testing, setTesting] = useState(false);
   const envKey = !settings.apiKey && Boolean(process.env.EXPO_PUBLIC_API_KEY);
   const deviceSpeech = getSpeechLib() !== null;
@@ -74,12 +73,12 @@ export default function SettingsScreen() {
     setTesting(true);
     try {
       await streamChat(apiConfig(), {
-        model: useSettings.getState().model,
+        model: MODEL.id,
         thinking: false,
         maxTokens: 8,
         messages: [{ role: 'user', content: 'Reply with OK.' }],
       });
-      toast.success(t('settings.connected', { model: modelLabel(useSettings.getState().model) }));
+      toast.success(t('settings.connected', { model: MODEL.label }));
     } catch (e) {
       toast.error(toApiError(e).message);
     } finally {
@@ -162,62 +161,8 @@ export default function SettingsScreen() {
         </Section>
 
         <Section
-          title={t('attach.model')}
-          footer={t('settings.model.footer', { app: APP_NAME, model: modelLabel(DEFAULT_VISION_MODEL) })}>
-          {MODELS.map((m, i) => (
-            <View key={m.id}>
-              {i > 0 ? <Divider /> : null}
-              <Row
-                label={m.label}
-                detail={t(`model.${m.key}.description`)}
-                onPress={() => settings.update({ model: m.id })}>
-                {settings.model === m.id ? <CheckIcon size={20} color={colors.primary} /> : null}
-              </Row>
-            </View>
-          ))}
-          <Divider />
-          <View style={styles.block}>
-            <AppText size={15} weight="medium">
-              {t('settings.customModel')}
-            </AppText>
-            <Field
-              value={customModel}
-              onChangeText={setCustomModel}
-              onEndEditing={() => customModel.trim() && settings.update({ model: customModel.trim() })}
-              placeholder={t('settings.customModel.placeholder')}
-              accessibilityLabel={t('settings.customModel')}
-            />
-          </View>
-          <Divider />
-          <Row
-            label={t('deepThink.title')}
-            detail={t('settings.deepThink.detail')}>
-            <Switch
-              value={settings.thinking}
-              onValueChange={(thinking) => settings.update({ thinking })}
-              trackColor={{ true: colors.primary, false: colors.border }}
-              thumbColor="#fff"
-            />
-          </Row>
-          {settings.thinking ? (
-            <View style={styles.block}>
-              <AppText size={15} weight="medium">
-                {t('settings.effort')}
-              </AppText>
-              <Segmented
-                value={settings.reasoningEffort}
-                options={[
-                  { value: 'low', label: t('settings.effort.low') },
-                  { value: 'high', label: t('settings.effort.high') },
-                  { value: 'max', label: t('settings.effort.max') },
-                ]}
-                onChange={(reasoningEffort) => settings.update({ reasoningEffort })}
-              />
-            </View>
-          ) : null}
-        </Section>
-
-        <Section title={t('answerStyle.title')} footer={t('settings.answerStyle.footer')}>
+          title={t('answerStyle.title')}
+          footer={t('settings.answerStyle.footer')}>
           {ANSWER_STYLES.map((style, i) => (
             <View key={style}>
               {i > 0 ? <Divider /> : null}

@@ -1,4 +1,4 @@
-import { DEFAULT_BASE_URL, MODELS } from '@/lib/ai/models';
+import { DEFAULT_BASE_URL } from '@/lib/ai/models';
 
 import { DEFAULT_SETTINGS, migrateSettings } from '../settings';
 
@@ -7,20 +7,13 @@ jest.mock('@/lib/storage/kv', () => ({ kv: { getItemSync: () => null, setItem: (
 jest.mock('@/lib/storage/secure', () => ({ secure: { getSync: () => null, set: async () => {} } }));
 
 describe('migrateSettings', () => {
-  it('turns Deep Think on once for installs from before it became the default', () => {
-    const migrated = migrateSettings({ model: MODELS[1].id, thinking: false, theme: 'dark' });
-    expect(migrated.thinking).toBe(true);
-    expect(migrated.model).toBe(MODELS[1].id);
+  it('drops the model choice and Deep Think settings older versions saved', () => {
+    const migrated = migrateSettings({ model: 'deepseek-v4-pro', thinking: false, reasoningEffort: 'max', theme: 'dark' });
+    expect(migrated).not.toHaveProperty('model');
+    expect(migrated).not.toHaveProperty('thinking');
+    expect(migrated).not.toHaveProperty('reasoningEffort');
     expect(migrated.theme).toBe('dark');
     expect(migrated.version).toBe(DEFAULT_SETTINGS.version);
-  });
-
-  it('respects turning Deep Think off after the migration', () => {
-    expect(migrateSettings({ version: 2, thinking: false }).thinking).toBe(false);
-  });
-
-  it('defaults to Deep Think on', () => {
-    expect(DEFAULT_SETTINGS.thinking).toBe(true);
   });
 
   it('forgets a saved copy of the built-in server address but keeps a custom server', () => {

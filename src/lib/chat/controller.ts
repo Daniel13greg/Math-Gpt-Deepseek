@@ -4,7 +4,7 @@ import { t } from '@/i18n';
 import { apiConfig } from '@/lib/api';
 import { streamChat } from '@/lib/ai/client';
 import { toApiError } from '@/lib/ai/errors';
-import { DEFAULT_VISION_MODEL, isKnownVisionModel, utilityModel } from '@/lib/ai/models';
+import { MODEL, REASONING_EFFORT } from '@/lib/ai/models';
 import { makeId } from '@/lib/id';
 import { deleteImageFiles, imageToDataUrl } from '@/lib/images';
 import { toUnicodeMath } from '@/lib/math';
@@ -141,14 +141,13 @@ function createUpdater(chatId: string, messageId: string) {
 }
 
 async function runAssistant(chatId: string): Promise<void> {
-  const settings = useSettings.getState();
   const chat = getChat(chatId);
   const userMessage = chat?.messages[chat.messages.length - 1];
   if (!chat || !userMessage || userMessage.role !== 'user') return;
 
   const tool = userMessage.tool;
-  // Deep Think applies to every model (Flash included) and to study tools as well as chat.
-  const thinking = settings.thinking;
+  // Chat answers and work checks think; study guides and artifact tools run without thinking.
+  const thinking = !tool || tool.kind === 'check-work';
   const assistantId = makeId('m');
   const startedAt = Date.now();
   useChats.getState().addMessage(chatId, {
@@ -159,7 +158,7 @@ async function runAssistant(chatId: string): Promise<void> {
     status: 'streaming',
     thinking,
     tool: tool?.kind,
-    model: settings.model,
+    model: MODEL.id,
   });
 
   const controller = new AbortController();
@@ -175,14 +174,14 @@ async function runAssistant(chatId: string): Promise<void> {
       let thinkingMs: number | undefined;
       const artifact = await generateArtifact({
         config,
-        model: settings.model,
+        model: MODEL.id,
         kind: tool.kind,
         diagram: tool.diagram,
         subject: chat.subject,
         topic: tool.topic,
         context: tool.context,
         thinking,
-        reasoningEffort: settings.reasoningEffort,
+        reasoningEffort: REASONING_EFFORT,
         signal: controller.signal,
         onProgress: (progress) => update({ progress }),
         onReasoning: (delta) => {
@@ -228,20 +227,19 @@ async function runAssistant(chatId: string): Promise<void> {
           : await toApiMessages(history, { thinking, loadImage: imageToDataUrl });
       const note = chat.noteId ? useNotes.getState().notes[chat.noteId] : undefined;
       const system =
-        (tool ? toolSystemPrompt(tool.kind, chat.subject) : tutorSystemPrompt(chat.subject, settings.answerStyle)) +
+        (tool ? toolSystemPrompt(tool.kind, chat.subject) : tutorSystemPrompt(chat.subject, useSettings.getState().answerStyle)) +
         (note && tool?.kind !== 'study-guide' ? lectureChatContext(note.title, note.notes, note.transcript) : '');
       const messages = [{ role: 'system' as const, content: system }, ...fitToBudget(built.messages, HISTORY_TOKEN_BUDGET)];
-      const model = built.hasImages && !isKnownVisionModel(settings.model) ? DEFAULT_VISION_MODEL : settings.model;
 
       const updater = createUpdater(chatId, assistantId);
       let firstContentAt: number | null = null;
       const result = await streamChat(
         config,
         {
-          model,
+          model: MODEL.id,
           messages,
           thinking,
-          reasoningEffort: settings.reasoningEffort,
+          reasoningEffort: REASONING_EFFORT,
           maxTokens: thinking ? 32768 : 8192,
           temperature: tool?.kind === 'study-guide' ? 0.6 : tool?.kind === 'check-work' ? 0.2 : 0.3,
         },
@@ -259,7 +257,7 @@ async function runAssistant(chatId: string): Promise<void> {
         content: result.content,
         reasoning: result.reasoning || undefined,
         status: 'done',
-        model: result.model ?? model,
+        model: result.model ?? MODEL.id,
         finishReason: result.finishReason,
         thinkingMs: thinking && result.reasoning ? (firstContentAt ?? Date.now()) - startedAt : undefined,
       });
@@ -293,7 +291,7 @@ async function maybeGenerateTitle(chatId: string) {
   const replyText = reply.artifact ? '' : reply.content.slice(0, 400);
   try {
     const result = await streamChat(chatApiConfig(chatId), {
-      model: utilityModel(useSettings.getState().model),
+      model: MODEL.id,
       thinking: false,
       maxTokens: 24,
       temperature: 0.3,

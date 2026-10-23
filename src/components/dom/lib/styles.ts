@@ -219,10 +219,4 @@ export const TRANSCRIPT_CSS = `
 
 .mg .preview-card { margin-top: 12px; border-radius: 12px; background: var(--surface); padding: 12px 14px; font-size: 15px; }
 .mg .preview-card .label { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-3); font-weight: 600; margin-bottom: 4px; }
-.mg .video-thumb {
-  position: relative; border-radius: 14px; overflow: hidden; aspect-ratio: 16 / 9;
-  background: linear-gradient(135deg, #1d3d5e, #3490dd); color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; padding: 18px;
-}
-.mg .video-thumb .play { position: absolute; width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,.95); color: #1d3d5e; display: flex; align-items: center; justify-content: center; bottom: 14px; right: 14px; }
-.mg .video-thumb h3 { margin: 0; font-size: 20px; line-height: 1.3; max-width: 80%; }
 `;

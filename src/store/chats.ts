@@ -53,6 +53,39 @@ function recoverInterrupted(chats: Record<string, Chat>): Record<string, Chat> {
   return out;
 }
 
+interface LegacyVideoLesson {
+  title?: string;
+  scenes?: { heading?: string; body?: string }[];
+}
+
+// Typed `boolean` so TypeScript doesn't infer a type guard and narrow saved artifacts to `never`.
+const isVideo = (kind: string | undefined): boolean => kind === 'video';
+
+/** The video tool was removed: saved lessons become their slide text, and their requests plain messages. */
+function retireVideoLessons(chats: Record<string, Chat>): Record<string, Chat> {
+  const out: Record<string, Chat> = {};
+  for (const [id, chat] of Object.entries(chats)) {
+    const hasVideo = chat.messages.some((m) => isVideo(m.role === 'user' ? m.tool?.kind : m.tool));
+    out[id] = hasVideo
+      ? {
+          ...chat,
+          messages: chat.messages.map((m): Message => {
+            if (m.role === 'user') return isVideo(m.tool?.kind) ? { ...m, tool: undefined } : m;
+            if (!isVideo(m.tool)) return m;
+            const lesson = isVideo(m.artifact?.kind) ? (m.artifact?.data as LegacyVideoLesson) : undefined;
+            const content = lesson
+              ? [`### ${lesson.title ?? 'Lesson'}`, ...(lesson.scenes ?? []).map((s) => `**${s.heading ?? ''}**\n\n${s.body ?? ''}`)].join(
+                  '\n\n',
+                )
+              : m.content;
+            return { ...m, tool: undefined, artifact: undefined, content };
+          }),
+        }
+      : chat;
+  }
+  return out;
+}
+
 export const useChats = create<ChatsState>()((set, get) => {
   const updateChat = (chatId: string, fn: (chat: Chat) => Chat) => {
     const chat = get().chats[chatId];
@@ -61,7 +94,7 @@ export const useChats = create<ChatsState>()((set, get) => {
   };
 
   return {
-    chats: recoverInterrupted(initialChats),
+    chats: retireVideoLessons(recoverInterrupted(initialChats)),
     activeChatId: null,
 
     createChat: (subject, title = t('drawer.newChat'), extra) => {

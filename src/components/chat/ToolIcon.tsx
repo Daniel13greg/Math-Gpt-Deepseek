@@ -7,7 +7,6 @@ import {
   ClipboardCheckIcon,
   FlashcardsIcon,
   PencilRulerIcon,
-  PlayIcon,
 } from '@/components/icons';
 
 export function ToolIcon({
@@ -25,8 +24,6 @@ export function ToolIcon({
   switch (kind) {
     case 'check-work':
       return <ClipboardCheckIcon {...props} />;
-    case 'video':
-      return <PlayIcon {...props} />;
     case 'practice-test':
       return <BookCheckIcon {...props} />;
     case 'practice-question':

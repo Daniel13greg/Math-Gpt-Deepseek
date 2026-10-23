@@ -74,12 +74,15 @@ export default function RootLayout() {
           {/* The title is only used as the back button label ("(main)" otherwise) and the web page title. */}
           <Stack.Screen name="(main)" options={{ title: APP_NAME }} />
           <Stack.Screen name="settings" options={{ ...header, title: t('settings.title') }} />
-          <Stack.Screen name="models" options={{ presentation: 'modal' }} />
           <Stack.Screen name="practice-test" options={{ ...header, title: t('tool.practice-test.chip') }} />
           <Stack.Screen name="flashcards" options={{ ...header, title: t('tool.flashcards.chip') }} />
-          <Stack.Screen name="video" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
           <Stack.Screen name="notes/[id]" options={{ ...header, title: t('notes.title') }} />
           <Stack.Screen name="image" options={{ presentation: 'transparentModal', animation: 'fade' }} />
+          {/* No swipe-back: one-finger drags move the photo. */}
+          <Stack.Screen
+            name="crop"
+            options={{ animation: 'fade', gestureEnabled: false, contentStyle: { backgroundColor: '#000' } }}
+          />
           <Stack.Screen name="expo-sharing" options={{ animation: 'none' }} />
           <Stack.Screen name="math-input" options={{ ...header, title: t('math.title'), presentation: 'modal' }} />
         </Stack>

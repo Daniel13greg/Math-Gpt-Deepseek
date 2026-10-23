@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 import { DEFAULT_ANSWER_STYLE, type AnswerStyle } from '@/constants/answerStyles';
 import { applyLanguagePreference, type LanguagePreference } from '@/i18n';
-import { DEFAULT_MODEL, isBuiltInServer, type ReasoningEffort } from '@/lib/ai/models';
+import { isBuiltInServer } from '@/lib/ai/models';
 import { kv } from '@/lib/storage/kv';
 import { secure } from '@/lib/storage/secure';
 
@@ -10,12 +10,8 @@ export type ThemePreference = 'system' | 'light' | 'dark';
 export type SttProvider = 'device' | 'cloud';
 
 export interface PersistedSettings {
-  /** Bumped when a stored setting needs migrating (see loadSettings). */
+  /** Bumped when a stored setting needs migrating (see migrateSettings). */
   version: number;
-  model: string;
-  /** "Deep Think": thinking mode for answers, study tools and notes, on every model. */
-  thinking: boolean;
-  reasoningEffort: ReasoningEffort;
   /** How chat answers are written: full steps, Socratic tutor, just the answer, simple, exam-style. */
   answerStyle: AnswerStyle;
   /** Server for chat requests; empty means the built-in one (its address is never shown). */
@@ -44,13 +40,10 @@ const SETTINGS_KEY = 'settings:v1';
 const API_KEY = 'api_key';
 const STT_API_KEY = 'stt_api_key';
 
-const SETTINGS_VERSION = 2;
+const SETTINGS_VERSION = 3;
 
 export const DEFAULT_SETTINGS: PersistedSettings = {
   version: SETTINGS_VERSION,
-  model: DEFAULT_MODEL,
-  thinking: true,
-  reasoningEffort: 'high',
   answerStyle: DEFAULT_ANSWER_STYLE,
   baseUrl: '',
   theme: 'system',
@@ -63,10 +56,12 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
 };
 
 /** Upgrades settings saved by older versions of the app. */
-export function migrateSettings(stored: Partial<PersistedSettings>): PersistedSettings {
-  const settings = { ...DEFAULT_SETTINGS, ...stored };
-  // v2: Deep Think is on by default for every model, so turn it on once for existing installs.
-  if ((stored.version ?? 1) < 2) settings.thinking = true;
+export function migrateSettings(
+  stored: Partial<PersistedSettings> & { model?: unknown; thinking?: unknown; reasoningEffort?: unknown },
+): PersistedSettings {
+  // v3: the model choice and Deep Think settings are gone; the app always uses MathGPT Flash, thinking in chat.
+  const { model: _m, thinking: _t, reasoningEffort: _r, ...saved } = stored;
+  const settings = { ...DEFAULT_SETTINGS, ...saved };
   // Older versions saved the built-in server's address; it stays hidden, so store it as empty.
   if (isBuiltInServer(settings.baseUrl)) settings.baseUrl = '';
   settings.version = SETTINGS_VERSION;

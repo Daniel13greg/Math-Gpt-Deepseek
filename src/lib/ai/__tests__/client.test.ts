@@ -1,6 +1,6 @@
 import { buildRequestBody, chatCompletionsUrl, patchReasoningContent, streamChat, type ChatRequest } from '../client';
 import { ApiError, errorFromResponse } from '../errors';
-import { DEFAULT_BASE_URL, MODELS } from '../models';
+import { DEFAULT_BASE_URL, MODEL } from '../models';
 
 /** Minimal Response stand-in whose body yields the given byte chunks. */
 function fakeResponse(status: number, chunks: Uint8Array[], contentType = 'text/event-stream') {
@@ -270,12 +270,11 @@ describe('patchReasoningContent', () => {
 });
 
 describe('errorFromResponse', () => {
-  it('shows model names instead of raw model IDs from the server', () => {
-    const pro = MODELS[1];
-    const error = errorFromResponse(400, `${pro.id} does not accept images`);
+  it('shows the model name instead of the raw model ID from the server', () => {
+    const error = errorFromResponse(400, `${MODEL.id} does not accept audio`);
     expect(error.kind).toBe('bad_request');
-    expect(error.message).toBe(`The request was rejected: ${pro.label} does not accept images`);
-    expect(error.apiMessage).toBe(`${pro.id} does not accept images`);
+    expect(error.message).toBe(`The request was rejected: ${MODEL.label} does not accept audio`);
+    expect(error.apiMessage).toBe(`${MODEL.id} does not accept audio`);
   });
 
   it('names the app rather than the server in its own messages', () => {

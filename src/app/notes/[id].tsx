@@ -27,7 +27,6 @@ import { askAboutNote, studyFromNote, type LectureTool } from '@/lib/chat/contro
 import { generateLectureNotes, stopNotes } from '@/lib/notes/generate';
 import { useNotes } from '@/store/notes';
 import { describeUsage } from '@/lib/usage';
-import { useSettings } from '@/store/settings';
 import { toast } from '@/store/toast';
 import { useUI } from '@/store/ui';
 import { useUsage } from '@/store/usage';
@@ -46,7 +45,6 @@ export default function NoteScreen() {
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<Tab>('notes');
-  const thinking = useSettings((s) => s.thinking);
   const prices = useUsage((s) => s.prices);
   const pdf = usePdfExport();
   const { lang } = useT();
@@ -144,7 +142,7 @@ export default function NoteScreen() {
               markdown={note.notes}
               scheme={scheme}
               streaming={generating}
-              placeholder={thinking ? t('notes.thinking') : t('notes.writing')}
+              placeholder={t('notes.writing')}
               onLink={async (url) => {
                 if (/^https?:/.test(url)) await WebBrowser.openBrowserAsync(url);
               }}

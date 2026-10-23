@@ -1,6 +1,6 @@
 import { ask, expect, pickTool, test } from './fixtures';
 
-test('answers a question with Deep Think and titles the chat', async ({ app }) => {
+test('answers a question with thinking and titles the chat', async ({ app }) => {
   await ask(app, 'Solve x^2 - 5x + 6 = 0');
   await expect(app.getByText('Final answer:')).toBeVisible();
   await expect(app.getByText(/Thought for \d+s/)).toBeVisible();
@@ -45,6 +45,8 @@ test('a photo with several problems asks which one to solve', async ({ app }) =>
   const chooser = app.waitForEvent('filechooser');
   await app.getByText('Choose from photos', { exact: true }).click();
   await (await chooser).setFiles('assets/images/icon.png');
+  // Library photos open the crop screen first.
+  await app.getByRole('button', { name: 'Done', exact: true }).click();
   await expect(app.getByRole('button', { name: 'Remove image' })).toBeVisible();
 
   await app.getByRole('button', { name: 'Send', exact: true }).click();

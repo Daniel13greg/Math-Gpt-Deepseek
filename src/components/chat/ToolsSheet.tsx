@@ -26,7 +26,7 @@ function Chevron({ open, color }: { open: boolean; color: string }) {
   );
 }
 
-/** "Tools" bottom sheet: video, practice test/question, graph, diagram (expandable), study guide, flashcards. */
+/** "Tools" bottom sheet: practice test/question, graph, diagram (expandable), study guide, flashcards. */
 export function ToolsSheet({ visible, onClose, onSelect }: ToolsSheetProps) {
   const { colors } = useTheme();
   const { t } = useT();

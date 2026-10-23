@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/AppText';
 import { t, tp, useT } from '@/i18n';
-import { MODELS, modelLabel } from '@/lib/ai/models';
+import { MODEL, modelLabel } from '@/lib/ai/models';
 import type { UsageByModel } from '@/lib/types';
 import {
   costByModel,
@@ -14,7 +14,6 @@ import {
   totalUsage,
   type ModelPrice,
 } from '@/lib/usage';
-import { useSettings } from '@/store/settings';
 import { toast } from '@/store/toast';
 import { useUsage } from '@/store/usage';
 
@@ -88,10 +87,9 @@ export function UsageSection() {
   const { t } = useT();
   const months = useUsage((s) => s.months);
   const prices = useUsage((s) => s.prices);
-  const selected = useSettings((s) => s.model);
   const thisMonth = months[monthKey()];
   const allTime = mergeByModel(...Object.values(months));
-  const models = [...new Set([...MODELS.map((m) => m.id), selected, ...Object.keys(allTime)])];
+  const models = [...new Set([MODEL.id, ...Object.keys(allTime)])];
 
   return (
     <>

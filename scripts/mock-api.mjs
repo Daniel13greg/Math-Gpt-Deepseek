@@ -174,31 +174,6 @@ const TOOLS = {
     ],
     explanation: 'The parabola opens upward with vertex \\((0,-4)\\). It meets the line at \\((-2, 0)\\) and \\((3, 5)\\).',
   },
-  video: {
-    title: 'The Pythagorean Theorem',
-    scenes: [
-      {
-        heading: 'Right triangles',
-        body: '- Two legs: \\(a\\) and \\(b\\)\n- Hypotenuse: \\(c\\), opposite the right angle',
-        narration: 'Every right triangle has two legs and a longest side called the hypotenuse.',
-      },
-      {
-        heading: 'The big idea',
-        body: '\\[a^2 + b^2 = c^2\\]',
-        narration: 'The squares of the legs add up to the square of the hypotenuse.',
-      },
-      {
-        heading: 'Worked example',
-        body: '\\[3^2 + 4^2 = 9 + 16 = 25 = 5^2\\]',
-        narration: 'With legs three and four, the hypotenuse is five.',
-      },
-      {
-        heading: 'Recap',
-        body: '- Only for right triangles\n- \\(c\\) is always the longest side',
-        narration: 'Remember, it only works for right triangles.',
-      },
-    ],
-  },
   flowchart: {
     title: 'Solving a Quadratic Equation',
     nodes: [
@@ -253,7 +228,6 @@ function pickTool(system, user) {
   if (system.includes('practice test of')) return 'practice-test';
   if (system.includes('flashcards')) return 'flashcards';
   if (system.includes('graph of one to four functions')) return 'graph';
-  if (system.includes('video lesson')) return 'video';
   const diagram = /Diagram type: ([a-z-]+)/.exec(user)?.[1];
   if (diagram) return TOOLS[diagram] ? diagram : 'geometry';
   return null;

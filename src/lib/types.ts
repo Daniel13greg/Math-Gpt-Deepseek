@@ -166,19 +166,6 @@ export type DiagramSpec =
   | { type: 'venn'; title: string; sets: string[]; regions: VennRegion[]; caption: string }
   | { type: 'svg'; kind: DiagramKind; title: string; svg: string; caption: string };
 
-export interface VideoScene {
-  heading: string;
-  /** Markdown + LaTeX shown on screen. */
-  body: string;
-  /** Plain text spoken by text-to-speech. */
-  narration: string;
-}
-
-export interface VideoLesson {
-  title: string;
-  scenes: VideoScene[];
-}
-
 export type Artifact =
   | {
       kind: 'practice-question';
@@ -194,8 +181,7 @@ export type Artifact =
     }
   | { kind: 'flashcards'; data: FlashcardDeck }
   | { kind: 'graph'; data: GraphSpec }
-  | { kind: 'diagram'; data: DiagramSpec }
-  | { kind: 'video'; data: VideoLesson };
+  | { kind: 'diagram'; data: DiagramSpec };
 
 /* ---------- Lecture notes ---------- */
 

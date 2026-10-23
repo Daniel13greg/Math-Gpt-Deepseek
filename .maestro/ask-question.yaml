@@ -1,4 +1,4 @@
-# Ask a question: Deep Think streams its reasoning, the answer renders and the chat gets a title.
+# Ask a question: the model streams its reasoning, the answer renders and the chat gets a title.
 appId: com.mathgpt.app
 name: Ask a question
 ---

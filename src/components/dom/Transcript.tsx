@@ -36,7 +36,6 @@ const PAGE_CSS = `html, body { margin: 0; padding: 0; height: 100%; overflow: hi
 
 const TOOL_ICONS: Record<string, IconName> = {
   'check-work': 'clipboardCheck',
-  video: 'play',
   'practice-test': 'bookCheck',
   'practice-question': 'circleQuestionMark',
   graph: 'chartScatter',

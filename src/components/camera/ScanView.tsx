@@ -1,6 +1,5 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
 import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -22,6 +21,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { t as translate, useT } from '@/i18n';
 import { frameToCrop } from '@/lib/cropFrame';
 import { prepareImage } from '@/lib/images';
+import { pickAndCropImage } from '@/lib/pickImage';
 import type { ImageAttachment } from '@/lib/types';
 import { toast } from '@/store/toast';
 
@@ -150,17 +150,11 @@ export function ScanView({ onSolve }: ScanViewProps) {
   };
 
   const pickFromLibrary = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 1 });
-    if (result.canceled || !result.assets[0]) return;
-    const asset = result.assets[0];
-    setBusy(true);
-    try {
-      setPreview(await prepareImage(asset.uri, { width: asset.width, height: asset.height }));
-    } catch {
-      toast.error(t('chat.imageUnreadable'));
-    } finally {
-      setBusy(false);
-    }
+    const image = await pickAndCropImage();
+    if (!image) return;
+    // The preview only shows over the camera; without camera access, solve right away.
+    if (permission?.granted) setPreview(image);
+    else onSolve(image);
   };
 
   if (!permission) {

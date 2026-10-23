@@ -45,3 +45,7 @@ example
 # Playwright
 /test-results/
 /playwright-report/
+
+# Downloaded builds
+*.apk
+*.aab

@@ -1,6 +1,5 @@
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
-import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import * as Speech from 'expo-speech';
 import * as WebBrowser from 'expo-web-browser';
@@ -19,7 +18,7 @@ import { MaxContentWidth } from '@/constants/theme';
 import { useDictation } from '@/hooks/useDictation';
 import { usePdfExport } from '@/hooks/usePdfExport';
 import { useTheme } from '@/hooks/useTheme';
-import { t as translate, useT } from '@/i18n';
+import { useT } from '@/i18n';
 import {
   anotherQuestion,
   editFrom,
@@ -30,7 +29,7 @@ import {
   sendMessage,
   stopGeneration,
 } from '@/lib/chat/controller';
-import { prepareImage } from '@/lib/images';
+import { pickAndCropImage } from '@/lib/pickImage';
 import { speakable } from '@/lib/tools/normalize';
 import type { Message } from '@/lib/types';
 import { getChat, useChats } from '@/store/chats';
@@ -83,14 +82,8 @@ function messageText(m: Message | undefined): string {
 }
 
 export async function pickImageFromLibrary() {
-  const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 1 });
-  if (result.canceled || !result.assets[0]) return;
-  const asset = result.assets[0];
-  try {
-    useUI.getState().addPendingImage(await prepareImage(asset.uri, { width: asset.width, height: asset.height }));
-  } catch {
-    toast.error(translate('chat.imageUnreadable'));
-  }
+  const image = await pickAndCropImage();
+  if (image) useUI.getState().addPendingImage(image);
 }
 
 interface ComposerAreaProps {
@@ -115,9 +108,7 @@ function ComposerArea({ chatId, busy, onPlus, onTools }: ComposerAreaProps) {
   const setDraft = useUI((s) => s.setDraft);
   const removePendingImage = useUI((s) => s.removePendingImage);
   const setTool = useUI((s) => s.setTool);
-  const thinking = useSettings((s) => s.thinking);
   const answerStyle = useSettings((s) => s.answerStyle);
-  const updateSettings = useSettings((s) => s.update);
   const dictationBase = useRef('');
 
   const dictation = useDictation({
@@ -162,8 +153,6 @@ function ComposerArea({ chatId, busy, onPlus, onTools }: ComposerAreaProps) {
         onRemoveImage={removePendingImage}
         tool={tool}
         onClearTool={() => setTool(null)}
-        thinking={thinking}
-        onToggleThinking={() => updateSettings({ thinking: !thinking })}
         answerStyle={answerStyle}
         busy={busy || isGenerating(chatId)}
         listening={dictation.state !== 'idle'}
@@ -294,7 +283,6 @@ export function ChatView() {
         const params = { chatId, messageId: m.id };
         if (m.artifact.kind === 'practice-test') router.push({ pathname: '/practice-test', params });
         else if (m.artifact.kind === 'flashcards') router.push({ pathname: '/flashcards', params });
-        else if (m.artifact.kind === 'video') router.push({ pathname: '/video', params });
         break;
       }
       case 'open-link':
@@ -367,7 +355,6 @@ export function ChatView() {
         onClose={() => setAttachOpen(false)}
         onCamera={() => useUI.getState().setMode('camera')}
         onLibrary={() => void pickImageFromLibrary()}
-        onModel={() => router.push('/models')}
       />
     </KeyboardAvoidingView>
   );

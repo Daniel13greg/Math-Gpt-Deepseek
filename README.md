@@ -1,12 +1,12 @@
 # MathGPT
 
 A React Native (Expo) STEM tutor app in the style of the **MathGPT** mobile app, running on its own math
-models, **MathGPT Flash** and **MathGPT Pro**.
+model, **MathGPT Flash**, which always thinks step by step before answering.
 Ask any STEM question, snap a photo of a problem, record a lecture and get notes, or generate
-practice tests, flashcards, graphs, diagrams, study guides and narrated video lessons.
+practice tests, flashcards, graphs, diagrams and study guides.
 
 ![Chat, tools, answers and lecture notes](docs/screens-1.jpg)
-![Practice question, graph, flashcards and video lesson](docs/screens-2.jpg)
+![Practice question, graph and flashcards](docs/screens-2.jpg)
 ![Flowchart, practice test, lecture notes and dark mode](docs/screens-3.jpg)
 
 ## Features
@@ -17,16 +17,15 @@ practice tests, flashcards, graphs, diagrams, study guides and narrated video le
 | **Chat** | Step-by-step answers for 10 subjects (Math, Physics, Accounting, Chemistry, Statistics, Biology, Economics, Finance, Computer Science, Engineering). Streaming Markdown with **LaTeX math** (KaTeX, incl. `\ce{}` chemistry), tables and code. Fractions are always stacked and symbols typeset, even when the model or student types plain text like `6/4`, `x^2`, `sqrt(16)` or `a <= b`. Copy, share, read aloud, regenerate, edit. A new chat opens with starter questions for the chosen subject. |
 | **Answer styles** | Step by step, **Tutor mode** (Socratic: hints first, the student does the steps), Just the answer, Explain simply, Exam-style working. Pick one from the **+** menu or Settings. |
 | **Check My Work** | Photograph or type your own working; the reply gives a verdict, marks each step and explains the first mistake with a corrected solution. |
-| **Deep Think** | Thinking mode with a live, collapsible chain of thought and adjustable reasoning effort. On by default for every model (Flash included) and used for study tools and lecture notes too. |
-| **Scan** | In-app camera with a resizable crop frame (or pick from photos). The photo goes straight to the vision model (Flash). If a photo holds several exercises, the app asks which one to solve (or all of them). |
+| **Thinking** | Every chat answer (and every work check) uses thinking mode, with a live, collapsible chain of thought. |
+| **Scan** | In-app camera with a resizable crop frame, or pick from photos and crop with your fingers (drag to move, pinch or double-tap to zoom, drag corners to resize). The photo goes straight to MathGPT Flash, which reads images. If a photo holds several exercises, the app asks which one to solve (or all of them). |
 | **Share to the app** | Share a screenshot or photo (or text) from any app's share sheet: it lands in the composer ready to solve. Uses `expo-sharing`'s share extension (experimental), so it needs a development or production build, not Expo Go. |
 | **Record** | "Create lecture notes": record a lecture (live transcript) or upload MP3/AAC/WAV/OGG/FLAC, then the model writes structured notes with formulas, examples and review questions. Recording keeps going while you use Chat or Scan. **Study this lecture** turns the notes into flashcards, a practice test or a study guide, or opens a chat grounded in them (**Ask about it**). |
-| **Tools** | Check My Work, Create Video (animated slides + text-to-speech narration), Practice Test (scored, with review and **Practice my mistakes**, which writes a new test aimed at the questions you missed), Practice Question (interactive, hints, solution; **Another question** gets harder after a right answer and easier after a wrong one), Graph (pan/zoom plot), Diagram (flowchart, mind map, geometry, free-body, Venn), Study Guide, Flashcards (flip + swipe, with spaced repetition: every "Got it" / "Still learning" schedules the card, and decks with cards due show under **Review today** in the drawer). |
+| **Tools** | Check My Work, Practice Test (scored, with review and **Practice my mistakes**, which writes a new test aimed at the questions you missed), Practice Question (interactive, hints, solution; **Another question** gets harder after a right answer and easier after a wrong one), Graph (pan/zoom plot), Diagram (flowchart, mind map, geometry, free-body, Venn), Study Guide, Flashcards (flip + swipe, with spaced repetition: every "Got it" / "Still learning" schedules the card, and decks with cards due show under **Review today** in the drawer). |
 | **PDF export** | Save answers and study guides (chat actions), lecture notes, practice tests (questions, then the answer key on its own page) and flashcards as PDFs to share or print. Math prints as native MathML. |
 | **History** | Chats and notes are saved on the device; searchable drawer grouped by date; rename/delete. |
 | **Backup** | Settings → Backup saves chats (with photos), notes, flashcard progress, usage and settings (never API keys) to a JSON file; restoring merges it in without deleting anything. |
-| **Usage** | Tokens per chat (long-press it in the drawer), per lecture note, this month and all time, per model. Enter per-model prices in Settings to see costs too. |
-| **Models** | The header shows the current model; tap it to switch between *Flash* (fast, reads photos) and *Pro* (strongest reasoning). |
+| **Usage** | Tokens per chat (long-press it in the drawer), per lecture note, this month and all time. Enter prices in Settings to see costs too. |
 | **Themes** | Light, dark or system. |
 | **Languages** | English, Español, Português (Brasil), Français, Deutsch and 简体中文, following the device language or chosen in Settings. Answers always follow the language the student writes in. |
 
@@ -76,16 +75,16 @@ the JavaScript bundle, so **never ship a build made this way**. Keys entered in 
 the iOS Keychain / Android Keystore instead. (Baking in an *app token* for the
 [key-holding proxy](server/README.md) is fine: it only reaches your proxy, inside its limits.)
 
-## Models & settings
+## Model & settings
 
 | Setting | Default | Notes |
 |---|---|---|
-| Model | MathGPT Flash | Fast; reads photos. MathGPT Pro is the strongest text model. A custom model ID can be entered in Settings. |
-| Deep Think | on | Sends `thinking: {type: "enabled"}` and `reasoning_effort` (low/high/max) for answers, study tools and notes, on every model. The app always sends the flag explicitly. If the server refuses JSON mode together with thinking, tools retry without `response_format`. |
+| Model | MathGPT Flash | Fixed; reads photos. |
+| Thinking | chat and work checks | Chat answers and Check My Work send `thinking: {type: "enabled"}` with `reasoning_effort: "high"`. Study guides, the other tools, titles and notes send `disabled` (the server defaults to *on*, so the flag is always explicit). |
 | Server | built-in | Point it at your own proxy to keep keys off devices (see Security), or bake one in at build time with `EXPO_PUBLIC_API_BASE_URL`. |
 
-The built-in server address and the model IDs live in `src/lib/ai/models.ts`; the app only ever shows the
-model names. Photos are always routed to the vision model (Flash). Tools use JSON mode
+The built-in server address and the model ID live in `src/lib/ai/models.ts`; the app only ever shows the
+model name. Tools use JSON mode
 (`response_format: json_object`) with schema validation, LaTeX-safe JSON repair and one automatic retry.
 
 **Answer checking.** Practice tests and questions are solved a second time without the answer key
@@ -123,14 +122,14 @@ note. Graph key points that don't lie on any plotted curve are removed.
 
 ```
 src/
-  app/                    routes: (main) drawer screen, settings, models, notes, practice-test, flashcards, video, image
+  app/                    routes: (main) drawer screen, settings, notes, practice-test, flashcards, image, crop
   components/
     chat/                 composer, subject tabs, welcome screen, tools & "+" sheets, chat screen
     camera/ record/       Scan and Record modes
-    dom/                  'use dom' components (Transcript, RichDocument, PracticeTest, Flashcards, VideoScene) + web libs
+    dom/                  'use dom' components (Transcript, RichDocument, PracticeTest, Flashcards) + web libs
     drawer/ header/ ui/   navigation chrome and shared UI
   lib/
-    ai/                   model API client, SSE parser, errors, models
+    ai/                   model API client, SSE parser, errors, model
     chat/                 send/stream/regenerate controller, history → API messages
     tools/                tool generation and JSON normalizers
     speech/               on-device + cloud speech-to-text
@@ -156,7 +155,7 @@ npm run test:server # tests for the key-holding proxy (server/proxy.mjs)
 ### End-to-end tests (web)
 
 `e2e/` drives the exported web build in a phone-sized Chromium against the mock model server, so no
-API key is needed: a Deep Think answer and chat title, tutor mode, Check My Work, the math keyboard, the
+API key is needed: a thinking answer and chat title, tutor mode, Check My Work, the math keyboard, the
 photo problem picker, a practice test → **Practice my mistakes**, flashcards → **Review today**, lecture
 notes → flashcards, switching language, backup → restore on a fresh device, usage counting, and chatting
 through the key-holding proxy with an app token.
@@ -193,5 +192,3 @@ set the repository variable `EAS_UPDATE_ENABLED` to `true`.
   `EXPO_PUBLIC_API_BASE_URL`.
 - "MathGPT" is another company's product name, mirrored here to match the original UI. Change
   `APP_NAME` in `src/constants/app.ts`, `name` in `app.json` and the bundle IDs before publishing.
-- The "video" tool produces narrated, animated slides played in the app (on-device text-to-speech),
-  not an exported video file.

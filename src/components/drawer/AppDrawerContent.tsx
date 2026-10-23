@@ -10,7 +10,6 @@ import {
   PencilIcon,
   SearchIcon,
   SettingsIcon,
-  SparklesIcon,
   SquarePenIcon,
   Trash2Icon,
 } from '@/components/icons';
@@ -252,18 +251,6 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
       </ScrollView>
 
       <View style={[styles.footer, { borderTopColor: colors.hairline, paddingBottom: insets.bottom + 8 }]}>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => {
-            close();
-            router.push('/models');
-          }}
-          style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surface }]}>
-          <SparklesIcon size={19} color={colors.primary} />
-          <AppText weight="medium" size={15}>
-            {t('drawer.models')}
-          </AppText>
-        </Pressable>
         <Pressable
           accessibilityRole="button"
           onPress={() => {

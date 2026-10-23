@@ -164,9 +164,26 @@ const blockMath: TokenizerAndRendererExtension = {
   },
 };
 
+/** True when `text` opens display math (\[, $$ or \begin{…}) without closing it. */
+function hasOpenDisplayMath(text: string): boolean {
+  return (
+    text.lastIndexOf('\\[') > text.lastIndexOf('\\]') ||
+    text.split('$$').length % 2 === 0 ||
+    text.lastIndexOf('\\begin{') > text.lastIndexOf('\\end{')
+  );
+}
+
 const marked = new Marked({ gfm: true, breaks: false, async: false });
 marked.use({
   extensions: [blockMath, inlineMath],
+  tokenizer: {
+    // "Thus,\n\[\na\n=\nb\n\]": a lone "=" or "-" line inside an equation isn't a setext heading underline.
+    // Returning undefined skips the heading; false falls back to marked's own rule.
+    lheading(src) {
+      const underline = /\n {0,3}(?:=+|-+) *(?:\n|$)/.exec(src);
+      return underline && hasOpenDisplayMath(src.slice(0, underline.index)) ? undefined : false;
+    },
+  },
   hooks: {
     // Wide tables scroll horizontally instead of overflowing the chat.
     postprocess: (html) => html.replace(/<table>/g, '<div class="table-wrap"><table>').replace(/<\/table>/g, '</table></div>'),

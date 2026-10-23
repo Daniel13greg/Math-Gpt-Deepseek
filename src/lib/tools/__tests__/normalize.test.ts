@@ -5,7 +5,6 @@ import {
   normalizeGraph,
   normalizePracticeQuestion,
   normalizePracticeTest,
-  normalizeVideo,
   sanitizeSvg,
   speakable,
 } from '../normalize';
@@ -135,12 +134,7 @@ describe('sanitizeSvg', () => {
   });
 });
 
-describe('video', () => {
-  it('fills missing narration from the slide text', () => {
-    const v = normalizeVideo({ title: 'Pythagoras', scenes: [{ heading: 'Theorem', body: '\\(a^2 + b^2 = c^2\\)' }] }, 'p');
-    expect(v.scenes[0].narration).toBe('Theorem. a squared plus b squared equals c squared');
-  });
-
+describe('read aloud', () => {
   it('speakable strips markdown and LaTeX', () => {
     expect(speakable('**Area** is \\(\\frac{1}{2}bh\\)')).toBe('Area is 1 over 2 bh');
     expect(speakable('So 6/4 = 3/2 and x^2 - 4 >= 0.')).toBe(
